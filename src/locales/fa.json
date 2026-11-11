@@ -10147,6 +10147,14 @@
       "op": "Operation",
       "sum": "Amount"
     },
-    "enoughUntil": "Plenty left until {{date}}"
+    "enoughUntil": "Plenty left until {{date}}",
+    "topup": {
+      "title": "Top up",
+      "custom": "Or your own amount",
+      "range": "from {{min}} to {{max}}",
+      "cta": "Top up {{amount}}",
+      "savedCards": "Saved cards"
+    },
+    "history": "History"
   }
 }

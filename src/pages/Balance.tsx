@@ -16,8 +16,11 @@ import { Button } from '@/components/primitives/Button';
 import { ChevronDownIcon, ChevronRightIcon, CreditCardIcon, WalletIcon } from '@/components/icons';
 import { staggerContainer, staggerItem } from '@/components/motion/transitions';
 import { isPaidStatus, isFailedStatus } from '../utils/paymentStatus';
-import { transactionTypeBadge, transactionTypeLabelKey } from '../utils/transactionType';
+import { transactionTypeLabelKey } from '../utils/transactionType';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
+import { TopUpPanel } from '@/components/balance/TopUpPanel';
+import { RvShieldIcon } from '@/components/rv';
+import { ArrowUpIcon } from '@/components/icons/extended-icons';
 
 export default function Balance() {
   const { t } = useTranslation();
@@ -74,7 +77,7 @@ export default function Balance() {
   }> | null>(null);
   const [promoSelectCode, setPromoSelectCode] = useState<string | null>(null);
   const [transactionsPage, setTransactionsPage] = useState(1);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
 
   const { data: transactions, isLoading } = useQuery<PaginatedResponse<Transaction>>({
     queryKey: ['transactions', transactionsPage],
@@ -191,6 +194,124 @@ export default function Balance() {
         </section>
       </motion.div>
 
+      {paymentMethods && paymentMethods.length > 0 && (
+        <motion.div variants={staggerItem} initial="initial" animate="animate">
+          <TopUpPanel methods={paymentMethods} />
+        </motion.div>
+      )}
+
+      {/* Transaction History */}
+      <motion.div variants={staggerItem}>
+        <div>
+          <button
+            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+            className="flex w-full items-end justify-between text-left"
+          >
+            <h2 className="rv-d text-[40px] text-dark-100">{t('rv.history')}</h2>
+            <ChevronDownIcon
+              className={`mb-2 h-5 w-5 text-dark-400 transition-transform duration-200 ${isHistoryOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          <AnimatePresence>
+            {isHistoryOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="bento-card mt-3 !px-4 !py-1">
+                  {isLoading ? (
+                    <SkeletonGroup className="space-y-3">
+                      <Skeleton variant="card" count={3} className="h-16" />
+                    </SkeletonGroup>
+                  ) : transactions?.items && transactions.items.length > 0 ? (
+                    <motion.div variants={staggerContainer} initial="initial" animate="animate">
+                      {transactions.items.map((tx) => {
+                        const isZero = tx.amount_rubles === 0;
+                        const isPositive = tx.amount_rubles > 0;
+                        const displayAmount = Math.abs(tx.amount_rubles);
+                        const sign = isZero ? '' : isPositive ? '+' : '-';
+
+                        return (
+                          <motion.div key={tx.id} variants={staggerItem} className="rv-row">
+                            <span className="rv-ic !rounded-full">
+                              {isPositive ? <ArrowUpIcon className="h-5 w-5" /> : <RvShieldIcon />}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-bold leading-tight text-dark-100 [overflow-wrap:anywhere]">
+                                {tx.description || t(transactionTypeLabelKey(tx.type))}
+                              </div>
+                              <div className="mt-0.5 text-[13px] text-dark-400">
+                                {new Date(tx.created_at).toLocaleString(uiLocale(), {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </div>
+                            </div>
+                            <div
+                              className={`shrink-0 whitespace-nowrap text-[17px] font-bold ${isZero ? 'text-dark-400' : isPositive ? 'text-accent-400' : 'text-dark-100'}`}
+                            >
+                              {sign === '-' ? '−' : sign}
+                              {formatAmount(displayAmount, displayAmount % 1 === 0 ? 0 : 2)}
+                              {'\u00A0'}
+                              {currencySymbol}
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+                  ) : (
+                    <div className="py-12 text-center">
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-linear-lg bg-dark-800">
+                        <WalletIcon className="h-8 w-8 text-dark-500" />
+                      </div>
+                      <div className="text-dark-400">{t('balance.noTransactions')}</div>
+                    </div>
+                  )}
+
+                  {transactions && transactions.pages > 1 && (
+                    // Три колонки: «Далее» не уезжает отдельной строкой на всю ширину.
+                    <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm text-dark-500">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setTransactionsPage((prev) => Math.max(1, prev - 1))}
+                        disabled={transactions.page <= 1}
+                      >
+                        {t('common.back')}
+                      </Button>
+                      <div className="whitespace-nowrap text-center">
+                        {t('balance.page', {
+                          current: transactions.page,
+                          total: transactions.pages,
+                        })}
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          setTransactionsPage((prev) =>
+                            transactions.pages ? Math.min(transactions.pages, prev + 1) : prev + 1,
+                          )
+                        }
+                        disabled={transactions.page >= transactions.pages}
+                      >
+                        {t('common.next')}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
       {/* Promo Code Section */}
       <motion.div variants={staggerItem}>
         <Card>
@@ -283,185 +404,6 @@ export default function Balance() {
       {/* Payment Methods — self-animated: mounts after its query resolves, when
           the parent stagger orchestration has already finished and would leave
           it stuck at opacity 0 */}
-      {paymentMethods && paymentMethods.length > 0 && (
-        <motion.div variants={staggerItem} initial="initial" animate="animate">
-          <Card>
-            <h2 className="rv-d mb-4 text-[36px] text-dark-100">{t('balance.topUpBalance')}</h2>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              {paymentMethods.map((method) => {
-                const methodKey = method.id.toLowerCase().replace(/-/g, '_');
-                const translatedName = t(`balance.paymentMethods.${methodKey}.name`, {
-                  defaultValue: '',
-                });
-                const translatedDesc = t(`balance.paymentMethods.${methodKey}.description`, {
-                  defaultValue: '',
-                });
-
-                return (
-                  <button
-                    type="button"
-                    key={method.id}
-                    disabled={!method.is_available}
-                    className="rv-opt disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => method.is_available && navigate(`/balance/top-up/${method.id}`)}
-                  >
-                    <span className="rv-rad" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-bold text-dark-100">
-                        {method.name || translatedName}
-                      </span>
-                      <span className="mt-0.5 block text-[13px] text-dark-400">
-                        {method.description || translatedDesc
-                          ? `${method.description || translatedDesc} · `
-                          : ''}
-                        {t('balance.paymentRange', {
-                          min: formatAmount(method.min_amount_kopeks / 100, 0),
-                          max: formatAmount(method.max_amount_kopeks / 100, 0),
-                        })}
-                        {'\u00A0'}
-                        {currencySymbol}
-                      </span>
-                    </span>
-                    <ChevronRightIcon className="h-5 w-5 text-dark-400" />
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
-        </motion.div>
-      )}
-
-      {/* Transaction History */}
-      <motion.div variants={staggerItem}>
-        <Card className="overflow-hidden">
-          <button
-            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-            className="flex w-full items-center justify-between text-left"
-          >
-            <h2 className="rv-d text-[36px] text-dark-100">{t('balance.transactionHistory')}</h2>
-            <ChevronDownIcon
-              className={`h-5 w-5 text-dark-400 transition-transform duration-200 ${isHistoryOpen ? 'rotate-180' : ''}`}
-            />
-          </button>
-
-          <AnimatePresence>
-            {isHistoryOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4">
-                  {isLoading ? (
-                    <SkeletonGroup className="space-y-3">
-                      <Skeleton variant="card" count={3} className="h-16" />
-                    </SkeletonGroup>
-                  ) : transactions?.items && transactions.items.length > 0 ? (
-                    <motion.div
-                      className="space-y-3"
-                      variants={staggerContainer}
-                      initial="initial"
-                      animate="animate"
-                    >
-                      {transactions.items.map((tx) => {
-                        const isZero = tx.amount_rubles === 0;
-                        const isPositive = tx.amount_rubles > 0;
-                        const displayAmount = Math.abs(tx.amount_rubles);
-                        const sign = isZero ? '' : isPositive ? '+' : '-';
-                        const colorClass = isZero
-                          ? 'text-dark-400'
-                          : isPositive
-                            ? 'text-success-400'
-                            : 'text-error-400';
-
-                        return (
-                          <motion.div
-                            key={tx.id}
-                            variants={staggerItem}
-                            className="rounded-linear border border-dark-700/30 bg-dark-800/30 p-4"
-                          >
-                            {/* Сумма — в строке с типом и датой и держит свою ширину;
-                                описание — под ними во всю ширину. Рядом с суммой
-                                описание сжималось в узкий столбик, а без запрета
-                                сжатия сумму уводило за край карточки, и карточка
-                                её обрезала. */}
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                                <span className={transactionTypeBadge(tx.type)}>
-                                  {t(transactionTypeLabelKey(tx.type))}
-                                </span>
-                                <span className="text-xs text-dark-500">
-                                  {new Date(tx.created_at).toLocaleDateString(uiLocale())}
-                                </span>
-                              </div>
-                              <div
-                                className={`shrink-0 whitespace-nowrap text-lg font-semibold ${colorClass}`}
-                              >
-                                {sign}
-                                {formatAmount(displayAmount)}
-                                {'\u00A0'}
-                                {currencySymbol}
-                              </div>
-                            </div>
-                            {/* Почта, ник, номер счёта — без пробелов, переносятся где угодно. */}
-                            {tx.description && (
-                              <div className="mt-2 text-sm text-dark-400 [overflow-wrap:anywhere]">
-                                {tx.description}
-                              </div>
-                            )}
-                          </motion.div>
-                        );
-                      })}
-                    </motion.div>
-                  ) : (
-                    <div className="py-12 text-center">
-                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-linear-lg bg-dark-800">
-                        <WalletIcon className="h-8 w-8 text-dark-500" />
-                      </div>
-                      <div className="text-dark-400">{t('balance.noTransactions')}</div>
-                    </div>
-                  )}
-
-                  {transactions && transactions.pages > 1 && (
-                    // Три колонки: «Далее» не уезжает отдельной строкой на всю ширину.
-                    <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm text-dark-500">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setTransactionsPage((prev) => Math.max(1, prev - 1))}
-                        disabled={transactions.page <= 1}
-                      >
-                        {t('common.back')}
-                      </Button>
-                      <div className="whitespace-nowrap text-center">
-                        {t('balance.page', {
-                          current: transactions.page,
-                          total: transactions.pages,
-                        })}
-                      </div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() =>
-                          setTransactionsPage((prev) =>
-                            transactions.pages ? Math.min(transactions.pages, prev + 1) : prev + 1,
-                          )
-                        }
-                        disabled={transactions.page >= transactions.pages}
-                      >
-                        {t('common.next')}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Card>
-      </motion.div>
-
       {/* Saved Cards Navigation — self-animated: mounts after its query resolves
           (see Payment Methods above) */}
       {savedCardsData?.recurrent_enabled && (
