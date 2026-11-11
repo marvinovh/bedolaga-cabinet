@@ -10018,6 +10018,37 @@
       "cta": "Top up {{amount}}",
       "savedCards": "Saved cards"
     },
-    "history": "History"
+    "history": "History",
+    "multi": {
+      "kicker": "My subscriptions · {{count}}",
+      "working_one": "{{count}} working",
+      "working_few": "{{count}} working",
+      "working_many": "{{count}} working",
+      "working_other": "{{count}} working",
+      "ending_one": "{{count}} ending",
+      "ending_few": "{{count}} ending",
+      "ending_many": "{{count}} ending",
+      "ending_other": "{{count}} ending",
+      "off_one": "{{count}} off",
+      "off_few": "{{count}} off",
+      "off_many": "{{count}} off",
+      "off_other": "{{count}} off",
+      "endsOn": "“{{name}}” ends on {{date}}. Renew it so nothing stops working.",
+      "isOff": "“{{name}}” is off. Bring it back so the devices work again.",
+      "renewNamedFor": "Renew “{{name}}” for {{price}}",
+      "renewNamed": "Renew “{{name}}”",
+      "manageAll": "All subscriptions",
+      "title": "Subscriptions",
+      "attentionFirst": "those needing attention first",
+      "endedOn": "ended {{date}}",
+      "until": "until {{date}}",
+      "restoreFor": "Restore for {{price}}",
+      "restore": "Restore",
+      "renewFor": "Renew for {{price}}",
+      "offTag": "Off",
+      "open": "Open subscription",
+      "buyMore": "Buy another subscription",
+      "note": "Each subscription has its own link and devices — handy for sharing with family."
+    }
   }
 }

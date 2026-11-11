@@ -12,7 +12,7 @@ import { balanceApi } from '../api/balance';
 import { wheelApi } from '../api/wheel';
 import Onboarding, { useOnboarding } from '../components/Onboarding';
 import PromoOffersSection from '../components/PromoOffersSection';
-import NewsSection from '../components/news/NewsSection';
+import { MultiSubscriptions } from '../components/dashboard/MultiSubscriptions';
 import SubscriptionCardActive from '../components/dashboard/SubscriptionCardActive';
 import SubscriptionCardExpired from '../components/dashboard/SubscriptionCardExpired';
 import { hasLegacySubscription } from '../utils/legacySubscription';
@@ -31,7 +31,6 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { giftApi } from '../api/gift';
 import { promoApi } from '../api/promo';
 import PendingGiftCard from '../components/dashboard/PendingGiftCard';
-import SubscriptionListCard from '../components/subscription/SubscriptionListCard';
 import { DeviceLimitSheet } from '../components/subscription/DeviceLimitSheet';
 import { API } from '../config/constants';
 import { ChevronRightIcon, StarIcon } from '@/components/icons';
@@ -75,14 +74,19 @@ export default function Dashboard() {
     staleTime: 60_000,
   });
   const isMultiTariff = multiSubData?.multi_tariff_enabled ?? false;
+  const multiList = multiSubData?.subscriptions ?? [];
+  // Мультитариф с одной подпиской выглядит как обычная главная (макет 02),
+  // список — только когда подписок несколько (макет 02c).
+  const singleSubId = isMultiTariff && multiList.length === 1 ? multiList[0].id : undefined;
+  const multiView = isMultiTariff && multiList.length > 1;
 
   const { data: subscriptionResponse, isLoading: subLoading } = useQuery({
-    queryKey: ['subscription'],
-    queryFn: () => subscriptionApi.getSubscription(),
+    queryKey: singleSubId ? ['subscription', singleSubId] : ['subscription'],
+    queryFn: () => subscriptionApi.getSubscription(singleSubId),
     retry: false,
     staleTime: API.BALANCE_STALE_TIME_MS,
     refetchOnMount: 'always',
-    enabled: !isMultiTariff,
+    enabled: multiSubData !== undefined && (!isMultiTariff || !!singleSubId),
   });
 
   const subscription = subscriptionResponse?.subscription ?? null;
@@ -94,9 +98,9 @@ export default function Dashboard() {
   });
 
   const { data: devicesData } = useQuery({
-    queryKey: ['devices'],
-    queryFn: () => subscriptionApi.getDevices(),
-    enabled: !!subscription && !isMultiTariff,
+    queryKey: singleSubId ? ['devices', singleSubId] : ['devices'],
+    queryFn: () => subscriptionApi.getDevices(singleSubId),
+    enabled: !!subscription && !multiView,
     staleTime: API.BALANCE_STALE_TIME_MS,
   });
 
@@ -256,11 +260,6 @@ export default function Dashboard() {
     ? multiSubData !== undefined && (multiSubData.subscriptions?.length ?? 0) === 0
     : subscriptionResponse?.has_subscription === false && !subLoading;
 
-  // Есть ли НАСТОЯЩАЯ (платная, не триал) живая подписка — от этого зависит CTA:
-  // «+ Купить ещё» только при наличии платной; иначе явная «Посмотреть тарифы».
-  const hasActivePaid = (multiSubData?.subscriptions ?? []).some(
-    (s) => !s.is_trial && (s.status === 'active' || s.status === 'limited'),
-  );
   // Старая подписка (без тарифа при включённых тарифах) в списке: «купить ещё»
   // не предлагаем, её карточка ведёт на переход на тариф.
   const hasLegacy = hasLegacySubscription(multiSubData?.subscriptions);
@@ -337,58 +336,17 @@ export default function Dashboard() {
         {/* Multi-tariff: show subscription cards (max 3) — только когда подписки
           реально есть. Пустой случай (нет подписок) ведёт блок ниже (триал/покупка),
           иначе кнопка покупки дублировалась. */}
-        {isMultiTariff && multiSubData?.subscriptions && multiSubData.subscriptions.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-sm font-medium text-dark-400">
-                {t('dashboard.subscriptions', 'Подписки')}
-              </span>
-              <Link to="/subscriptions" className="text-xs text-accent-400 hover:underline">
-                {t('dashboard.manageAll', 'Управление')} →
-              </Link>
-            </div>
-            {visibleSubscriptions.map((sub, index) => (
-              <SubscriptionListCard
-                key={sub.id}
-                subscription={sub}
-                onClick={() => navigate(`/subscriptions/${sub.id}`)}
-                connect={{
-                  connectedDevices: deviceQueries[index]?.data?.total,
-                  onConnect: () => navigate(`/connection?sub=${sub.id}`),
-                  onManage: () => setDeviceLimitSubId(sub.id),
-                }}
-              />
-            ))}
-            {multiSubData.subscriptions.length > 3 && (
-              <Link
-                to="/subscriptions"
-                className="flex w-full items-center justify-center rounded-2xl border border-dashed border-white/15 p-3 text-xs opacity-50 transition-opacity hover:opacity-80"
-              >
-                {t('dashboard.showAll', 'Показать все')} ({multiSubData.subscriptions.length})
-              </Link>
-            )}
-            {hasLegacy ? null : hasActivePaid ? (
-              <Link
-                to="/subscription/purchase"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-500/15 p-3.5 text-sm font-medium text-accent-400 transition-all hover:bg-accent-500/25"
-              >
-                <span className="text-base">+</span>{' '}
-                {t('subscriptions.buyAnother', 'Купить ещё тариф')}
-              </Link>
-            ) : (
-              <Link
-                to="/subscription/purchase"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-500 p-3.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-600"
-              >
-                <span className="text-base">+</span>{' '}
-                {t('subscriptions.browsePlans', 'Посмотреть тарифы и купить подписку')}
-              </Link>
-            )}
-          </div>
+        {multiView && (
+          <MultiSubscriptions
+            subscriptions={multiList}
+            tariffs={
+              purchaseOptions && 'tariffs' in purchaseOptions ? purchaseOptions.tariffs : undefined
+            }
+            canBuyMore={!hasLegacy}
+          />
         )}
 
-        {/* Subscription Status Card — hidden in multi-tariff (managed via /subscriptions) */}
-        {!isMultiTariff &&
+        {!multiView &&
           (subLoading ? (
             <SkeletonGroup className="bento-card">
               <div className="mb-4 flex items-center justify-between">
@@ -453,7 +411,7 @@ export default function Dashboard() {
         <PromoOffersSection />
 
         {/* «−9% Продли сразу на 90 дней» */}
-        {subscription?.is_active && !subscription.is_trial && !isMultiTariff && (
+        {subscription?.is_active && !subscription.is_trial && !multiView && (
           <RenewOfferCard
             subscriptionId={subscription.id}
             tariffs={
@@ -479,12 +437,16 @@ export default function Dashboard() {
           ) : (
             <QuickTile to="/support" icon={<RvChatIcon />} label={t('nav.support')} />
           )}
-          <QuickTile to="/subscriptions" icon={<RvShieldIcon />} label={t('rv.mySubscription')} />
-          <QuickTile
-            to={subscription ? `/connection?sub=${subscription.id}` : '/connection'}
-            icon={<RvMonitorIcon />}
-            label={t('rv.tvOrPc')}
-          />
+          {!multiView && (
+            <QuickTile to="/subscriptions" icon={<RvShieldIcon />} label={t('rv.mySubscription')} />
+          )}
+          {!multiView && (
+            <QuickTile
+              to={subscription ? `/connection?sub=${subscription.id}` : '/connection'}
+              icon={<RvMonitorIcon />}
+              label={t('rv.tvOrPc')}
+            />
+          )}
         </div>
 
         {wheelConfig?.is_enabled && (
@@ -506,15 +468,14 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-3 lg:hidden">
-          {referralEnabled && <PartnerCard percent={referralInfo?.commission_percent} />}
+          {referralEnabled && !multiView && (
+            <PartnerCard percent={referralInfo?.commission_percent} />
+          )}
           <HelpCard />
         </div>
 
         {/* Напоминания (админка → Напоминания) */}
         <ReminderCards />
-
-        {/* News Section */}
-        <NewsSection />
       </div>
 
       {/* Правая колонка на компьютере */}

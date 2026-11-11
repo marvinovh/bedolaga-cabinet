@@ -10271,6 +10271,37 @@
       "cta": "Пополнить на {{amount}}",
       "savedCards": "Сохранённые карты"
     },
-    "history": "История"
+    "history": "История",
+    "multi": {
+      "kicker": "Мои подписки · {{count}}",
+      "working_one": "{{count}} работает",
+      "working_few": "{{count}} работают",
+      "working_many": "{{count}} работают",
+      "working_other": "{{count}} работают",
+      "ending_one": "{{count}} кончается",
+      "ending_few": "{{count}} кончаются",
+      "ending_many": "{{count}} кончаются",
+      "ending_other": "{{count}} кончаются",
+      "off_one": "{{count}} выключена",
+      "off_few": "{{count}} выключены",
+      "off_many": "{{count}} выключено",
+      "off_other": "{{count}} выключено",
+      "endsOn": "Подписка «{{name}}» закончится {{date}}. Продли — и ничего не отключится.",
+      "isOff": "Подписка «{{name}}» выключена. Верни её, чтобы устройства снова работали.",
+      "renewNamedFor": "Продлить «{{name}}» за {{price}}",
+      "renewNamed": "Продлить «{{name}}»",
+      "manageAll": "Все подписки",
+      "title": "Подписки",
+      "attentionFirst": "сначала те, что требуют внимания",
+      "endedOn": "закончилась {{date}}",
+      "until": "до {{date}}",
+      "restoreFor": "Вернуть за {{price}}",
+      "restore": "Вернуть",
+      "renewFor": "Продлить за {{price}}",
+      "offTag": "Выключена",
+      "open": "Открыть подписку",
+      "buyMore": "Купить ещё подписку",
+      "note": "У каждой подписки своя ссылка и свои устройства — удобно делить с семьёй."
+    }
   }
 }
