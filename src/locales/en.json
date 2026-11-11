@@ -10177,6 +10177,11 @@
       "open": "Open subscription",
       "buyMore": "Buy another subscription",
       "note": "Each subscription has its own link and devices — handy for sharing with family."
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "No passwords — via Telegram or an account.",
+      "fastest": "The fastest way — one tap"
     }
   }
 }

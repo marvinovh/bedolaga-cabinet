@@ -404,7 +404,7 @@ export default function Login() {
 
   return (
     <div
-      className="flex min-h-[100dvh] items-center justify-center px-4 sm:px-6 lg:px-8"
+      className="flex min-h-[100dvh] items-start justify-center px-4 sm:items-center sm:px-6 lg:px-8"
       style={{
         paddingTop:
           safeTop > 0 ? `${safeTop + 16}px` : 'calc(1rem + env(safe-area-inset-top, 0px))',
@@ -427,27 +427,33 @@ export default function Login() {
         <LanguageSwitcher />
       </div>
 
-      <div className="relative w-full max-w-md space-y-5">
-        {/* Logo & branding */}
-        <div className="text-center">
-          <div className="relative mx-auto mb-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-dark-700/50 bg-dark-800/80 shadow-md">
-            {/* Letter fallback */}
-            <span
-              className={`absolute text-lg font-bold text-accent-400 transition-opacity duration-200 ${branding?.has_custom_logo && logoLoaded ? 'opacity-0' : 'opacity-100'}`}
-            >
-              {appLogo}
-            </span>
-            {/* Logo image */}
-            {branding?.has_custom_logo && logoUrl && (
-              <img
-                src={logoUrl}
-                alt={appName || 'Logo'}
-                className={`absolute h-full w-full object-contain transition-opacity duration-200 ${logoLoaded ? 'opacity-100' : 'opacity-0'}`}
-                onLoad={() => setLogoLoaded(true)}
-              />
+      <div className="relative w-full max-w-md space-y-8">
+        {/* Шапка входа (макет «01 · Вход»): лого слева, «Войти» крупно */}
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-[10px] bg-accent-500">
+              <span
+                className={`rv-d absolute text-[22px] text-[#111] transition-opacity duration-200 ${branding?.has_custom_logo && logoLoaded ? 'opacity-0' : 'opacity-100'}`}
+              >
+                {appLogo}
+              </span>
+              {branding?.has_custom_logo && logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt={appName || 'Logo'}
+                  className={`absolute h-full w-full object-contain transition-opacity duration-200 ${logoLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  onLoad={() => setLogoLoaded(true)}
+                />
+              )}
+            </div>
+            {appName && (
+              <span className="text-[24px] font-bold lowercase leading-none text-dark-50">
+                {appName.replace(/\s+/g, '')}
+              </span>
             )}
           </div>
-          {appName && <h1 className="text-2xl font-bold text-dark-50">{appName}</h1>}
+          <h1 className="rv-d mt-16 text-[64px] text-dark-50">{t('rv.login.title')}</h1>
+          <p className="mt-3 text-base text-dark-300">{t('rv.login.subtitle')}</p>
 
           {/* Referral Banner */}
           {referralCode && isEmailAuthEnabled && (
@@ -480,8 +486,8 @@ export default function Login() {
             }}
           />
         ) : (
-          /* Main auth card */
-          <div className="card">
+          /* Способы входа — без общей карточки, как в макете */
+          <div>
             {error && (
               <div
                 role="alert"
@@ -522,29 +528,22 @@ export default function Login() {
             {/* OAuth providers - compact icon row */}
             {oauthProviders.length > 0 && (
               <>
-                <div className="my-4 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-dark-700" />
-                  <span className="text-xs text-dark-500">{t('auth.or', 'or')}</span>
-                  <div className="h-px flex-1 bg-dark-700" />
-                </div>
-                <div className="flex items-stretch gap-2">
+                <div className="mt-6 flex flex-col gap-2.5">
                   {oauthProviders.map((provider) => (
                     <button
                       key={provider.name}
                       type="button"
                       onClick={() => handleOAuthLogin(provider.name)}
                       disabled={oauthLoading !== null}
-                      className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-xl border border-dark-700 bg-dark-800/80 py-2.5 transition-all hover:border-dark-600 hover:bg-dark-700 disabled:opacity-50"
+                      className="flex min-h-[58px] w-full items-center justify-center gap-3 rounded-[14px] border-2 border-dark-600 bg-dark-900 text-[17px] font-bold text-dark-100 transition-colors hover:border-dark-400 disabled:opacity-50"
                       title={provider.display_name}
                     >
                       {oauthLoading === provider.name ? (
                         <span className="h-5 w-5 animate-spin rounded-full border-2 border-dark-400 border-t-white" />
                       ) : (
-                        <OAuthProviderIcon provider={provider.name} className="h-5 w-5" />
+                        <OAuthProviderIcon provider={provider.name} className="h-6 w-6" />
                       )}
-                      <span className="text-[10px] leading-none text-dark-500">
-                        {provider.display_name}
-                      </span>
+                      <span>{provider.display_name}</span>
                     </button>
                   ))}
                 </div>

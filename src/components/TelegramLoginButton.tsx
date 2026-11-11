@@ -516,7 +516,7 @@ export default function TelegramLoginButton({ referralCode }: TelegramLoginButto
               href={deepLinkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#54a9eb] px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#4a96d2]"
+              className="btn btn-primary rv-btn-lg w-full"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
@@ -538,7 +538,7 @@ export default function TelegramLoginButton({ referralCode }: TelegramLoginButto
                     })
                     .catch(() => {});
                 }}
-                className="group flex w-full items-center justify-between rounded-lg border border-dark-700 bg-dark-800/50 px-3 py-2 transition-colors hover:border-dark-600"
+                className="group flex w-full items-center justify-between rounded-xl border-2 border-dark-700 bg-dark-800 px-3 py-2.5 transition-colors hover:border-dark-600"
               >
                 <code className="truncate text-xs text-dark-300">{startCommand}</code>
                 <span className="ml-2 flex-shrink-0 text-[10px] text-dark-500 transition-colors group-hover:text-dark-300">
@@ -597,76 +597,63 @@ export default function TelegramLoginButton({ referralCode }: TelegramLoginButto
     );
   }
 
-  // Normal widget UI (when script loads successfully)
+  void widgetError;
+  // Normal UI. RichVPN: главная кнопка — вход через бота (макет «01 · Вход»:
+  // одна лаймовая «Войти через Telegram»). Виджет Telegram — iframe, его не
+  // перекрасить; он остаётся смонтированным, но скрыт.
+  const tgIcon = (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+    </svg>
+  );
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col space-y-3">
       {isOIDC ? (
-        <div className="flex flex-col items-center space-y-2">
-          <button
-            type="button"
-            onClick={() => {
-              setOidcError('');
-              setOidcLoading(true);
-              if (window.Telegram?.Login) {
-                window.Telegram.Login.open();
-              } else {
-                setOidcLoading(false);
-              }
-            }}
-            disabled={oidcLoading || !scriptLoaded}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#54a9eb] px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#4a96d2] disabled:opacity-50"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-            </svg>
-            {oidcLoading ? t('common.loading') : t('auth.loginWithTelegram')}
-          </button>
-          {oidcError && <p className="text-xs text-error-500">{oidcError}</p>}
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setOidcError('');
+            setOidcLoading(true);
+            if (window.Telegram?.Login) {
+              window.Telegram.Login.open();
+            } else {
+              setOidcLoading(false);
+            }
+          }}
+          disabled={oidcLoading || !scriptLoaded}
+          className="btn btn-primary rv-btn-lg w-full"
+        >
+          {tgIcon}
+          {oidcLoading ? t('common.loading') : t('auth.loginWithTelegram')}
+        </button>
       ) : (
-        <div className="flex flex-col items-center space-y-2">
-          <div ref={containerRef} className="flex justify-center" />
-          {widgetError !== '' && (
-            <p className="text-xs text-error-500">{widgetError || t('common.error')}</p>
-          )}
+        <button
+          type="button"
+          onClick={() => setManualDeepLink(true)}
+          className="btn btn-primary rv-btn-lg w-full"
+        >
+          {tgIcon}
+          {t('auth.loginWithTelegram')}
+        </button>
+      )}
+      <p className="text-center text-xs text-dark-400">{t('rv.login.fastest')}</p>
+      {oidcError && <p className="text-center text-xs text-error-500">{oidcError}</p>}
+      {!isOIDC && (
+        <div className="sr-only" aria-hidden="true">
+          <div ref={containerRef} />
         </div>
       )}
 
-      {/* Referral deep link — only relevant for not-yet-registered users who
-          arrived via a referral link; the bot itself handles registering
-          them with the code attached. Hidden otherwise to avoid a third,
-          visually-identical "Telegram" entry point next to the two auth
-          methods below. */}
       {referralCode && (
         <a
           href={`https://t.me/${botUsername}?start=${encodeURIComponent(referralCode)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-telegram-blue inline-flex items-center text-xs hover:underline"
+          className="link text-center text-xs"
         >
           {t('auth.orOpenInApp')}&nbsp;@{botUsername}
         </a>
       )}
-
-      <div className="flex w-full max-w-xs items-center gap-3">
-        <div className="h-px flex-1 bg-dark-700" />
-        <span className="text-[11px] text-dark-500">{t('common.or')}</span>
-        <div className="h-px flex-1 bg-dark-700" />
-      </div>
-
-      {/* Manual opt-in: same deep-link flow used as the anti-block fallback,
-          offered here as an explicit equal alternative to the widget for
-          users who'd rather confirm in the bot than type a phone number. */}
-      <button
-        type="button"
-        onClick={() => setManualDeepLink(true)}
-        className="inline-flex items-center gap-2 rounded-lg border border-dark-700 bg-dark-800/50 px-6 py-3 text-sm font-medium text-dark-200 transition-colors hover:border-dark-600 hover:bg-dark-800"
-      >
-        <svg className="h-5 w-5 text-telegram-blue" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-        </svg>
-        {t('auth.loginWithBot')}
-      </button>
     </div>
   );
 }

@@ -407,8 +407,14 @@ export function TariffPickerGrid({
               }
             >
               {selectedAction === 'switch'
-                ? t('subscription.switchTariff.switch')
-                : t('rv.pick.toPayment')}
+                ? t(
+                    switchSelection
+                      ? 'subscription.switchTariff.choose'
+                      : 'subscription.switchTariff.switch',
+                  )
+                : selectedAction === 'moveToTariff'
+                  ? t('subscription.cta.moveToTariff')
+                  : t('rv.pick.toPayment')}
               <ArrowRightIcon className="h-5 w-5" />
             </button>
           </div>
