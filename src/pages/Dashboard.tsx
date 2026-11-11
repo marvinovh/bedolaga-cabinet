@@ -309,9 +309,9 @@ export default function Dashboard() {
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-5">
-      <div className="space-y-3 lg:space-y-5">
+      <div className="flex min-w-0 flex-col gap-3 lg:gap-5">
         {/* Приветствие */}
-        <div data-onboarding="welcome" className="flex flex-wrap items-center gap-2">
+        <div data-onboarding="welcome" className="flex flex-wrap items-center gap-2 lg:hidden">
           <h1 className="sr-only">{t('dashboard.title')}</h1>
           <p className="text-base font-medium text-dark-300">
             {userName ? t('rv.hi', { name: userName }) : t('rv.hiNoName')}

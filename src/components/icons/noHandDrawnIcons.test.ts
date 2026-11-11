@@ -17,6 +17,7 @@ const SRC = join(import.meta.dirname, '..', '..');
 const ALLOWED = new Set([
   'components/icons/index.tsx', // RemnawaveIcon — логотип панели
   'components/icons/LandingIcons.tsx',
+  'components/rv/icons.tsx', // иконки макета RichVPN
   'components/OAuthProviderIcon.tsx',
   'components/PaymentMethodIcon.tsx',
   'components/ProviderIcon.tsx',

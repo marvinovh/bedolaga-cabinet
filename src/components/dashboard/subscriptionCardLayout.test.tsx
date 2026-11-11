@@ -99,43 +99,31 @@ async function renderCard(sub: Subscription, connectedDevices = 0) {
   return container;
 }
 
-describe('ряд «Тариф» + «Осталось»', () => {
-  it('обе плитки умеют сжиматься — длинное имя тарифа не выталкивает соседа', async () => {
-    const container = await renderCard(subscription());
-
-    const row = container.querySelector('.mb-5.flex.gap-2\\.5');
-    expect(row).toBeTruthy();
-    const plates = [...(row?.children ?? [])];
-    expect(plates).toHaveLength(2);
-    for (const plate of plates) {
-      expect(plate.className).toContain('min-w-0');
-      expect(plate.className).toContain('flex-1');
-    }
-  });
-
+describe('герой подписки', () => {
   it('имя тарифа переносится, а не обрезается в одну строку', async () => {
     await renderCard(subscription());
 
     const name = screen.getByText('🟡 Компания - 10 устройств');
     expect(name.className).toContain('line-clamp-2');
+    expect(name.className).toContain('min-w-0');
     expect(name.className).not.toContain('truncate');
   });
 });
 
 describe('индикатор устройств', () => {
-  const dots = (container: Element) =>
-    container.querySelectorAll('.h-\\[7px\\].w-\\[7px\\].rounded-full');
+  const slots = (container: Element) => container.querySelectorAll('.rv-slots > i');
 
-  it('до пяти устройств показывает точки', async () => {
+  it('слоты по числу устройств, занятые отмечены', async () => {
     const container = await renderCard(subscription({ device_limit: 5 }), 2);
 
-    expect(dots(container)).toHaveLength(5);
+    expect(slots(container)).toHaveLength(5);
+    expect(container.querySelectorAll('.rv-slots > i.on')).toHaveLength(2);
   });
 
-  it('свыше пяти — полоску: десять точек не оставляли места заголовку', async () => {
-    const container = await renderCard(subscription({ device_limit: 10 }), 10);
+  it('при большом лимите — полоса вместо слотов', async () => {
+    const container = await renderCard(subscription({ device_limit: 20 }), 10);
 
-    expect(dots(container)).toHaveLength(0);
-    expect(container.querySelector('.w-16 .rounded-full')).toBeTruthy();
+    expect(slots(container)).toHaveLength(0);
+    expect(container.querySelector('.rv-meter > i')).toBeTruthy();
   });
 });

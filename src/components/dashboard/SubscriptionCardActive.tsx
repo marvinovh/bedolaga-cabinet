@@ -71,8 +71,8 @@ export default function SubscriptionCardActive({
         data-onboarding="connect-devices"
       >
         <div className="flex items-center justify-between gap-3">
-          <p className="rv-kicker min-w-0 truncate">
-            <span className="truncate">
+          <p className="rv-kicker min-w-0">
+            <span className="line-clamp-2 min-w-0 break-words">
               {subscription.tariff_name || t('subscription.currentPlan')}
             </span>
           </p>
@@ -137,8 +137,8 @@ export default function SubscriptionCardActive({
       </section>
 
       {/* ─── Трафик и устройства ─── */}
-      <section className="bento-card !p-5 lg:grid lg:grid-cols-2 lg:gap-8">
-        <div>
+      <section className="bento-card !p-5 lg:grid lg:grid-cols-2 lg:gap-5 lg:!border-0 lg:!bg-transparent lg:!p-0">
+        <div className="lg:bento-card lg:!p-6">
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-base font-bold text-dark-100">
               {isUnlimited ? t('rv.traffic') : t('rv.trafficLeft')}
@@ -186,7 +186,7 @@ export default function SubscriptionCardActive({
           <ManagedTrafficSummary subscription={subscription} refreshed={trafficData} />
         </div>
 
-        <div className="mt-6 border-t-2 border-dark-700 pt-5 lg:mt-0 lg:border-0 lg:pt-0">
+        <div className="mt-6 border-t-2 border-dark-700 pt-5 lg:bento-card lg:mt-0 lg:!p-6">
           <Link
             to={`/subscriptions/${subscription.id}`}
             className="flex items-center justify-between gap-3"

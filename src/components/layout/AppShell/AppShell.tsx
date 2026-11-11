@@ -33,6 +33,8 @@ import {
   InfoIcon,
   SunIcon,
   MoonIcon,
+  ChevronDownIcon,
+  UserIcon,
 } from '@/components/icons';
 
 import { MobileBottomNav } from './MobileBottomNav';
@@ -41,6 +43,9 @@ import { AppHeader } from './AppHeader';
 import { LogoutButton } from './LogoutButton';
 import { useBackgroundConsumer } from '@/components/backgrounds/BackgroundHost';
 import { Avatar, BalanceChip, Brand } from '@/components/rv';
+
+// Второстепенные разделы — в «Ещё», в шапке макета пять пунктов.
+const DESKTOP_MORE = ['/gift', '/info'];
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -159,42 +164,92 @@ export function AppShell({ children }: AppShellProps) {
           <Brand size={36} onAccent onClick={handleNavClick} />
 
           <nav className="mx-auto flex min-w-0 items-center gap-1 overflow-x-auto scrollbar-hide">
-            {desktopNav.map((item) => renderNavLink(item.path, item.label, item.icon))}
+            {desktopNav
+              .filter((item) => !DESKTOP_MORE.includes(item.path))
+              .map((item) => renderNavLink(item.path, item.label, item.icon))}
+            {desktopNav.some((item) => DESKTOP_MORE.includes(item.path)) && (
+              <details className="group relative">
+                <summary
+                  className={cn(
+                    'flex cursor-pointer list-none items-center gap-1 rounded-[10px] px-3.5 py-2 text-[15px] font-bold leading-none text-[#111] hover:bg-[#111]/10 [&::-webkit-details-marker]:hidden',
+                    DESKTOP_MORE.some((p) => isActive(p)) &&
+                      'bg-[#111] text-[rgb(var(--color-accent-500))]',
+                  )}
+                >
+                  {t('rv.more')}
+                  <ChevronDownIcon className="h-4 w-4 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-2xl border-2 border-dark-700 bg-dark-900 p-1.5 shadow-[6px_6px_0_rgba(0,0,0,.6)]">
+                  {desktopNav
+                    .filter((item) => DESKTOP_MORE.includes(item.path))
+                    .map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={(e) => {
+                          handleNavClick();
+                          e.currentTarget.closest('details')?.removeAttribute('open');
+                        }}
+                        className={isActive(item.path) ? 'nav-item-active' : 'nav-item'}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                      </Link>
+                    ))}
+                </div>
+              </details>
+            )}
             {isAdmin && renderNavLink('/admin', t('admin.nav.title'), ShieldIcon, true)}
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              onClick={() => {
-                haptic.impact('light');
-                toggleTheme();
-              }}
-              className={cn(
-                'grid h-10 w-10 place-items-center rounded-full text-[#111] transition-colors hover:bg-[#111]/10',
-                !canToggleTheme && 'hidden',
-              )}
-              aria-label={
-                isDark ? t('theme.light') || 'Light mode' : t('theme.dark') || 'Dark mode'
-              }
-              title={isDark ? t('theme.light') || 'Light mode' : t('theme.dark') || 'Dark mode'}
-            >
-              {isDark ? <MoonIcon className="h-5 w-5" /> : <SunIcon className="h-5 w-5" />}
-            </button>
-            <div className="rv-on-accent-tools flex items-center gap-1">
-              <TicketNotificationBell isAdmin={location.pathname.startsWith('/admin')} />
-              <LanguageSwitcher />
-            </div>
             <BalanceChip onAccent />
-            <Link to="/profile" aria-label={t('nav.profile')} onClick={handleNavClick}>
-              <Avatar size={44} onAccent />
-            </Link>
-            <LogoutButton
-              variant="icon"
-              onLogout={() => {
-                haptic.impact('light');
-                logout();
-              }}
-            />
+            {/* Аватар — меню: профиль, тема, язык, уведомления, выход */}
+            <details className="group relative">
+              <summary
+                className="block cursor-pointer list-none rounded-full [&::-webkit-details-marker]:hidden"
+                aria-label={t('nav.profile')}
+              >
+                <Avatar size={44} onAccent />
+              </summary>
+              <div className="absolute right-0 top-full z-50 mt-2 w-[260px] rounded-2xl border-2 border-dark-700 bg-dark-900 p-1.5 text-dark-100 shadow-[6px_6px_0_rgba(0,0,0,.6)]">
+                <Link
+                  to="/profile"
+                  onClick={(e) => {
+                    handleNavClick();
+                    e.currentTarget.closest('details')?.removeAttribute('open');
+                  }}
+                  className={isActive('/profile') ? 'nav-item-active' : 'nav-item'}
+                >
+                  <UserIcon className="h-5 w-5" />
+                  {t('nav.profile')}
+                </Link>
+                {canToggleTheme && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      haptic.impact('light');
+                      toggleTheme();
+                    }}
+                    className="nav-item w-full"
+                  >
+                    {isDark ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+                    {isDark ? t('theme.light') || 'Light mode' : t('theme.dark') || 'Dark mode'}
+                  </button>
+                )}
+                <div className="flex items-center gap-2 px-2 py-1.5">
+                  <TicketNotificationBell isAdmin={location.pathname.startsWith('/admin')} />
+                  <LanguageSwitcher />
+                </div>
+                <LogoutButton
+                  variant="menu"
+                  onLogout={() => {
+                    haptic.impact('light');
+                    logout();
+                  }}
+                />
+              </div>
+            </details>
           </div>
         </div>
       </header>
@@ -226,7 +281,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* Боковые отступы не меньше вырезов (альбомная ориентация iPhone); снизу —
           просвет под панелью: фиксированные 112px в standalone iOS не хватало,
           и низ контента уходил под неё. */}
-      <main className="mx-auto max-w-[1136px] py-4 lg:py-8 pb-[calc(var(--mobile-nav-clearance)+0.5rem)] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] lg:px-6 lg:pb-8">
+      <main className="mx-auto max-w-[1184px] py-4 lg:py-8 pb-[calc(var(--mobile-nav-clearance)+0.5rem)] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] lg:px-6 lg:pb-8">
         {children}
       </main>
 

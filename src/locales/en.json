@@ -10081,6 +10081,7 @@
     "disabled": "Subscription disabled",
     "trial": "Trial",
     "refresh": "Refresh",
-    "recentOps": "Recent activity"
+    "recentOps": "Recent activity",
+    "more": "More"
   }
 }

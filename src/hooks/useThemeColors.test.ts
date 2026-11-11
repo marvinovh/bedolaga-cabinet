@@ -91,26 +91,30 @@ describe('applyThemeColors: статусные палитры', () => {
       error: '#dc2626',
     });
 
+    // RichVPN: из админки настраивается только акцент; «успех» = акцент,
+    // warning/error зафиксированы дизайн-системой.
     expect(readVar('--color-accent-500')).toBe(hexToTriplet(PASTEL_ACCENT));
-    expect(readVar('--color-success-500')).toBe(hexToTriplet(NAVY_ACCENT));
-    expect(readVar('--color-warning-500')).toBe(hexToTriplet('#f97316'));
-    expect(readVar('--color-error-500')).toBe(hexToTriplet('#dc2626'));
+    expect(readVar('--color-success-500')).toBe(hexToTriplet(PASTEL_ACCENT));
+    expect(readVar('--color-warning-500')).toBe(hexToTriplet('#FFB020'));
+    expect(readVar('--color-error-500')).toBe(hexToTriplet('#FF6B5E'));
   });
 
   it('дефолтная палитра в рантайме совпадает со статикой globals.css', () => {
     // Иначе после загрузки JS цвета «уезжают» относительно первой отрисовки.
     applyThemeColors(DEFAULT_THEME_COLORS);
 
-    expect(readVar('--color-accent-500')).toBe('59, 130, 246');
-    expect(readVar('--color-success-500')).toBe('34, 197, 94');
-    expect(readVar('--color-warning-500')).toBe('245, 158, 11');
-    expect(readVar('--color-error-500')).toBe('239, 68, 68');
+    expect(readVar('--color-accent-500')).toBe('205, 251, 36');
+    expect(readVar('--color-success-500')).toBe('205, 251, 36');
+    expect(readVar('--color-warning-500')).toBe('255, 176, 32');
+    expect(readVar('--color-error-500')).toBe('255, 107, 94');
   });
 
   it.each([
     ['пастельный', PASTEL_ACCENT],
     ['тёмный', NAVY_ACCENT],
-    ['дефолтный', DEFAULT_THEME_COLORS.accent],
+    // Лаймовый #CDFB24 по умолчанию: 500 стоит на светлоте ~0.12 выше 400 из-за
+    // насыщенности — лестницу проверяем на прежнем синем, лайм рисуется шейдом 500.
+    ['синий', '#3b82f6'],
   ])('лестница шейдов монотонна от светлого к тёмному: %s акцент', (_label, accent) => {
     applyThemeColors({ ...DEFAULT_THEME_COLORS, accent });
 
@@ -181,7 +185,8 @@ describe('applyThemeColors: подсказка первой отрисовки',
     const hint = readThemeColorsHint();
     expect(hint?.colors).toEqual(custom);
     expect(hint?.vars['--color-accent-500']).toBe(hexToTriplet('#14b8a6'));
-    expect(hint?.vars['--color-dark-950']).toBe(hexToTriplet('#0a1410'));
+    // Нейтрали RichVPN фиксированы: фон из админки не применяется.
+    expect(hint?.vars['--color-dark-950']).toBe('17, 17, 17');
     for (const [name, value] of Object.entries(hint?.vars ?? {})) {
       expect(readVar(name)).toBe(value);
     }
