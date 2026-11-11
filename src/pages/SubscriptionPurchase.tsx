@@ -77,6 +77,7 @@ export default function SubscriptionPurchase() {
 
   // Tariffs mode state
   const [selectedTariff, setSelectedTariff] = useState<Tariff | null>(null);
+  const [selectedPeriodDays, setSelectedPeriodDays] = useState<number | undefined>();
   const [showTariffPurchase, setShowTariffPurchase] = useState(false);
   // (selectedTariffPeriod / customDays / customTrafficGb / useCustomDays /
   //  useCustomTraffic moved into <TariffPurchaseForm>; form remounts with
@@ -251,15 +252,7 @@ export default function SubscriptionPurchase() {
 
       {/* Tariffs Section */}
       {isTariffsMode && tariffs.length > 0 && (
-        <div
-          className="relative overflow-hidden rounded-3xl"
-          style={{
-            background: g.cardBg,
-            border: `1px solid ${g.cardBorder}`,
-            boxShadow: g.shadow,
-            padding: '24px 28px',
-          }}
-        >
+        <div>
           {/* Trial upgrade prompt — hidden when expired banner is active */}
           {subscription?.is_trial &&
             !(
@@ -374,8 +367,9 @@ export default function SubscriptionPurchase() {
               isTariffsMode={isTariffsMode}
               isMultiTariff={isMultiTariff}
               subscriptionId={subscriptionId}
-              onSelectTariff={(tariff) => {
+              onSelectTariff={(tariff, periodDays) => {
                 setSelectedTariff(tariff);
+                setSelectedPeriodDays(periodDays);
                 setShowTariffPurchase(true);
               }}
               onSwitchTariff={(tariffId) => setSwitchTariffId(tariffId)}
@@ -385,6 +379,7 @@ export default function SubscriptionPurchase() {
               /* Tariff Purchase Form (extracted into its own component) */
               <TariffPurchaseForm
                 key={selectedTariff.id}
+                initialPeriodDays={selectedPeriodDays}
                 cispaySubscriptionId={resolveCisPayTarget(
                   subscriptionId,
                   subscription,

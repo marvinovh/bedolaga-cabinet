@@ -10234,7 +10234,24 @@
     "pick": {
       "a": "Выбери",
       "b": "свой",
-      "c": "тариф"
+      "c": "тариф",
+      "days_one": "{{count}} день",
+      "days_few": "{{count}} дня",
+      "days_many": "{{count}} дней",
+      "days_other": "{{count}} дней",
+      "countries_one": "{{count}} страна",
+      "countries_few": "{{count}} страны",
+      "countries_many": "{{count}} стран",
+      "countries_other": "{{count}} стран",
+      "hint": "Не знаешь, что взять? <b>{{name}}</b> — подходит большинству. Сравни трафик и устройства ниже.",
+      "perMonth": "в месяц",
+      "saving": "выгода {{percent}}%",
+      "noPeriod": "На этот срок не продаётся",
+      "more": "Ещё тарифов: {{count}} — {{names}}",
+      "dailyPrefix": "Не готов на месяц?",
+      "daily": "Тариф «{{name}}» — {{price}} в сутки",
+      "balanceNote": "На балансе {{amount}} — учтём при оплате",
+      "toPayment": "Перейти к оплате"
     }
   }
 }

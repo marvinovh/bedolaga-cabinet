@@ -2947,3 +2947,17 @@ main h1.text-3xl {
   background: #111;
   color: var(--rv-acc);
 }
+.rv-seg em {
+  position: absolute;
+  top: -11px;
+  right: -4px;
+  font-style: normal;
+  font-family: var(--rv-text);
+  font-weight: 700;
+  font-size: 11px;
+  background: #ff5a1f;
+  color: #fff;
+  padding: 3px 6px;
+  border-radius: 6px;
+  line-height: 1.1;
+}

@@ -10118,7 +10118,24 @@
     "pick": {
       "a": "Pick",
       "b": "your",
-      "c": "plan"
+      "c": "plan",
+      "days_one": "{{count}} day",
+      "days_few": "{{count}} days",
+      "days_many": "{{count}} days",
+      "days_other": "{{count}} days",
+      "countries_one": "{{count}} country",
+      "countries_few": "{{count}} countries",
+      "countries_many": "{{count}} countries",
+      "countries_other": "{{count}} countries",
+      "hint": "Not sure what to pick? <b>{{name}}</b> suits most people. Compare traffic and devices below.",
+      "perMonth": "per month",
+      "saving": "save {{percent}}%",
+      "noPeriod": "Not sold for this period",
+      "more": "{{count}} more plans: {{names}}",
+      "dailyPrefix": "Not ready for a month?",
+      "daily": "“{{name}}” plan — {{price}} per day",
+      "balanceNote": "{{amount}} on balance — counted at checkout",
+      "toPayment": "Go to payment"
     }
   }
 }

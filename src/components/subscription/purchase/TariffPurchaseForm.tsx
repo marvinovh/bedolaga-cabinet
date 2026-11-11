@@ -64,6 +64,8 @@ export interface TariffPurchaseFormProps {
   cispayPurchaseEnabled?: boolean;
   cispaySubscriptionId?: number;
   onBack: () => void;
+  /** Период, выбранный на витрине (макет «Выбор тарифа»). */
+  initialPeriodDays?: number;
 }
 
 export function TariffPurchaseForm({
@@ -76,6 +78,7 @@ export function TariffPurchaseForm({
   cispayPurchaseEnabled = false,
   cispaySubscriptionId = subscriptionId,
   onBack,
+  initialPeriodDays,
 }: TariffPurchaseFormProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -106,7 +109,10 @@ export function TariffPurchaseForm({
   // Отмеченный оператором период выбран сразу: рамка «Выгодно» и итог внизу
   // должны говорить об одном и том же периоде.
   const [selectedTariffPeriod, setSelectedTariffPeriod] = useState<TariffPeriod | null>(
-    pickBestValue(tariff.periods) || tariff.periods[0] || null,
+    tariff.periods.find((p) => p.days === initialPeriodDays) ||
+      pickBestValue(tariff.periods) ||
+      tariff.periods[0] ||
+      null,
   );
   const [customDays, setCustomDays] = useState<number>(30);
   const [customTrafficGb, setCustomTrafficGb] = useState<number>(50);

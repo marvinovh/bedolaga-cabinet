@@ -168,13 +168,13 @@ export default function Balance() {
 
   return (
     <motion.div
-      className="space-y-6"
+      className="space-y-3 lg:space-y-5"
       variants={staggerContainer}
       initial="initial"
       animate="animate"
     >
       <motion.div variants={staggerItem}>
-        <h1 className="text-2xl font-bold text-dark-50 sm:text-3xl">{t('balance.title')}</h1>
+        <h1 className="sr-only">{t('balance.title')}</h1>
       </motion.div>
 
       {/* Balance Card — flat surface; the giant numeric carries the
@@ -182,21 +182,19 @@ export default function Balance() {
           decoration (DESIGN.md Tunable-but-Scarce Rule) and read as the
           SaaS hero-metric template. */}
       <motion.div variants={staggerItem}>
-        <Card>
-          <div className="mb-2 text-sm text-dark-400">{t('balance.currentBalance')}</div>
-          <div className="text-4xl font-bold text-dark-50 sm:text-5xl">
-            {formatAmount(balanceData?.balance_rubles || 0)}
-            <span className="ml-2 text-2xl text-dark-400">{currencySymbol}</span>
+        <section className="bento-card !p-5 sm:!p-7">
+          <p className="rv-kicker">{t('balance.currentBalance')}</p>
+          <div className="rv-num mt-3 text-[96px] text-dark-100">
+            {formatAmount(balanceData?.balance_rubles || 0, 0)}
+            <span className="rv-rub">{currencySymbol}</span>
           </div>
-        </Card>
+        </section>
       </motion.div>
 
       {/* Promo Code Section */}
       <motion.div variants={staggerItem}>
         <Card>
-          <h2 className="mb-4 text-lg font-semibold text-dark-100">
-            {t('balance.promocode.title')}
-          </h2>
+          <h2 className="mb-3 text-lg font-bold text-dark-100">{t('balance.promocode.title')}</h2>
           {/* На телефоне поле во всю ширину, кнопка под ним: рядом с «Активировать»
               подсказка в поле обрезалась посреди слова. */}
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -288,10 +286,8 @@ export default function Balance() {
       {paymentMethods && paymentMethods.length > 0 && (
         <motion.div variants={staggerItem} initial="initial" animate="animate">
           <Card>
-            <h2 className="mb-4 text-lg font-semibold text-dark-100">
-              {t('balance.topUpBalance')}
-            </h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <h2 className="rv-d mb-4 text-[36px] text-dark-100">{t('balance.topUpBalance')}</h2>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {paymentMethods.map((method) => {
                 const methodKey = method.id.toLowerCase().replace(/-/g, '_');
                 const translatedName = t(`balance.paymentMethods.${methodKey}.name`, {
@@ -302,29 +298,32 @@ export default function Balance() {
                 });
 
                 return (
-                  <Card
+                  <button
+                    type="button"
                     key={method.id}
-                    interactive={method.is_available}
-                    className={!method.is_available ? 'cursor-not-allowed opacity-50' : ''}
+                    disabled={!method.is_available}
+                    className="rv-opt disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => method.is_available && navigate(`/balance/top-up/${method.id}`)}
                   >
-                    <div className="font-semibold text-dark-100">
-                      {method.name || translatedName}
-                    </div>
-                    {(method.description || translatedDesc) && (
-                      <div className="mt-1 text-sm text-dark-500">
-                        {method.description || translatedDesc}
-                      </div>
-                    )}
-                    <div className="mt-3 text-xs text-dark-400">
-                      {t('balance.paymentRange', {
-                        min: formatAmount(method.min_amount_kopeks / 100, 0),
-                        max: formatAmount(method.max_amount_kopeks / 100, 0),
-                      })}
-                      {'\u00A0'}
-                      {currencySymbol}
-                    </div>
-                  </Card>
+                    <span className="rv-rad" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-bold text-dark-100">
+                        {method.name || translatedName}
+                      </span>
+                      <span className="mt-0.5 block text-[13px] text-dark-400">
+                        {method.description || translatedDesc
+                          ? `${method.description || translatedDesc} · `
+                          : ''}
+                        {t('balance.paymentRange', {
+                          min: formatAmount(method.min_amount_kopeks / 100, 0),
+                          max: formatAmount(method.max_amount_kopeks / 100, 0),
+                        })}
+                        {'\u00A0'}
+                        {currencySymbol}
+                      </span>
+                    </span>
+                    <ChevronRightIcon className="h-5 w-5 text-dark-400" />
+                  </button>
                 );
               })}
             </div>
@@ -339,9 +338,7 @@ export default function Balance() {
             onClick={() => setIsHistoryOpen(!isHistoryOpen)}
             className="flex w-full items-center justify-between text-left"
           >
-            <h2 className="text-lg font-semibold text-dark-100">
-              {t('balance.transactionHistory')}
-            </h2>
+            <h2 className="rv-d text-[36px] text-dark-100">{t('balance.transactionHistory')}</h2>
             <ChevronDownIcon
               className={`h-5 w-5 text-dark-400 transition-transform duration-200 ${isHistoryOpen ? 'rotate-180' : ''}`}
             />
