@@ -104,7 +104,7 @@
        она занимает. Всё, что прижато к низу на мобильном (тосты, бары действий,
        низ контента), встаёт выше --mobile-nav-clearance — иначе панель это
        перекрывает. Высота панели — константа дизайна (иконка + подпись). */
-    --mobile-nav-height: 76px;
+    --mobile-nav-height: 72px;
     --mobile-nav-offset: max(16px, env(safe-area-inset-bottom, 0px));
     --mobile-nav-clearance: calc(var(--mobile-nav-height) + var(--mobile-nav-offset) + 12px);
   }
@@ -1882,4 +1882,944 @@ input[type="checkbox"]:hover:not(:checked) {
   .admin-orb {
     animation: none;
   }
+}
+
+/* ============================================================================
+   RICH VPN — дизайн-система веб-кабинета (UI-кит «RichVPN — веб-кабинет»).
+   Bebas Neue — заголовки, цифры, кнопки; Vela Sans — текст. Лайм (акцент из
+   админки) — единственный цвет; рамки 2px, жёсткие тени со сдвигом, «таблетка»
+   с наклоном, топо-волны на лаймовых плашках. Тёмная тема — основная.
+   Блок стоит в конце @layer components: перекрывает базовые классы выше, но
+   Tailwind-утилиты на элементах по-прежнему сильнее.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Bebas Neue";
+  src: url("/fonts/BebasNeue-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vela Sans";
+  src: url("/fonts/VelaSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vela Sans";
+  src: url("/fonts/VelaSans-Medium.woff2") format("woff2");
+  font-weight: 500 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vela Sans";
+  src: url("/fonts/VelaSans-Bold.woff2") format("woff2");
+  font-weight: 700 900;
+  font-display: swap;
+}
+
+:root {
+  --rv-acc: rgb(var(--color-accent-500));
+  --rv-ink: #111111;
+  --rv-bone: #f2f0e8;
+  --rv-bg: #111111;
+  --rv-s1: #1b1b1b;
+  --rv-s2: #222222;
+  --rv-s3: #2a2a2a;
+  --rv-bd: #2a2a2a;
+  --rv-bd2: #3d3d3a;
+  --rv-tx: #f2f0e8;
+  --rv-tx2: #c9c8c0;
+  --rv-tx3: #9c9b93;
+  --rv-acc-tx: var(--rv-acc);
+  --rv-btn-bg: var(--rv-acc);
+  --rv-btn-fg: #111111;
+  --rv-btn-bd: var(--rv-acc);
+  --rv-btn-sh: rgba(var(--color-accent-500), 0.22);
+  --rv-ghost-bd: #4a4a46;
+  --rv-acc-bg: rgba(var(--color-accent-500), 0.13);
+  --rv-warn: #ffb020;
+  --rv-warn-bg: #33270f;
+  --rv-bad: #ff6b5e;
+  --rv-bad-bg: #3a1715;
+  --rv-topo: url("/rv/topo-dark.svg");
+  --rv-topo-on-acc: url("/rv/topo-on-acc.svg");
+  --rv-display: "Bebas Neue", "Vela Sans", Impact, "Arial Narrow", sans-serif;
+  --rv-text: "Vela Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bento-radius: 22px;
+  --bento-radius-lg: 22px;
+}
+.light {
+  --rv-bg: #f2f0e8;
+  --rv-s1: #ffffff;
+  --rv-s2: #f8f7f2;
+  --rv-s3: #e9e7de;
+  --rv-bd: #111111;
+  --rv-bd2: #111111;
+  --rv-tx: #111111;
+  --rv-tx2: #3f3f3b;
+  --rv-tx3: #64645e;
+  --rv-acc-tx: #111111;
+  --rv-btn-bg: #111111;
+  --rv-btn-fg: var(--rv-acc);
+  --rv-btn-bd: #111111;
+  --rv-btn-sh: rgba(17, 17, 17, 0.22);
+  --rv-ghost-bd: #111111;
+  --rv-acc-bg: rgba(var(--color-accent-500), 0.45);
+  --rv-warn: #8a5a00;
+  --rv-warn-bg: #ffefc7;
+  --rv-bad: #c4271b;
+  --rv-bad-bg: #ffe3df;
+  --rv-topo: url("/rv/topo-light.svg");
+}
+
+/* Плоский фон без шума — как в макете */
+body::before {
+  display: none !important;
+}
+body {
+  font-family: var(--rv-text);
+  font-feature-settings: "ss01" 0;
+}
+.font-display,
+h1,
+h2 {
+  font-synthesis: none;
+}
+
+@layer components {
+  /* ---------- Типографика ---------- */
+  .rv-d {
+    font-family: var(--rv-display);
+    font-weight: 400;
+    line-height: 0.92;
+    text-transform: uppercase;
+    letter-spacing: 0.005em;
+    font-synthesis: none;
+  }
+  .rv-num {
+    font-family: var(--rv-display);
+    font-weight: 400;
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+    font-synthesis: none;
+  }
+  .rv-rub {
+    font-family: var(--rv-text);
+    font-weight: 700;
+    font-size: 0.55em;
+    margin-left: 0.08em;
+    vertical-align: 0.14em;
+  }
+  .rv-pill {
+    display: inline-block;
+    background: var(--rv-acc);
+    color: #111;
+    border-radius: 0.22em;
+    padding: 0.06em 0.16em 0.02em;
+    line-height: 0.92;
+    transform: rotate(-1.8deg);
+  }
+  .rv-pill-ink {
+    background: #111;
+    color: var(--rv-acc);
+  }
+  .rv-kicker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--rv-tx3);
+  }
+  .rv-kicker::before {
+    content: "";
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    flex: none;
+  }
+  .rv-kicker-acc {
+    color: var(--rv-acc-tx);
+  }
+
+  /* Заголовок экрана: Bebas с «таблеткой» */
+  .rv-title {
+    font-family: var(--rv-display);
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 0.92;
+    text-transform: uppercase;
+    letter-spacing: 0.005em;
+    color: var(--rv-tx);
+    font-synthesis: none;
+  }
+  @media (min-width: 1024px) {
+    .rv-title {
+      font-size: 56px;
+    }
+  }
+
+  /* ---------- Кнопки ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50;
+    min-height: 44px;
+    padding: 12px 16px 10px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    font-family: var(--rv-display);
+    font-weight: 400;
+    font-size: 19px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-synthesis: none;
+    transition:
+      transform 0.15s,
+      box-shadow 0.15s,
+      background-color 0.15s,
+      border-color 0.15s,
+      color 0.15s,
+      opacity 0.15s;
+  }
+  .btn:active:not(:disabled) {
+    transform: translate(1px, 1px);
+  }
+  .btn-primary,
+  .light .btn-primary {
+    background: var(--rv-btn-bg);
+    color: var(--rv-btn-fg);
+    border-color: var(--rv-btn-bd);
+    box-shadow: 4px 4px 0 var(--rv-btn-sh);
+  }
+  .btn-primary:hover:not(:disabled),
+  .light .btn-primary:hover:not(:disabled) {
+    background: var(--rv-btn-bg);
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--rv-btn-sh);
+  }
+  .btn-primary:active:not(:disabled),
+  .light .btn-primary:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
+  .btn-secondary,
+  .light .btn-secondary {
+    background: transparent;
+    color: var(--rv-tx);
+    border-color: var(--rv-ghost-bd);
+    box-shadow: none;
+  }
+  .btn-secondary:hover:not(:disabled),
+  .light .btn-secondary:hover:not(:disabled) {
+    background: var(--rv-s2);
+    border-color: var(--rv-tx3);
+    color: var(--rv-tx);
+  }
+  .light .btn-secondary:hover:not(:disabled) {
+    border-color: #111;
+    background: #fff;
+  }
+  .btn-ghost,
+  .light .btn-ghost {
+    background: transparent;
+    color: var(--rv-tx2);
+    border-color: transparent;
+  }
+  .btn-ghost:hover:not(:disabled),
+  .light .btn-ghost:hover:not(:disabled) {
+    background: var(--rv-s2);
+    color: var(--rv-tx);
+  }
+  .btn-danger,
+  .light .btn-danger {
+    background: transparent;
+    color: var(--rv-bad);
+    border-color: var(--rv-bad);
+    box-shadow: none;
+  }
+  .btn-danger:hover:not(:disabled),
+  .light .btn-danger:hover:not(:disabled) {
+    background: var(--rv-bad-bg);
+    border-color: var(--rv-bad);
+  }
+  /* Крупная главная кнопка экрана (58px) */
+  .rv-btn-lg {
+    min-height: 58px;
+    padding: 17px 22px 15px;
+    border-radius: 14px;
+    font-size: 24px;
+  }
+  .btn-primary.rv-btn-lg {
+    box-shadow: 5px 5px 0 var(--rv-btn-sh);
+  }
+  /* Кнопка «чернилами» на лаймовой плашке */
+  .rv-btn-ink,
+  .light .rv-btn-ink {
+    background: #111 !important;
+    color: var(--rv-acc) !important;
+    border-color: #111 !important;
+    box-shadow: 5px 5px 0 rgba(17, 17, 17, 0.25) !important;
+  }
+  .rv-btn-ghost-ink {
+    background: transparent !important;
+    color: #111 !important;
+    border-color: #111 !important;
+    box-shadow: none !important;
+  }
+  .btn-icon,
+  .light .btn-icon {
+    @apply inline-flex items-center justify-center;
+    min-height: 44px;
+    min-width: 44px;
+    border-radius: 12px;
+    color: var(--rv-tx2);
+    transition:
+      background-color 0.15s,
+      color 0.15s;
+  }
+  .btn-icon:hover,
+  .light .btn-icon:hover {
+    background: var(--rv-s2);
+    color: var(--rv-tx);
+  }
+  .rv-ibtn {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    border: 2px solid var(--rv-bd);
+    background: var(--rv-s1);
+    color: var(--rv-tx);
+    flex: none;
+  }
+
+  /* ---------- Карточки ---------- */
+  .card,
+  .bento-card,
+  .light .card,
+  .light .bento-card {
+    background: var(--rv-s1);
+    border: 2px solid var(--rv-bd);
+    border-radius: 22px;
+    box-shadow: none;
+  }
+  .bento-card {
+    padding: 18px;
+  }
+  @media (min-width: 1024px) {
+    .card,
+    .bento-card,
+    .light .card,
+    .light .bento-card {
+      background: var(--rv-s1);
+    }
+  }
+  .card-hover:hover,
+  .bento-card-hover:hover,
+  .light .card-hover:hover,
+  .light .bento-card-hover:hover {
+    background: var(--rv-s1);
+    border-color: var(--rv-ghost-bd);
+    box-shadow: none;
+    transform: translate(-2px, -2px);
+  }
+  .light .card-hover:hover,
+  .light .bento-card-hover:hover {
+    box-shadow: 6px 6px 0 #111;
+  }
+  .bento-card-hover::after,
+  .light .bento-card-hover::after {
+    display: none;
+  }
+  .card-glow:hover,
+  .bento-card-glow:hover,
+  .light .card-glow:hover,
+  .light .bento-card-glow:hover {
+    border-color: var(--rv-acc);
+    box-shadow: none;
+  }
+  /* Лаймовая плашка (герой) */
+  .rv-card-acc {
+    background: var(--rv-acc) !important;
+    color: #111 !important;
+    border-color: var(--rv-acc) !important;
+  }
+  .rv-card-acc .rv-kicker,
+  .rv-card-acc .rv-sub {
+    color: rgba(17, 17, 17, 0.74);
+  }
+  .rv-card-ink {
+    background: #0a0a0a !important;
+    color: var(--rv-bone) !important;
+    border-color: var(--rv-bd2) !important;
+  }
+  .light .rv-card-ink {
+    background: #111 !important;
+    border-color: #111 !important;
+  }
+  .rv-card-ink .rv-kicker {
+    color: var(--rv-acc);
+  }
+  .rv-card-dash {
+    background: transparent !important;
+    border: 2px dashed var(--rv-bd2) !important;
+  }
+  .rv-topo {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .rv-topo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--rv-topo);
+    background-size: 900px 900px;
+    pointer-events: none;
+  }
+  .rv-card-acc.rv-topo::before {
+    background-image: var(--rv-topo-on-acc);
+  }
+  .rv-shadow {
+    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6);
+  }
+  .light .rv-shadow {
+    box-shadow: 6px 6px 0 rgba(17, 17, 17, 0.9);
+  }
+
+  /* ---------- Поля ---------- */
+  .input,
+  .light .input {
+    width: 100%;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--rv-tx);
+    background: var(--rv-s2);
+    border: 2px solid var(--rv-bd2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    min-height: 50px;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+  .light .input {
+    background: #fff;
+  }
+  .input::placeholder {
+    color: var(--rv-tx3);
+  }
+  .input:focus,
+  .light .input:focus {
+    outline: 0;
+    border-color: var(--rv-acc);
+    box-shadow: none;
+    --tw-ring-shadow: 0 0 #0000;
+  }
+  .light .input:focus {
+    border-color: #111;
+    box-shadow: 4px 4px 0 #111;
+  }
+  .input-error,
+  .light .input-error {
+    border-color: var(--rv-bad);
+  }
+  .label,
+  .light .label {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--rv-tx2);
+  }
+
+  /* ---------- Бейджи/теги ---------- */
+  .badge {
+    @apply inline-flex items-center;
+    gap: 7px;
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1;
+    padding: 6px 10px;
+    border-radius: 99px;
+    white-space: nowrap;
+    border: 0;
+  }
+  .badge-success,
+  .light .badge-success,
+  .badge-info,
+  .light .badge-info {
+    background: var(--rv-acc-bg);
+    color: var(--rv-acc-tx);
+    border: 0;
+  }
+  .badge-warning,
+  .light .badge-warning {
+    background: var(--rv-warn-bg);
+    color: var(--rv-warn);
+    border: 0;
+  }
+  .badge-error,
+  .light .badge-error {
+    background: var(--rv-bad-bg);
+    color: var(--rv-bad);
+    border: 0;
+  }
+  .badge-neutral,
+  .light .badge-neutral {
+    background: var(--rv-s3);
+    color: var(--rv-tx);
+    border: 0;
+  }
+  .rv-tag-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+  .rv-badge {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: #111;
+    color: var(--rv-acc);
+    padding: 6px 9px;
+    border-radius: 7px;
+    transform: rotate(-2deg);
+    white-space: nowrap;
+  }
+  .rv-badge-lime {
+    background: var(--rv-acc);
+    color: #111;
+  }
+  .dark .rv-badge:not(.rv-badge-lime) {
+    box-shadow: 0 0 0 1.5px var(--rv-acc);
+  }
+
+  /* ---------- Метры ---------- */
+  .rv-meter {
+    height: 12px;
+    border-radius: 99px;
+    background: var(--rv-s3);
+    overflow: hidden;
+  }
+  .rv-meter > i {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--rv-acc);
+  }
+  .light .rv-meter {
+    background: #e2e0d6;
+    outline: 2px solid #111;
+    outline-offset: -2px;
+  }
+  .light .rv-meter > i {
+    background: #111;
+  }
+  .rv-meter.rv-warn > i {
+    background: var(--rv-warn);
+  }
+  .rv-meter.rv-bad > i {
+    background: var(--rv-bad);
+  }
+  .rv-card-acc .rv-meter {
+    background: rgba(17, 17, 17, 0.14);
+    outline: 0;
+  }
+  .rv-card-acc .rv-meter > i {
+    background: #111;
+  }
+  .rv-slots {
+    display: flex;
+    gap: 6px;
+  }
+  .rv-slots > i {
+    flex: 1;
+    height: 12px;
+    border-radius: 4px;
+    background: var(--rv-s3);
+  }
+  .rv-slots > i.on {
+    background: var(--rv-acc);
+  }
+  .light .rv-slots > i {
+    background: #e2e0d6;
+  }
+  .light .rv-slots > i.on {
+    background: #111;
+  }
+
+  /* ---------- Списки ---------- */
+  .rv-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 4px;
+    min-height: 60px;
+    border-bottom: 2px solid var(--rv-bd);
+  }
+  .light .rv-row {
+    border-bottom-color: #e2e0d6;
+  }
+  .rv-row:last-child {
+    border-bottom: 0;
+  }
+  .rv-ic {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: var(--rv-s3);
+    display: grid;
+    place-items: center;
+    flex: none;
+    color: var(--rv-tx);
+  }
+  .rv-ic svg {
+    width: 20px;
+    height: 20px;
+  }
+  .rv-ic-acc {
+    background: var(--rv-acc);
+    color: #111;
+  }
+
+  /* ---------- Сегменты ---------- */
+  .rv-seg {
+    display: flex;
+    background: var(--rv-s1);
+    border: 2px solid var(--rv-bd);
+    border-radius: 16px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .light .rv-seg {
+    background: #111;
+    border-color: #111;
+  }
+  .rv-seg > * {
+    flex: 1;
+    position: relative;
+    font-family: var(--rv-display);
+    font-size: 20px;
+    line-height: 1;
+    padding: 12px 8px 10px;
+    border-radius: 11px;
+    color: var(--rv-tx);
+    text-align: center;
+    min-height: 44px;
+  }
+  .light .rv-seg > * {
+    color: var(--rv-bone);
+  }
+  .rv-seg > .on {
+    background: var(--rv-acc);
+    color: #111 !important;
+  }
+
+  /* ---------- Радио-карточка ---------- */
+  .rv-opt {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 2px solid var(--rv-bd);
+    border-radius: 16px;
+    background: var(--rv-s1);
+    min-height: 64px;
+    width: 100%;
+    text-align: left;
+    transition:
+      border-color 0.15s,
+      background-color 0.15s,
+      box-shadow 0.15s;
+  }
+  .rv-opt .rv-rad {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--rv-tx3);
+    flex: none;
+    display: grid;
+    place-items: center;
+  }
+  .rv-opt.on {
+    border-color: var(--rv-acc);
+    background: var(--rv-acc-bg);
+  }
+  .rv-opt.on .rv-rad {
+    border-color: var(--rv-acc);
+    background: var(--rv-acc);
+  }
+  .rv-opt.on .rv-rad::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #111;
+  }
+  .light .rv-opt.on {
+    border-color: #111;
+    box-shadow: 4px 4px 0 #111;
+  }
+  .light .rv-opt.on .rv-rad {
+    border-color: #111;
+  }
+
+  /* ---------- Навигация (меню) ---------- */
+  .nav-item,
+  .light .nav-item {
+    @apply flex items-center gap-3;
+    padding: 11px 14px;
+    border-radius: 12px;
+    font-weight: 500;
+    color: var(--rv-tx2);
+    transition:
+      background-color 0.15s,
+      color 0.15s;
+  }
+  .nav-item:hover,
+  .light .nav-item:hover {
+    background: var(--rv-s2);
+    color: var(--rv-tx);
+  }
+  .nav-item-active,
+  .light .nav-item-active,
+  .nav-item-active:hover,
+  .light .nav-item-active:hover {
+    background: var(--rv-acc);
+    color: #111;
+    font-weight: 700;
+  }
+  .divider,
+  .light .divider {
+    border-top: 2px solid var(--rv-bd);
+  }
+  .light .divider {
+    border-top-color: #e2e0d6;
+  }
+  .stat-value,
+  .light .stat-value {
+    font-family: var(--rv-display);
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 0.9;
+    color: var(--rv-tx);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label,
+  .light .stat-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--rv-tx3);
+  }
+  .link,
+  .light .link {
+    color: var(--rv-tx);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--rv-acc);
+  }
+  .glass,
+  .light .glass {
+    background: var(--rv-bg);
+    border-color: var(--rv-bd);
+  }
+
+  /* ---------- Таблицы (админка) ---------- */
+  .rv-tbox {
+    overflow-x: auto;
+    border: 2px solid var(--rv-bd);
+    border-radius: 18px;
+    background: var(--rv-s1);
+  }
+  .rv-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .rv-tbl th {
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--rv-tx3);
+    font-weight: 700;
+    padding: 12px 14px;
+    border-bottom: 2px solid var(--rv-bd);
+    white-space: nowrap;
+  }
+  .rv-tbl td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--rv-bd);
+    vertical-align: middle;
+  }
+  .light .rv-tbl td {
+    border-bottom-color: #e2e0d6;
+  }
+  .rv-tbl tr:last-child td {
+    border-bottom: 0;
+  }
+
+  /* ---------- KPI (админка) ---------- */
+  .rv-kpi {
+    background: var(--rv-s1);
+    border: 2px solid var(--rv-bd);
+    border-radius: 18px;
+    padding: 16px 18px;
+  }
+  .rv-kpi .k {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--rv-tx3);
+  }
+  .rv-kpi .n {
+    font-family: var(--rv-display);
+    font-size: 46px;
+    line-height: 0.9;
+    margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rv-kpi.acc {
+    background: var(--rv-acc);
+    color: #111;
+    border-color: var(--rv-acc);
+  }
+  .rv-kpi.acc .k {
+    color: rgba(17, 17, 17, 0.7);
+  }
+
+  /* ---------- Чат ---------- */
+  .rv-msg {
+    max-width: 82%;
+    padding: 11px 14px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .rv-msg-me {
+    align-self: flex-end;
+    background: var(--rv-acc);
+    color: #111;
+    border-bottom-right-radius: 6px;
+  }
+  .rv-msg-them {
+    align-self: flex-start;
+    background: var(--rv-s1);
+    border: 2px solid var(--rv-bd);
+    border-bottom-left-radius: 6px;
+  }
+
+  /* ---------- Шаги подключения ---------- */
+  .rv-stepn {
+    font-family: var(--rv-display);
+    font-size: 84px;
+    line-height: 0.78;
+    color: transparent;
+    -webkit-text-stroke: 2px var(--rv-acc);
+  }
+  .light .rv-stepn {
+    -webkit-text-stroke-color: #111;
+  }
+  .rv-prog {
+    display: flex;
+    gap: 6px;
+  }
+  .rv-prog > i {
+    flex: 1;
+    height: 6px;
+    border-radius: 99px;
+    background: var(--rv-s3);
+  }
+  .rv-prog > i.on {
+    background: var(--rv-acc);
+  }
+  .light .rv-prog > i {
+    background: #dddbd1;
+  }
+  .light .rv-prog > i.on {
+    background: #111;
+  }
+
+  .rv-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--rv-acc);
+    flex: none;
+  }
+  .rv-dot.ping {
+    animation: rvping 1.8s infinite;
+  }
+}
+
+@keyframes rvping {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--color-accent-500), 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(var(--color-accent-500), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--color-accent-500), 0);
+  }
+}
+
+/* Фокус — лаймовая обводка (в светлой — чернилами) */
+:where(button, a, [role="button"]):focus-visible {
+  --tw-ring-color: rgb(var(--color-accent-500));
+}
+.light :where(button, a, [role="button"]):focus-visible {
+  --tw-ring-color: #111;
+}
+
+/* Заголовки страниц: Bebas в верхнем регистре */
+main h1 {
+  font-family: var(--rv-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  line-height: 0.95;
+}
+/* Bebas уже обычного шрифта — подтягиваем кегль типовых заголовков страниц */
+main h1.text-xl {
+  font-size: 1.875rem;
+}
+main h1.text-2xl {
+  font-size: 2.25rem;
+}
+main h1.text-3xl {
+  font-size: 2.75rem;
+}
+@media (min-width: 640px) {
+  main h1.sm\:text-2xl,
+  main h1.sm\:text-3xl {
+    font-size: 2.75rem;
+  }
+}
+
+/* Колокольчик и язык на лаймовой шапке — прозрачные, чернилами */
+.rv-on-accent-tools > div > button,
+.rv-on-accent-tools > button {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #111 !important;
+  border-radius: 999px !important;
+}
+.rv-on-accent-tools > div > button:hover,
+.rv-on-accent-tools > button:hover {
+  background: rgba(17, 17, 17, 0.1) !important;
+}
+.rv-on-accent-tools > div > button > span:not(.absolute),
+.rv-on-accent-tools > div > button > svg {
+  color: #111 !important;
 }

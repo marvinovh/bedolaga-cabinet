@@ -44,50 +44,43 @@ export function MobileBottomNav({ items, isMenuOpen = false }: MobileBottomNavPr
     <nav
       className={cn(
         'fixed z-50 transition-all duration-200 lg:hidden',
-        'bg-dark-900/95 backdrop-blur-linear',
-        'border border-dark-700/30',
         isKeyboardOpen || isMenuOpen ? HIDDEN_UNDER_KEYBOARD : 'opacity-100',
       )}
       style={{
         // Отступ снизу и просвет под панелью объявлены в globals.css
-        // (--mobile-nav-*): в standalone iOS inset около 34pt, и панель стоит
-        // вплотную к безопасной зоне, в браузере — 16px.
+        // (--mobile-nav-*): в standalone iOS inset около 34pt, в браузере — 16px.
         bottom: 'var(--mobile-nav-offset)',
-        // По бокам та же логика: в альбомной ориентации iPhone вырезы слева и
-        // справа около 59pt, панель не должна уходить под чёлку и углы.
-        left: 'max(16px, env(safe-area-inset-left, 0px))',
-        right: 'max(16px, env(safe-area-inset-right, 0px))',
-        borderRadius: 'var(--bento-radius, 24px)',
-        padding: '8px 4px',
-        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+        // В альбомной ориентации iPhone панель не уходит под чёлку и углы.
+        left: 'max(12px, env(safe-area-inset-left, 0px))',
+        right: 'max(12px, env(safe-area-inset-right, 0px))',
       }}
     >
-      <div className="flex justify-around">
+      <div className="flex gap-1 rounded-[24px] border-2 border-[#2A2A2A] bg-[#111] p-1.5 shadow-[0_14px_34px_rgba(0,0,0,.45)] [.light_&]:border-[#111]">
         {items.map((item) => {
           const Icon = ICONS[item.key];
+          const active = isActive(item.path);
           return (
             <Link
               key={item.path}
               to={item.path}
               onClick={handleNavClick}
+              aria-current={active ? 'page' : undefined}
               className={cn(
-                // На 360 пяти пунктам достаётся по ~64 px: при px-3 подпись
-                // «Колесо удачи» заходила на соседа. Боковых полей нет (подсветка —
-                // по всему пункту), подпись короткая (navShort), а если и она не
-                // влезла — многоточие, не наезд.
-                'relative flex min-w-0 flex-1 flex-col items-center justify-center rounded-2xl px-0 py-2.5 transition-all duration-200',
-                isActive(item.path) ? 'text-accent-400' : 'text-dark-400 hover:text-dark-200',
+                // На 360 пяти пунктам достаётся по ~64 px: подпись короткая
+                // (navShort), а если и она не влезла — многоточие, не наезд.
+                'relative flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[17px] px-0.5 py-2 text-[11px] font-bold leading-none transition-colors duration-150',
+                active ? 'text-[#111]' : 'text-[#A9A8A0] hover:text-[#F2F0E8]',
               )}
             >
-              {isActive(item.path) && (
+              {active && (
                 <motion.div
                   layoutId="bottom-nav-active"
-                  className="absolute inset-0 rounded-2xl bg-accent-500/15"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className="absolute inset-0 rounded-[17px] bg-accent-500"
+                  transition={{ type: 'spring', stiffness: 500, damping: 34 }}
                 />
               )}
-              <Icon className="relative z-10 h-5 w-5" />
-              <span className="relative z-10 mt-1 max-w-full truncate text-2xs">
+              <Icon className="relative z-10 h-[22px] w-[22px]" />
+              <span className="relative z-10 max-w-full truncate">
                 {t(`navShort.${item.key}`, { defaultValue: t(`nav.${item.key}`) })}
               </span>
             </Link>

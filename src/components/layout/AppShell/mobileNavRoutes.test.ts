@@ -18,11 +18,11 @@ describe('mobileNavItems', () => {
     ]);
   });
 
-  it('колесо занимает слот перед поддержкой и вытесняет рефералку', () => {
+  it('рефералка занимает слот перед поддержкой и вытесняет колесо', () => {
     const paths = mobileNavItems({ wheelEnabled: true, referralEnabled: true }).map(
       (item) => item.path,
     );
-    expect(paths).toEqual(['/', '/subscriptions', '/balance', '/wheel', '/support']);
+    expect(paths).toEqual(['/', '/subscriptions', '/balance', '/referral', '/support']);
   });
 
   it('рефералка получает слот, когда колесо выключено', () => {

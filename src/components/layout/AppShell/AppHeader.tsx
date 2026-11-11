@@ -1,27 +1,20 @@
 import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { useAuthStore } from '@/store/auth';
 import { displayName } from '@/utils/displayName';
 import { useShallow } from 'zustand/shallow';
 import { useTheme } from '@/hooks/useTheme';
-import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { usePlatform } from '@/platform';
-import {
-  brandingApi,
-  getCachedBranding,
-  setCachedBranding,
-  preloadLogo,
-  isLogoPreloaded,
-} from '@/api/branding';
 import { themeColorsApi } from '@/api/themeColors';
 import { cn } from '@/lib/utils';
 
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import TicketNotificationBell from '@/components/TicketNotificationBell';
 import { LogoutButton } from './LogoutButton';
+import { Avatar, BalanceChip, Brand } from '@/components/rv';
 
 // Icons
 import {
@@ -29,23 +22,18 @@ import {
   SubscriptionIcon,
   WalletIcon,
   UsersIcon,
-  ChatIcon,
   UserIcon,
+  ChatIcon,
   GamepadIcon,
   ClipboardIcon,
   InfoIcon,
   CogIcon,
   WheelIcon,
   GiftIcon,
-  MenuIcon,
   CloseIcon,
   SunIcon,
   MoonIcon,
-  SearchIcon,
 } from './icons';
-
-const FALLBACK_NAME = import.meta.env.VITE_APP_NAME || 'Cabinet';
-const FALLBACK_LOGO = import.meta.env.VITE_APP_LOGO || 'V';
 
 import type { TelegramPlatform } from '@/hooks/useTelegramSDK';
 
@@ -69,7 +57,6 @@ interface AppHeaderProps {
 export function AppHeader({
   mobileMenuOpen,
   setMobileMenuOpen,
-  onCommandPaletteOpen,
   headerHeight,
   isFullscreen,
   safeAreaInset,
@@ -87,31 +74,7 @@ export function AppHeader({
     useShallow((state) => ({ user: state.user, logout: state.logout, isAdmin: state.isAdmin })),
   );
   const { toggleTheme, isDark } = useTheme();
-  const { haptic, platform } = usePlatform();
-  const avatar = useUserAvatar(user);
-  const [logoLoaded, setLogoLoaded] = useState(() => isLogoPreloaded());
-
-  // Branding
-  const { data: branding } = useQuery({
-    queryKey: ['branding'],
-    queryFn: async () => {
-      const data = await brandingApi.getBranding();
-      setCachedBranding(data);
-      await preloadLogo(data);
-      return data;
-    },
-    initialData: getCachedBranding() ?? undefined,
-    initialDataUpdatedAt: 0,
-    staleTime: 60000,
-    refetchOnWindowFocus: true,
-    retry: 1,
-  });
-
-  const appName = branding ? branding.name : FALLBACK_NAME;
-  const logoLetter = branding?.logo_letter || FALLBACK_LOGO;
-  const hasCustomLogo = branding?.has_custom_logo || false;
-  const logoUrl = branding ? brandingApi.getLogoUrl(branding) : null;
-
+  const { haptic } = usePlatform();
   // Theme toggle visibility
   const { data: enabledThemes } = useQuery({
     queryKey: ['enabled-themes'],
@@ -168,7 +131,7 @@ export function AppHeader({
           режима задаёт .app-mobile-header в globals.css (display-mode: standalone),
           чтобы не было ни отдельного светлого блока, ни жёсткой границы. */}
       <header
-        className="glass app-mobile-header fixed left-0 right-0 top-0 z-50 shadow-lg shadow-black/10 lg:hidden"
+        className="app-mobile-header fixed left-0 right-0 top-0 z-50 bg-dark-950 lg:hidden"
         style={{
           paddingTop: isFullscreen
             ? `${Math.max(safeAreaInset.top, contentSafeAreaInset.top) + (telegramPlatform === 'android' ? 48 : 45)}px`
@@ -181,115 +144,30 @@ export function AppHeader({
           className="mx-auto w-full pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]"
           onClick={() => mobileMenuOpen && setMobileMenuOpen(false)}
         >
-          <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
-            <Link
-              to="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className={cn('flex flex-shrink-0 items-center gap-2.5', !appName && 'mr-4')}
-            >
-              <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-linear-lg border border-dark-700/50 bg-dark-800/80 shadow-md">
-                <span
-                  className={cn(
-                    'absolute text-lg font-bold text-accent-400 transition-opacity duration-200',
-                    hasCustomLogo && logoLoaded ? 'opacity-0' : 'opacity-100',
-                  )}
-                >
-                  {logoLetter}
-                </span>
-                {hasCustomLogo && logoUrl && (
-                  <img
-                    src={logoUrl}
-                    alt={appName || 'Logo'}
-                    className={cn(
-                      'absolute h-full w-full object-contain transition-opacity duration-200',
-                      logoLoaded ? 'opacity-100' : 'opacity-0',
-                    )}
-                    onLoad={() => setLogoLoaded(true)}
-                  />
-                )}
-              </div>
-              {appName && (
-                <span className="whitespace-nowrap text-base font-semibold text-dark-100">
-                  {appName}
-                </span>
-              )}
-            </Link>
+          <div className="flex h-16 items-center justify-between gap-2.5">
+            <Brand size={36} onClick={() => setMobileMenuOpen(false)} />
 
-            {/* Right side */}
-            <div className="flex items-center gap-1.5">
-              {/* Command palette trigger (web only) */}
-              {platform !== 'telegram' && (
-                <button
-                  onClick={() => {
-                    haptic.impact('light');
-                    onCommandPaletteOpen();
-                  }}
-                  className="btn-icon hidden sm:flex"
-                  title={t('common.searchShortcut', { shortcut: '⌘K' })}
-                >
-                  <SearchIcon className="h-5 w-5" />
-                </button>
-              )}
-
-              {/* Theme toggle */}
-              {canToggle && (
-                <button
-                  onClick={() => {
-                    haptic.impact('light');
-                    toggleTheme();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="relative rounded-linear-lg border border-dark-700/50 bg-dark-800/50 p-2 text-dark-400 transition-all duration-200 hover:bg-dark-700 hover:text-accent-400"
-                  title={isDark ? t('theme.light') || 'Light mode' : t('theme.dark') || 'Dark mode'}
-                >
-                  <div className="relative h-5 w-5">
-                    <div
-                      className={cn(
-                        'absolute inset-0 transition-all duration-300',
-                        isDark ? 'rotate-0 opacity-100' : 'rotate-90 opacity-0',
-                      )}
-                    >
-                      <MoonIcon className="h-5 w-5" />
-                    </div>
-                    <div
-                      className={cn(
-                        'absolute inset-0 transition-all duration-300',
-                        isDark ? '-rotate-90 opacity-0' : 'rotate-0 opacity-100',
-                      )}
-                    >
-                      <SunIcon className="h-5 w-5" />
-                    </div>
-                  </div>
-                </button>
-              )}
-
+            <div className="flex min-w-0 items-center gap-2">
               <div onClick={() => setMobileMenuOpen(false)}>
-                <TicketNotificationBell isAdmin={isAdminActive()} />
+                <BalanceChip />
               </div>
-              <div onClick={() => setMobileMenuOpen(false)}>
-                <LanguageSwitcher />
-              </div>
-
-              {/* Mobile menu button */}
+              {/* Аватар открывает меню: профиль, остальные разделы, тема, язык */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   haptic.impact('light');
                   setMobileMenuOpen(!mobileMenuOpen);
                 }}
-                className={`rounded-xl p-2.5 transition-all duration-200 ${
-                  mobileMenuOpen
-                    ? 'bg-dark-700 text-dark-100'
-                    : 'text-dark-400 hover:bg-dark-800 hover:text-dark-100'
-                }`}
+                className="relative rounded-full"
                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={mobileMenuOpen}
               >
                 {mobileMenuOpen ? (
-                  <CloseIcon className="h-6 w-6" />
+                  <span className="grid h-11 w-11 place-items-center rounded-full border-2 border-dark-700 bg-dark-900 text-dark-100">
+                    <CloseIcon className="h-5 w-5" />
+                  </span>
                 ) : (
-                  <MenuIcon className="h-6 w-6" />
+                  <Avatar size={44} />
                 )}
               </button>
             </div>
@@ -316,33 +194,41 @@ export function AppHeader({
           >
             <div className="mx-auto max-w-6xl py-4 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]">
               {/* User info */}
-              <div className="mb-4 flex items-center justify-between border-b border-dark-800/50 pb-4">
+              <div className="mb-4 flex items-center justify-between gap-2 border-b-2 border-dark-700 pb-4">
                 {/* min-w-0 — иначе truncate у имени не срабатывал, и длинное имя
                     уходило за правый край экрана. */}
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  {/* Заглушка — через состояние, а не правкой DOM: прежний onError прятал
-                      картинку руками, и любой ре-рендер возвращал класс hidden заглушке,
-                      оставляя пустое место. */}
-                  {avatar.src ? (
-                    <img
-                      src={avatar.src}
-                      alt={t('common.avatar')}
-                      className="h-10 w-10 shrink-0 rounded-full object-cover"
-                      onError={avatar.onError}
-                    />
-                  ) : (
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-dark-700">
-                      <UserIcon className="h-5 w-5" />
-                    </div>
-                  )}
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex min-w-0 flex-1 items-center gap-3"
+                >
+                  <Avatar size={44} />
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-dark-100">
+                    <div className="truncate text-base font-bold text-dark-100">
                       {displayName(user)}
                     </div>
-                    <div className="truncate text-xs text-dark-500">
+                    <div className="truncate text-xs text-dark-400">
                       @{user?.username || `ID: ${user?.telegram_id}`}
                     </div>
                   </div>
+                </Link>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {canToggle && (
+                    <button
+                      onClick={() => {
+                        haptic.impact('light');
+                        toggleTheme();
+                      }}
+                      className="rv-ibtn"
+                      aria-label={
+                        isDark ? t('theme.light') || 'Light mode' : t('theme.dark') || 'Dark mode'
+                      }
+                    >
+                      {isDark ? <MoonIcon className="h-5 w-5" /> : <SunIcon className="h-5 w-5" />}
+                    </button>
+                  )}
+                  <TicketNotificationBell isAdmin={isAdminActive()} />
+                  <LanguageSwitcher />
                 </div>
               </div>
 

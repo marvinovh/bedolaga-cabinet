@@ -39,7 +39,7 @@ export const DEFAULT_ENABLED_THEMES: EnabledThemes = {
 
 // Default theme colors
 export const DEFAULT_THEME_COLORS: ThemeColors = {
-  accent: '#3b82f6',
+  accent: '#CDFB24',
 
   darkBackground: '#0a0f1a',
   darkSurface: '#0f172a',

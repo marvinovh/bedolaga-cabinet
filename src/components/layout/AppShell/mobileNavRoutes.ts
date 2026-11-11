@@ -41,8 +41,9 @@ const REFERRAL: MobileNavItem = { key: 'referral', path: '/referral' };
  * колесо (оператор включил его как бренд-момент) важнее, рефералка уходит в шапку.
  */
 function slotItems({ wheelEnabled, referralEnabled }: MobileNavFlags): readonly MobileNavItem[] {
-  if (wheelEnabled) return [WHEEL];
+  // RichVPN: в панели «Друзья» (как в макете), колесо уходит в меню шапки.
   if (referralEnabled) return [REFERRAL];
+  if (wheelEnabled) return [WHEEL];
   return [];
 }
 

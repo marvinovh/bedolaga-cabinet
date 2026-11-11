@@ -29,7 +29,8 @@ export function LogoutButton({ variant, onLogout }: LogoutButtonProps) {
     <button
       type="button"
       onClick={onLogout}
-      className="rounded-xl border border-dark-700/50 bg-dark-800/50 p-2 text-dark-400 transition-colors duration-200 hover:bg-dark-700 hover:text-accent-400"
+      className="grid h-10 w-10 place-items-center rounded-full text-[#111] transition-colors duration-150 hover:bg-[#111]/10"
+      aria-label={t('nav.logout')}
       title={t('nav.logout')}
     >
       <LogoutIcon className="h-5 w-5" />

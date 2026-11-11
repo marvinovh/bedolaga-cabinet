@@ -46,6 +46,48 @@ function shadeLightness(shade: ShadeLevel, baseLightness: number): number {
   return Math.min(baseLightness, baseLightness - share * (baseLightness - LADDER_BOTTOM));
 }
 
+// RichVPN design-system neutrals (см. UI-кит: ink #111, card #1B1B1B, bone #F2F0E8).
+export const RICHVPN_DEFAULT_ACCENT = '#CDFB24';
+const RICHVPN_FIXED_COLORS = {
+  darkBackground: '#111111',
+  darkSurface: '#1B1B1B',
+  darkText: '#F2F0E8',
+  darkTextSecondary: '#9C9B93',
+  lightBackground: '#F2F0E8',
+  lightSurface: '#FFFFFF',
+  lightText: '#111111',
+  lightTextSecondary: '#64645E',
+  warning: '#FFB020',
+  error: '#FF6B5E',
+} satisfies Partial<ThemeColors>;
+const RICHVPN_DARK_VARS: Record<string, string> = {
+  '--color-dark-50': '255, 255, 255',
+  '--color-dark-100': '242, 240, 232',
+  '--color-dark-200': '222, 220, 212',
+  '--color-dark-300': '201, 200, 192',
+  '--color-dark-400': '156, 155, 147',
+  '--color-dark-500': '142, 141, 134',
+  '--color-dark-600': '74, 74, 70',
+  '--color-dark-700': '42, 42, 42',
+  '--color-dark-800': '34, 34, 34',
+  '--color-dark-850': '31, 31, 31',
+  '--color-dark-900': '27, 27, 27',
+  '--color-dark-950': '17, 17, 17',
+};
+const RICHVPN_LIGHT_VARS: Record<string, string> = {
+  '--color-champagne-50': '248, 247, 242',
+  '--color-champagne-100': '255, 255, 255',
+  '--color-champagne-200': '242, 240, 232',
+  '--color-champagne-300': '214, 212, 202',
+  '--color-champagne-400': '156, 155, 147',
+  '--color-champagne-500': '100, 100, 94',
+  '--color-champagne-600': '85, 85, 79',
+  '--color-champagne-700': '63, 63, 59',
+  '--color-champagne-800': '42, 42, 40',
+  '--color-champagne-900': '17, 17, 17',
+  '--color-champagne-950': '17, 17, 17',
+};
+
 // Generate color palette from base color (returns RGB strings).
 // Шейд 500 — сам выбранный цвет. Раньше он принудительно получал L = 50 %:
 // оператор выбирал один цвет, а кнопки красились другим (пастель становилась
@@ -67,19 +109,6 @@ function generatePalette(baseHex: string): ColorPalette {
   }
 
   return palette as ColorPalette;
-}
-
-// Interpolate between two RGB colors
-function interpolateRgb(
-  rgb1: { r: number; g: number; b: number },
-  rgb2: { r: number; g: number; b: number },
-  factor: number,
-): string {
-  return rgbToString(
-    Math.round(rgb1.r + (rgb2.r - rgb1.r) * factor),
-    Math.round(rgb1.g + (rgb2.g - rgb1.g) * factor),
-    Math.round(rgb1.b + (rgb2.b - rgb1.b) * factor),
-  );
 }
 
 type Rgb = { r: number; g: number; b: number };
@@ -233,7 +262,15 @@ function withReadableTextShades(
 export function computeThemeCssVars(themeColors: ThemeColors): Record<string, string> {
   // Частичный/битый ответ /branding/colors раньше ронял ВСЁ приложение в
   // ErrorBoundary (hexToRgb(undefined)). Недостающие поля добиваем дефолтами.
-  const colors: ThemeColors = { ...DEFAULT_THEME_COLORS, ...themeColors };
+  // RichVPN: нейтрали и статусы фиксированы дизайн-системой (ink/bone), из
+  // админки настраивается только акцент.
+  const colors: ThemeColors = {
+    ...DEFAULT_THEME_COLORS,
+    ...themeColors,
+    ...RICHVPN_FIXED_COLORS,
+  };
+  if (!themeColors?.accent) colors.accent = RICHVPN_DEFAULT_ACCENT;
+  colors.success = colors.accent;
 
   // Generate palettes from status colors
   const accentPalette = generatePalette(colors.accent);
@@ -241,78 +278,15 @@ export function computeThemeCssVars(themeColors: ThemeColors): Record<string, st
   const warningPalette = generatePalette(colors.warning);
   const errorPalette = generatePalette(colors.error);
 
-  // Convert hex colors to RGB
-  const darkBgRgb = hexToRgb(colors.darkBackground);
   const darkSurfaceRgb = hexToRgb(colors.darkSurface);
   const darkTextRgb = hexToRgb(colors.darkText);
-  const darkTextSecRgb = hexToRgb(colors.darkTextSecondary);
 
-  // Contrast floors: secondary text must stay readable on the card surface
-  // regardless of the operator-chosen palette. dark-400 keeps a comfortable 5.0;
-  // dark-500 is held at AA 4.5 — it is not a decorative hint but the workhorse
-  // secondary token (700+ usages, mostly 11-12px), and the previous 3.8 floor
-  // measured 4.26 on a real operator palette: legible only just.
-  const darkTextSecReadable = ensureReadable(darkTextSecRgb, darkTextRgb, darkSurfaceRgb, 5.0);
-  const darkHintReadable = ensureReadable(
-    mixRgb(darkTextSecRgb, darkSurfaceRgb, 0.4),
-    darkTextRgb,
-    darkSurfaceRgb,
-    4.5,
-  );
+  const darkVars = RICHVPN_DARK_VARS;
 
-  // Dark palette with actual user colors:
-  // text colors (light shades): 50-100 = primary text, 200-300 = mixed, 400 = secondary text;
-  // transition colors (500-700): between secondary text and surface;
-  // surface/card colors (800-850); background colors (900-950).
-  const darkVars = {
-    '--color-dark-50': tripletOf(darkTextRgb),
-    '--color-dark-100': tripletOf(darkTextRgb),
-    '--color-dark-200': interpolateRgb(darkTextRgb, darkTextSecRgb, 0.33),
-    '--color-dark-300': interpolateRgb(darkTextRgb, darkTextSecRgb, 0.66),
-    '--color-dark-400': tripletOf(darkTextSecReadable),
-    '--color-dark-500': tripletOf(darkHintReadable),
-    '--color-dark-600': interpolateRgb(darkTextSecRgb, darkSurfaceRgb, 0.6),
-    '--color-dark-700': interpolateRgb(darkTextSecRgb, darkSurfaceRgb, 0.8),
-    '--color-dark-800': tripletOf(darkSurfaceRgb),
-    '--color-dark-850': interpolateRgb(darkSurfaceRgb, darkBgRgb, 0.5),
-    '--color-dark-900': interpolateRgb(darkSurfaceRgb, darkBgRgb, 0.7),
-    '--color-dark-950': tripletOf(darkBgRgb),
-  };
-
-  const lightBgRgb = hexToRgb(colors.lightBackground);
   const lightSurfaceRgb = hexToRgb(colors.lightSurface);
   const lightTextRgb = hexToRgb(colors.lightText);
-  const lightTextSecRgb = hexToRgb(colors.lightTextSecondary);
 
-  // Same contrast floors as the dark palette: champagne-600 backs dark-400
-  // (secondary text) in the light theme, champagne-500 backs dark-500 (hints).
-  // Порог у светлой темы выше: карточки стоят не на самой светлой поверхности,
-  // а на слегка отличном фоне, и ровно 4.5 по surface давало 4.41 на реальной
-  // плитке («Баланс», «Рефералы», сумма под ними).
-  const lightHintReadable = ensureReadable(
-    mixRgb(lightBgRgb, lightTextSecRgb, 0.6),
-    lightTextRgb,
-    lightSurfaceRgb,
-    5.0,
-  );
-  const lightTextSecReadable = ensureReadable(lightTextSecRgb, lightTextRgb, lightSurfaceRgb, 5.0);
-
-  // Champagne palette with actual user colors:
-  // background colors (light shades): 50-100 = surface, 200-400 = background tones;
-  // transition colors (500-600): between bg and text; text colors (700-950).
-  const lightVars = {
-    '--color-champagne-50': tripletOf(lightSurfaceRgb),
-    '--color-champagne-100': interpolateRgb(lightSurfaceRgb, lightBgRgb, 0.3),
-    '--color-champagne-200': tripletOf(lightBgRgb),
-    '--color-champagne-300': interpolateRgb(lightBgRgb, lightTextSecRgb, 0.2),
-    '--color-champagne-400': interpolateRgb(lightBgRgb, lightTextSecRgb, 0.4),
-    '--color-champagne-500': tripletOf(lightHintReadable),
-    '--color-champagne-600': tripletOf(lightTextSecReadable),
-    '--color-champagne-700': interpolateRgb(lightTextSecRgb, lightTextRgb, 0.33),
-    '--color-champagne-800': interpolateRgb(lightTextSecRgb, lightTextRgb, 0.66),
-    '--color-champagne-900': tripletOf(lightTextRgb),
-    '--color-champagne-950': tripletOf(lightTextRgb),
-  };
+  const lightVars = RICHVPN_LIGHT_VARS;
 
   const darkSurfaces: ThemeSurfaces = { surface: darkSurfaceRgb, text: darkTextRgb };
   const lightSurfaces: ThemeSurfaces = { surface: lightSurfaceRgb, text: lightTextRgb };

@@ -18,6 +18,8 @@ import { BackgroundRenderer } from './BackgroundRenderer';
 const useBackgroundConsumers = create<{ count: number }>(() => ({ count: 0 }));
 
 /** Вызывается из AppShell: «на этом роуте должен быть анимированный фон». */
+const RICHVPN_FLAT_BACKGROUND = true;
+
 export function useBackgroundConsumer() {
   useEffect(() => {
     useBackgroundConsumers.setState((s) => ({ count: s.count + 1 }));
@@ -41,5 +43,6 @@ export function BackgroundHost() {
     return () => clearTimeout(timer);
   }, [active]);
 
-  return mounted ? <BackgroundRenderer /> : null;
+  // RichVPN: фон плоский (ink/bone), анимированные фоны не рисуем.
+  return mounted && !RICHVPN_FLAT_BACKGROUND ? <BackgroundRenderer /> : null;
 }
