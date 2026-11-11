@@ -8,6 +8,7 @@ import { useHaptic } from '@/platform';
 import { formatTraffic } from '../../utils/formatTraffic';
 import { ArrowRightIcon, ChevronRightIcon, RefreshIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import { RvCheckIcon } from '@/components/rv';
 import type { Subscription } from '../../types';
 
 interface SubscriptionCardActiveProps {
@@ -24,6 +25,8 @@ interface SubscriptionCardActiveProps {
   refreshTrafficMutation: UseMutationResult<unknown, unknown, void, unknown>;
   trafficRefreshCooldown: number;
   connectedDevices: number;
+  /** Названия подключённых устройств — строкой под слотами. */
+  deviceNames?: string[];
 }
 
 const dayMonth = (iso: string) =>
@@ -39,6 +42,7 @@ export default function SubscriptionCardActive({
   refreshTrafficMutation,
   trafficRefreshCooldown,
   connectedDevices,
+  deviceNames = [],
 }: SubscriptionCardActiveProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -165,10 +169,17 @@ export default function SubscriptionCardActive({
             </div>
           )}
           <div className="mt-2 flex items-center justify-between gap-2 text-[13px] text-dark-400">
-            <span className="min-w-0 truncate">
-              {!isUnlimited && resetAt
-                ? t('rv.resetsOn', { date: dayMonth(resetAt) })
-                : t('rv.usedGb', { amount: formatTraffic(usedGb) })}
+            <span className="flex min-w-0 items-center gap-1.5 truncate">
+              {!isUnlimited && !unknownTraffic && leftPercent >= 25 ? (
+                <>
+                  <RvCheckIcon className="h-4 w-4 shrink-0 text-accent-400" />
+                  {t('rv.enoughUntil', { date: dayMonth(resetAt ?? subscription.end_date) })}
+                </>
+              ) : !isUnlimited && resetAt ? (
+                t('rv.resetsOn', { date: dayMonth(resetAt) })
+              ) : (
+                t('rv.usedGb', { amount: formatTraffic(usedGb) })
+              )}
             </span>
             <button
               type="button"
@@ -214,10 +225,12 @@ export default function SubscriptionCardActive({
               />
             </div>
           ) : null}
-          <p className="mt-2 text-[13px] text-dark-400">
-            {t('dashboard.validUntil', {
-              date: new Date(subscription.end_date).toLocaleDateString(uiLocale()),
-            })}
+          <p className="mt-2 truncate text-[13px] text-dark-400">
+            {deviceNames.length > 0
+              ? deviceNames.filter(Boolean).join(' · ')
+              : t('dashboard.validUntil', {
+                  date: new Date(subscription.end_date).toLocaleDateString(uiLocale()),
+                })}
           </p>
         </div>
       </section>

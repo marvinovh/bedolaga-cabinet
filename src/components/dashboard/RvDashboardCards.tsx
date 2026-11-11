@@ -2,6 +2,13 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
+import { useQuery } from '@tanstack/react-query';
+
+import { balanceApi } from '@/api/balance';
+import { useCurrency } from '@/hooks/useCurrency';
+import { uiLocale } from '@/utils/uiLocale';
+import type { Tariff } from '@/types';
+import { transactionTypeLabelKey } from '@/utils/transactionType';
 
 import { cn } from '@/lib/utils';
 import { ChevronRightIcon } from '@/components/icons';
@@ -86,6 +93,100 @@ export function ConnectPhoneCard({ subscriptionId }: { subscriptionId: number })
       <Link to={`/connection?sub=${subscriptionId}`} className="btn btn-secondary mt-4 w-full">
         {t('rv.connectThisPc')}
       </Link>
+    </section>
+  );
+}
+
+/** «−9% Продли сразу на 90 дней» — пунктирная карточка-предложение. */
+export function RenewOfferCard({
+  subscriptionId,
+  tariffs,
+}: {
+  subscriptionId: number;
+  tariffs: Tariff[] | undefined;
+}) {
+  const { t } = useTranslation();
+  const { formatAmount, currencySymbol } = useCurrency();
+  const current = tariffs?.find((x) => x.is_current);
+  const month = current?.periods.find((p) => p.days === 30);
+  const long = current?.periods.find((p) => p.days === 90);
+  if (!current || !month || !long) return null;
+  const full = month.price_kopeks * 3;
+  const percent = Math.round((1 - long.price_kopeks / full) * 100);
+  if (percent <= 0) return null;
+  const rub = (k: number) => `${formatAmount(k / 100, k % 100 === 0 ? 0 : 2)} ${currencySymbol}`;
+  return (
+    <section className="bento-card rv-card-dash !p-5 lg:flex lg:items-center lg:gap-6">
+      <div className="flex items-start gap-4 lg:flex-1 lg:items-center">
+        <span className="rv-num shrink-0 text-[52px] text-accent-400">−{percent}%</span>
+        <div className="min-w-0">
+          <p className="text-[17px] font-bold leading-tight text-dark-100">{t('rv.offer.title')}</p>
+          <p className="mt-1 text-sm leading-snug text-dark-300">
+            {t('rv.offer.text', { price: rub(long.price_kopeks), full: rub(full) })}
+          </p>
+        </div>
+      </div>
+      <Link
+        to={`/subscriptions/${subscriptionId}/renew`}
+        className="btn btn-secondary mt-4 w-full lg:mt-0 lg:w-auto"
+      >
+        {t('rv.offer.cta')}
+      </Link>
+    </section>
+  );
+}
+
+/** Десктоп: «Последние операции» — таблица из трёх строк. */
+export function RecentOpsTable() {
+  const { t } = useTranslation();
+  const { formatAmount, currencySymbol } = useCurrency();
+  const { data } = useQuery({
+    queryKey: ['transactions', 'recent3'],
+    queryFn: () => balanceApi.getTransactions({ page: 1, per_page: 3 }),
+    staleTime: 60_000,
+  });
+  const items = data?.items ?? [];
+  if (!items.length) return null;
+  return (
+    <section>
+      <h2 className="rv-d mb-3 text-[36px] text-dark-100">{t('rv.recentOps')}</h2>
+      <div className="rv-tbox">
+        <table className="rv-tbl">
+          <thead>
+            <tr>
+              <th>{t('rv.ops.date')}</th>
+              <th>{t('rv.ops.op')}</th>
+              <th className="!text-right">{t('rv.ops.sum')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((tx) => {
+              const positive = tx.amount_rubles > 0;
+              return (
+                <tr key={tx.id}>
+                  <td className="whitespace-nowrap text-dark-300">
+                    {new Date(tx.created_at).toLocaleDateString(uiLocale(), {
+                      day: 'numeric',
+                      month: 'long',
+                    })}
+                  </td>
+                  <td className="text-dark-100">
+                    {tx.description || t(transactionTypeLabelKey(tx.type))}
+                  </td>
+                  <td
+                    className={`whitespace-nowrap text-right font-bold ${positive ? 'text-accent-400' : 'text-dark-100'}`}
+                  >
+                    {positive ? '+' : tx.amount_rubles < 0 ? '−' : ''}
+                    {formatAmount(Math.abs(tx.amount_rubles), 0)}
+                    {' '}
+                    {currencySymbol}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

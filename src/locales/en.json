@@ -10127,6 +10127,17 @@
       "daily": "“{{name}}” plan — {{price}} per day",
       "balanceNote": "{{amount}} on balance — counted at checkout",
       "toPayment": "Go to payment"
-    }
+    },
+    "offer": {
+      "title": "Renew for 90 days at once",
+      "text": "{{price}} instead of {{full}}. Three months without thinking about payments.",
+      "cta": "Renew for 90 days"
+    },
+    "ops": {
+      "date": "Date",
+      "op": "Operation",
+      "sum": "Amount"
+    },
+    "enoughUntil": "Plenty left until {{date}}"
   }
 }

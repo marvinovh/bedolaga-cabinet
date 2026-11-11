@@ -23,6 +23,8 @@ import {
   HelpCard,
   PartnerCard,
   QuickTile,
+  RecentOpsTable,
+  RenewOfferCard,
 } from '../components/dashboard/RvDashboardCards';
 import { RvCardIcon, RvChatIcon, RvGiftIcon, RvMonitorIcon, RvShieldIcon } from '@/components/rv';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
@@ -47,6 +49,11 @@ export default function Dashboard() {
   const blockingType = useBlockingStore((state) => state.blockingType);
   const [trialError, setTrialError] = useState<string | null>(null);
   const { referralEnabled } = useFeatureFlags();
+  const { data: purchaseOptions } = useQuery({
+    queryKey: ['purchase-options', undefined],
+    queryFn: () => subscriptionApi.getPurchaseOptions(),
+    staleTime: 60_000,
+  });
 
   // Refresh user data on mount
   useEffect(() => {
@@ -410,6 +417,9 @@ export default function Dashboard() {
               refreshTrafficMutation={refreshTrafficMutation}
               trafficRefreshCooldown={trafficRefreshCooldown}
               connectedDevices={devicesData?.total ?? 0}
+              deviceNames={(devicesData?.devices ?? []).map(
+                (d) => d.local_name || d.device_model || d.platform,
+              )}
             />
           ) : null)}
 
@@ -441,6 +451,16 @@ export default function Dashboard() {
 
         {/* Promo Offers */}
         <PromoOffersSection />
+
+        {/* «−9% Продли сразу на 90 дней» */}
+        {subscription?.is_active && !subscription.is_trial && !isMultiTariff && (
+          <RenewOfferCard
+            subscriptionId={subscription.id}
+            tariffs={
+              purchaseOptions && 'tariffs' in purchaseOptions ? purchaseOptions.tariffs : undefined
+            }
+          />
+        )}
 
         {/* Быстрые действия (макет: 2×2 плитки) */}
         <div className="grid grid-cols-2 gap-2.5 lg:hidden">
@@ -480,6 +500,10 @@ export default function Dashboard() {
             <ChevronRightIcon className="h-5 w-5 text-dark-400" />
           </Link>
         )}
+
+        <div className="hidden lg:block">
+          <RecentOpsTable />
+        </div>
 
         <div className="space-y-3 lg:hidden">
           {referralEnabled && <PartnerCard percent={referralInfo?.commission_percent} />}
