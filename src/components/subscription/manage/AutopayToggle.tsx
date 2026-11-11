@@ -52,18 +52,17 @@ export function AutopayToggle({
 
   if (!showsAutopayToggle(subscription)) return null;
 
+  // RichVPN: карточка «Автопродление» с тогглом макета (цвета — из токенов).
+  void accentColor;
+  void offColor;
+  void surface;
   return (
-    <div
-      className="flex items-center justify-between rounded-[14px] p-3.5"
-      style={
-        surface
-          ? { background: surface.background, border: `1px solid ${surface.border}` }
-          : undefined
-      }
-    >
-      <div>
-        <div className="text-sm font-semibold text-dark-50">{t('subscription.autoRenewal')}</div>
-        <div className="mt-0.5 text-[11px] text-dark-400">
+    <div className="bento-card flex items-center justify-between gap-4 !p-5">
+      <div className="min-w-0">
+        <div className="text-lg font-bold leading-tight text-dark-100">
+          {t('subscription.autoRenewal')}
+        </div>
+        <div className="mt-1 text-[15px] leading-snug text-dark-300">
           {t('subscription.daysBeforeExpiry', { count: subscription.autopay_days_before })}
         </div>
       </div>
@@ -74,20 +73,8 @@ export function AutopayToggle({
         role="switch"
         aria-checked={subscription.autopay_enabled}
         aria-label={t('subscription.autopay', 'Auto-payment')}
-        className="relative h-7 w-[52px] rounded-full transition-colors duration-300"
-        style={{ background: subscription.autopay_enabled ? accentColor : offColor }}
-      >
-        {/* translateX (compositor) instead of left (layout-thrash).
-            Resting position pinned at left:3px; on toggles a 23px
-            slide on the GPU. */}
-        <span
-          className="absolute left-[3px] top-[3px] h-[22px] w-[22px] rounded-full bg-white transition-transform duration-300"
-          style={{
-            transform: subscription.autopay_enabled ? 'translateX(23px)' : 'translateX(0)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-          }}
-        />
-      </button>
+        className="rv-tog disabled:opacity-60"
+      />
     </div>
   );
 }

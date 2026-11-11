@@ -10091,6 +10091,29 @@
     "trial": "Trial",
     "refresh": "Refresh",
     "recentOps": "Recent activity",
-    "more": "More"
+    "more": "More",
+    "subp": {
+      "title": "Subscription",
+      "connect": "Connect",
+      "untilDate": "Until <b>{{date}}</b> · {{left}} left",
+      "ended": "Ended <b>{{date}}</b>",
+      "leftOf": "left of {{total}}",
+      "renewsOn": "renews {{date}}",
+      "canAddMore": "{{count}} more allowed",
+      "allTaken": "all slots taken",
+      "noLimit": "no limit",
+      "buyTraffic": "Buy more traffic",
+      "myDevices": "My devices",
+      "myDevicesHint": "Connected: {{count}} · remove extra ones",
+      "switchTariff": "Change plan",
+      "switchTariffHint": "Different traffic, devices and countries",
+      "copyLink": "Copy subscription link",
+      "copyLinkHint": "For manual setup",
+      "copied": "Copied",
+      "qr": "QR code",
+      "qrHint": "For a TV or a second phone",
+      "active": "Active",
+      "gb": "GB"
+    }
   }
 }

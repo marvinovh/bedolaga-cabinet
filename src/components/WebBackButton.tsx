@@ -21,10 +21,7 @@ export function WebBackButton({ to, replace, className }: WebBackButtonProps) {
     <Link
       to={to}
       replace={replace}
-      className={
-        className ||
-        'flex h-10 w-10 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 transition-colors hover:border-dark-600'
-      }
+      className={className || 'rv-ibtn transition-colors hover:border-dark-600'}
     >
       <BackIcon />
     </Link>

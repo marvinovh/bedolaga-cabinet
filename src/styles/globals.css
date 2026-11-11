@@ -2823,3 +2823,101 @@ main h1.text-3xl {
 .rv-on-accent-tools > div > button > svg {
   color: #111 !important;
 }
+
+/* Строка-действие в списке (макет «Подписка»: «Докупить трафик», «Мои устройства»…) */
+@layer components {
+  .rv-action {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 14px 4px;
+    min-height: 64px;
+    border-bottom: 2px solid var(--rv-bd);
+    color: var(--rv-tx);
+    transition: opacity 0.15s;
+  }
+  .light .rv-action {
+    border-bottom-color: #e2e0d6;
+  }
+  .rv-action:hover {
+    opacity: 0.85;
+  }
+  .rv-actions > :last-child .rv-action,
+  .rv-actions > .rv-action:last-child {
+    border-bottom: 0;
+  }
+  .rv-action-t {
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.25;
+    color: var(--rv-tx);
+  }
+  .rv-action .text-sm {
+    font-size: 13px;
+    color: var(--rv-tx3);
+  }
+  .rv-panel {
+    background: var(--rv-s2);
+    border: 2px solid var(--rv-bd);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 8px 0;
+  }
+  /* Тоггл макета */
+  .rv-tog {
+    width: 52px;
+    height: 32px;
+    border-radius: 99px;
+    background: var(--rv-s3);
+    border: 2px solid var(--rv-bd2);
+    position: relative;
+    flex: none;
+    transition:
+      background-color 0.2s,
+      border-color 0.2s;
+  }
+  .rv-tog::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--rv-tx3);
+    transition:
+      transform 0.2s,
+      background-color 0.2s;
+  }
+  .rv-tog[aria-checked="true"] {
+    background: var(--rv-acc);
+    border-color: var(--rv-acc);
+  }
+  .rv-tog[aria-checked="true"]::after {
+    transform: translateX(20px);
+    background: #111;
+  }
+  .light .rv-tog {
+    background: #fff;
+    border-color: #111;
+  }
+  .light .rv-tog::after {
+    background: #111;
+  }
+  .light .rv-tog[aria-checked="true"] {
+    background: var(--rv-acc);
+  }
+  .rv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 10px;
+    border-radius: 99px;
+    background: var(--rv-s3);
+    color: var(--rv-tx);
+    white-space: nowrap;
+  }
+}

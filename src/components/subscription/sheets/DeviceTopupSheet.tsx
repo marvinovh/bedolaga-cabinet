@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from '../../../hooks/useCurrency';
+import { RvPlusIcon } from '@/components/rv';
 import { deviceUnavailableText } from '../deviceReasons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { subscriptionApi } from '../../../api/subscription';
@@ -38,7 +39,7 @@ export function DeviceTopupSheet({
   devicesToAdd,
   onDevicesToAddChange,
   purchaseOptions,
-  isDark,
+  isDark: _isDark,
 }: DeviceTopupSheetProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -72,15 +73,13 @@ export function DeviceTopupSheet({
 
   if (!open) {
     return (
-      <button
-        onClick={onOpen}
-        className={`w-full rounded-xl border p-4 text-left transition-colors ${isDark ? 'border-dark-700/50 bg-dark-800/50 hover:border-dark-600' : 'border-champagne-300/60 bg-champagne-200/40 hover:border-champagne-400'}`}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="font-medium text-dark-100">
-              {t('subscription.additionalOptions.buyDevices')}
-            </div>
+      <button onClick={onOpen} className="rv-action">
+        <div className="flex items-center gap-4">
+          <span className="rv-ic">
+            <RvPlusIcon />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="rv-action-t">{t('subscription.additionalOptions.buyDevices')}</div>
             <div className="mt-1 text-sm text-dark-400">
               {t('subscription.additionalOptions.currentDeviceLimit', {
                 count: subscription.device_limit,
@@ -94,9 +93,7 @@ export function DeviceTopupSheet({
   }
 
   return (
-    <div
-      className={`rounded-xl border p-5 ${isDark ? 'border-dark-700/50 bg-dark-800/50' : 'border-champagne-300/60 bg-champagne-200/40'}`}
-    >
+    <div className="rv-panel">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-medium text-dark-100">{t('subscription.buyDevices')}</h3>
         <button

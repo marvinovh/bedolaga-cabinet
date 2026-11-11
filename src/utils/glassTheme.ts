@@ -9,18 +9,17 @@ const TEXT_VAR = '--color-dark-50';
 export function getGlassColors(isDark: boolean) {
   return {
     // Card container
-    cardBg: isDark
-      ? 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)'
-      : 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%)',
-    cardBorder: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.1)',
+    // RichVPN: карточка #1B1B1B с рамкой #2A2A2A (светлая — белая с чернильной рамкой)
+    cardBg: isDark ? '#1B1B1B' : '#FFFFFF',
+    cardBorder: isDark ? '#2A2A2A' : '#111111',
 
     // Inner sections (cards within cards)
-    innerBg: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-    innerBorder: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)',
+    innerBg: isDark ? '#222222' : '#F8F7F2',
+    innerBorder: isDark ? '#2A2A2A' : '#E2E0D6',
 
     // Hover states
-    hoverBg: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-    hoverBorder: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)',
+    hoverBg: isDark ? '#2A2A2A' : '#E9E7DE',
+    hoverBorder: isDark ? '#3D3D3A' : '#111111',
 
     // Text — из палитры оператора, а не зашитые белый/чёрный: иначе кастомный
     // цвет текста не доходил до дашборда и карточек подписок. Годится только
@@ -38,17 +37,17 @@ export function getGlassColors(isDark: boolean) {
     textGhost: `rgba(var(${TEXT_VAR}), ${isDark ? 0.08 : 0.06})`,
 
     // Progress bar track
-    trackBg: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-    trackBorder: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)',
+    trackBg: isDark ? '#2A2A2A' : '#E2E0D6',
+    trackBorder: isDark ? '#2A2A2A' : '#111111',
 
     // Code blocks
-    codeBg: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)',
-    codeBorder: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)',
+    codeBg: isDark ? '#222222' : '#F8F7F2',
+    codeBorder: isDark ? '#3D3D3A' : '#111111',
 
     // Glow effects — reduced in light mode
     glowAlpha: isDark ? '15' : '08',
 
     // Shadows for light mode depth
-    shadow: isDark ? 'none' : '0 2px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03)',
+    shadow: 'none',
   };
 }

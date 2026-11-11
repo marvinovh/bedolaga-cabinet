@@ -108,11 +108,11 @@ export function ReissueLinkButton({ subscription, subscriptionId }: ReissueLinkB
         type="button"
         onClick={handleRevoke}
         disabled={revokeMutation.isPending || cooldown > 0}
-        className="w-full rounded-xl border border-warning-500/30 bg-warning-500/10 p-4 text-left transition-colors hover:bg-warning-500/20 disabled:opacity-50"
+        className="w-full text-left disabled:opacity-50"
       >
         <div className="flex items-center justify-between">
           <div>
-            <div className="font-medium text-warning-400">{t('subscription.revoke.button')}</div>
+            <div className="rv-action-t">{t('subscription.revoke.button')}</div>
             <div className="mt-1 text-sm text-dark-400">
               {cooldown > 0
                 ? t('subscription.revoke.cooldown', {

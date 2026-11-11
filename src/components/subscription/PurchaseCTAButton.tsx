@@ -138,3 +138,44 @@ export default function PurchaseCTAButton({
     </Link>
   );
 }
+
+/**
+ * Куда ведёт главная кнопка подписки и как она называется — та же логика, что
+ * у PurchaseCTAButton, для героя экрана подписки (макет «04 · Подписка»).
+ */
+export function purchaseCtaTarget(
+  subscription: Subscription | null,
+  t: (key: string, fallback?: string) => string,
+  { isMultiTariff = false, isTariffsMode = false } = {},
+): { to: string; label: string } | null {
+  const isExpired =
+    !subscription ||
+    (!subscription.is_active && !subscription.is_trial && !subscription.is_limited);
+  const isTrial = subscription?.is_trial;
+  const isDaily = subscription?.is_daily;
+  const requiresTariff = needsTariff(subscription);
+
+  if (isTariffsMode && subscription && canOpenTariffSwitch(subscription)) {
+    return isDaily
+      ? null
+      : { to: `/subscriptions/${subscription.id}/renew`, label: t('subscription.extend') };
+  }
+  if (isMultiTariff && isDaily && !isExpired) return null;
+
+  const label = requiresTariff
+    ? t('subscription.cta.moveToTariff')
+    : isExpired
+      ? t('subscription.getSubscription')
+      : isTrial
+        ? t('subscription.trialUpgrade.title')
+        : t('subscription.extend');
+  const to =
+    requiresTariff && subscription?.id
+      ? tariffSelectionPath(subscription.id)
+      : isTrial
+        ? '/subscription/purchase'
+        : isMultiTariff && subscription?.id
+          ? `/subscriptions/${subscription.id}/renew`
+          : '/subscription/purchase';
+  return { to, label };
+}
