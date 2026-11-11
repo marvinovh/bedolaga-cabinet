@@ -161,7 +161,7 @@ export function RewardSettings({
 
   return (
     <div className="bento-card">
-      <h2 className="text-lg font-semibold text-dark-100">{t('referral.rewardSettings.title')}</h2>
+      <h2 className="rv-d text-[30px] text-dark-100">{t('referral.rewardSettings.title')}</h2>
       <p className="mt-1 text-sm text-dark-400">{t('referral.rewardSettings.intro')}</p>
 
       {kindChoice && (
@@ -271,7 +271,7 @@ export function ProgrammeTerms({ terms }: { terms: ReferralTerms }) {
   return (
     <div className="bento-card">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-dark-100">{t('referral.terms.title')}</h2>
+        <h2 className="rv-d text-[30px] text-dark-100">{t('referral.terms.title')}</h2>
         {/* Правило режима — одной фразой над лестницей. Без неё список
               уровней в режиме «за приглашённых» читается как складывающиеся
               награды, а в цепочке — наоборот, как выбор одной из них. */}
@@ -550,7 +550,7 @@ export default function Referral() {
 
     return (
       <div className="bento-card">
-        <h2 className="mb-4 text-lg font-semibold text-dark-100">{t('referral.terms.title')}</h2>
+        <h2 className="rv-d mb-4 text-[30px] text-dark-100">{t('referral.terms.title')}</h2>
         <div className={`grid grid-cols-2 gap-4 ${gridCols}`}>
           <StatCard
             label={t('referral.terms.commission')}
@@ -666,136 +666,144 @@ export default function Referral() {
   const showRejectedSection = partnerStatusValue === 'rejected';
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-dark-50 sm:text-3xl">{t('referral.title')}</h1>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-        <div className="col-span-2 md:col-span-1">
-          <StatCard
-            label={t('referral.stats.totalReferrals')}
-            value={info?.total_referrals || 0}
-            icon={<UsersIcon className="h-5 w-5" />}
-            tone="neutral"
-            subValue={`${info?.active_referrals || 0} ${t('referral.stats.activeReferrals').toLowerCase()}`}
-          />
+    <div className="space-y-3 lg:space-y-5">
+      {/* Лаймовая шапка партнёрки (макет «09 · Друзья») */}
+      <section className="rv-card-acc rv-topo -mx-4 -mt-4 px-4 pb-0 pt-5 lg:mx-0 lg:mt-0 lg:rounded-[22px] lg:px-8 lg:pt-8">
+        <div className="flex justify-end">
+          <span className="rv-badge">{t('rv.ref.badge')}</span>
         </div>
-        <StatCard
-          label={t('referral.stats.totalEarnings')}
-          value={formatPositive(info?.total_earnings_rubles || 0)}
-          icon={<BanknotesIcon className="h-5 w-5" />}
-          tone="success"
-          subValue={
-            info?.total_earnings_days
-              ? t('referral.stats.earnedDays', { count: info.total_earnings_days })
-              : undefined
-          }
-        />
-        <StatCard
-          label={
-            // В режиме «за приглашённых» глубины сети не существует — цепочка не
-            // обходится вовсе. Показывать её там значит обещать выплаты за
-            // приглашённых чужими приглашёнными, которых в этом режиме не бывает.
-            isTiersScheme
-              ? t('referral.stats.yourLevel')
-              : isLevelsScheme
-                ? t('referral.stats.chainDepth')
-                : t('referral.stats.commissionRate')
-          }
-          value={
-            isTiersScheme
-              ? (terms?.tier_current_level ?? null) === null
-                ? t('referral.stats.levelNotReached')
-                : String(terms?.tier_current_level)
-              : isLevelsScheme
-                ? t('referral.stats.levelsValue', { count: terms?.max_level_depth || 1 })
-                : `${info?.commission_percent || 0}%`
-          }
-          icon={<PercentIcon className="h-5 w-5" />}
-          tone="accent"
-        />
-      </div>
-
-      {/* Referral Links */}
-      <div className="bento-card">
-        <h2 className="mb-4 text-lg font-semibold text-dark-100">{t('referral.yourLink')}</h2>
-        <div className="space-y-3">
-          {/* Bot link */}
-          {botReferralLink && (
-            <div>
-              <div className="mb-1.5 flex items-center gap-2 text-sm font-medium text-dark-300">
-                <TelegramIcon className="h-4 w-4 text-accent-400" />
-                {t('referral.botLink')}
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
-                  type="text"
-                  readOnly
-                  value={botReferralLink}
-                  className="input min-w-0 flex-1 text-sm"
-                />
-                <button
-                  onClick={() => copyLink(botReferralLink, 'bot')}
-                  className={`btn-primary shrink-0 px-4 ${
-                    copiedLink === 'bot' ? 'bg-success-500 hover:bg-success-500' : ''
-                  }`}
-                >
-                  {copiedLink === 'bot' ? <CheckIcon /> : <CopyIcon />}
-                  <span className="ml-2">
-                    {copiedLink === 'bot' ? t('referral.copied') : t('referral.copyLink')}
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
-          {/* Cabinet link */}
-          <div>
-            <div className="mb-1.5 flex items-center gap-2 text-sm font-medium text-dark-300">
-              <LinkIcon className="h-4 w-4 text-accent-400" />
-              {t('referral.cabinetLink')}
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                type="text"
-                readOnly
-                value={referralLink}
-                className="input min-w-0 flex-1 text-sm"
-              />
-              {/* На телефоне кнопки делят ряд поровну: в своих размерах
-                  «Поделиться» вылезала за поле на 360. */}
-              <div className="grid grid-cols-2 gap-2 sm:flex">
-                <button
-                  onClick={() => copyLink(referralLink, 'cabinet')}
-                  disabled={!referralLink}
-                  className={`btn-primary min-w-0 shrink-0 px-4 ${
-                    copiedLink === 'cabinet' ? 'bg-success-500 hover:bg-success-500' : ''
-                  } ${!referralLink ? 'cursor-not-allowed opacity-50' : ''}`}
-                >
-                  {copiedLink === 'cabinet' ? <CheckIcon /> : <CopyIcon />}
-                  <span className="ml-2">
-                    {copiedLink === 'cabinet' ? t('referral.copied') : t('referral.copyLink')}
-                  </span>
-                </button>
-                <button
-                  onClick={shareLink}
-                  disabled={!referralLink}
-                  className={`btn-secondary flex min-w-0 shrink-0 items-center justify-center px-4 ${
-                    !referralLink ? 'cursor-not-allowed opacity-50' : ''
-                  }`}
-                >
-                  <ShareIcon className="h-4 w-4" />
-                  <span className="ml-2">{t('referral.shareButton')}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <p className="mt-3 text-sm text-dark-500">
+        <h1 className="rv-d mt-2 text-[52px] !text-[#111] lg:text-[72px]">
+          <span className="rv-pill rv-pill-ink inline-block">{t('rv.ref.title1')}</span>
+          <br />
+          {t('rv.ref.title2')}
+        </h1>
+        <p className="mt-3 max-w-xl text-base leading-snug">
           {isLevelsScheme
             ? t('referral.shareHintLevels')
             : t('referral.shareHint', { percent: info?.commission_percent || 0 })}
         </p>
-      </div>
+        <div className="mt-5 grid grid-cols-3 border-t-2 border-[#111]">
+          <div className="border-r-2 border-[#111] py-3 pr-3">
+            <div className="rv-num text-[34px]">
+              {isTiersScheme
+                ? (terms?.tier_current_level ?? '—')
+                : isLevelsScheme
+                  ? terms?.max_level_depth || 1
+                  : `${info?.commission_percent || 0}%`}
+            </div>
+            <div className="mt-1 text-xs">
+              {isTiersScheme
+                ? t('referral.stats.yourLevel')
+                : isLevelsScheme
+                  ? t('referral.stats.chainDepth')
+                  : t('rv.ref.yourPercent')}
+            </div>
+          </div>
+          <div className="border-r-2 border-[#111] px-3 py-3">
+            <div className="rv-num text-[34px]">{info?.total_referrals || 0}</div>
+            <div className="mt-1 text-xs">{t('rv.ref.friends')}</div>
+          </div>
+          <div className="py-3 pl-3">
+            <div className="rv-num text-[34px]">
+              {formatAmount(info?.total_earnings_rubles || 0, 0)}
+              <span className="rv-rub">{currencySymbol}</span>
+            </div>
+            <div className="mt-1 text-xs">{t('rv.ref.earned')}</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Пригласи друга */}
+      <section className="bento-card !p-5">
+        <h2 className="rv-d text-[30px] text-dark-100">{t('rv.ref.inviteTitle')}</h2>
+        <p className="mt-1.5 text-[15px] leading-snug text-dark-300">
+          {t('rv.ref.inviteText', { percent: info?.commission_percent || 0 })}
+        </p>
+        <button
+          type="button"
+          onClick={() =>
+            copyLink(botReferralLink || referralLink, botReferralLink ? 'bot' : 'cabinet')
+          }
+          disabled={!(botReferralLink || referralLink)}
+          className="mt-4 flex w-full items-center gap-3 rounded-2xl border-2 border-dashed border-accent-500 bg-[var(--rv-acc-bg)] p-3 pl-4 text-left"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs text-dark-400">
+              {copiedLink ? t('referral.copied') : t('rv.ref.tapToCopy')}
+            </span>
+            <span className="block truncate text-lg font-bold text-dark-100">
+              {(botReferralLink || referralLink || '').replace(/^https?:\/\//, '')}
+            </span>
+          </span>
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent-500 text-[#111]">
+            {copiedLink ? <CheckIcon /> : <CopyIcon />}
+          </span>
+        </button>
+        <div className="mt-4 grid grid-cols-4 gap-2">
+          {[
+            {
+              key: 'tg',
+              label: 'Telegram',
+              bg: '#2AABEE',
+              href: `https://t.me/share/url?url=${encodeURIComponent(botReferralLink || referralLink || '')}`,
+            },
+            {
+              key: 'wa',
+              label: 'WhatsApp',
+              bg: '#25D366',
+              href: `https://wa.me/?text=${encodeURIComponent(botReferralLink || referralLink || '')}`,
+            },
+            {
+              key: 'vk',
+              label: 'VK',
+              bg: '#0077FF',
+              href: `https://vk.com/share.php?url=${encodeURIComponent(botReferralLink || referralLink || '')}`,
+            },
+          ].map((x) => (
+            <a
+              key={x.key}
+              href={x.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-1.5 text-xs font-bold text-dark-200"
+            >
+              <span
+                className="grid h-[52px] w-[52px] place-items-center rounded-full text-white"
+                style={{ background: x.bg }}
+              >
+                {x.key === 'tg' ? (
+                  <TelegramIcon className="h-6 w-6" />
+                ) : x.key === 'vk' ? (
+                  'VK'
+                ) : (
+                  'WA'
+                )}
+              </span>
+              {x.label}
+            </a>
+          ))}
+          <button
+            type="button"
+            onClick={shareLink}
+            disabled={!(botReferralLink || referralLink)}
+            className="flex flex-col items-center gap-1.5 text-xs font-bold text-dark-200"
+          >
+            <span className="grid h-[52px] w-[52px] place-items-center rounded-full bg-dark-700 text-dark-100">
+              <ShareIcon className="h-5 w-5" />
+            </span>
+            {t('rv.ref.more')}
+          </button>
+        </div>
+        {botReferralLink && referralLink && (
+          <button
+            type="button"
+            onClick={() => copyLink(referralLink, 'cabinet')}
+            className="mt-4 w-full text-center text-sm text-dark-400 underline decoration-dotted"
+          >
+            {copiedLink === 'cabinet' ? t('referral.copied') : t('rv.ref.copyCabinet')}
+          </button>
+        )}
+      </section>
 
       {/* Program Terms */}
       {programTerms}
@@ -823,7 +831,7 @@ export default function Referral() {
 
       {/* Referrals List */}
       <div className="bento-card">
-        <h2 className="mb-4 text-lg font-semibold text-dark-100">{t('referral.yourReferrals')}</h2>
+        <h2 className="rv-d mb-4 text-[30px] text-dark-100">{t('referral.yourReferrals')}</h2>
         {referralList?.items && referralList.items.length > 0 ? (
           <div className="space-y-3">
             {referralList.items.map((ref) => (
@@ -861,9 +869,7 @@ export default function Referral() {
       {/* Earnings History */}
       {earnings?.items && earnings.items.length > 0 && (
         <div className="bento-card">
-          <h2 className="mb-4 text-lg font-semibold text-dark-100">
-            {t('referral.earningsHistory')}
-          </h2>
+          <h2 className="rv-d mb-4 text-[30px] text-dark-100">{t('referral.earningsHistory')}</h2>
           <div className="space-y-3">
             {earnings.items.map((earning) => (
               <div
@@ -904,7 +910,7 @@ export default function Referral() {
               <PartnerIcon className="h-8 w-8" />
             </div>
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-dark-100">
+              <h2 className="rv-d text-[30px] text-dark-100">
                 {t('referral.partner.becomePartner')}
               </h2>
               <p className="mt-1 text-sm text-dark-400">
@@ -935,7 +941,7 @@ export default function Referral() {
               <ClockIcon />
             </div>
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-dark-100">
+              <h2 className="rv-d text-[30px] text-dark-100">
                 {t('referral.partner.underReview')}
               </h2>
               <p className="mt-1 text-sm text-dark-400">{t('referral.partner.underReviewDesc')}</p>
@@ -962,7 +968,7 @@ export default function Referral() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-dark-100">
+                <h2 className="rv-d text-[30px] text-dark-100">
                   {t('referral.partner.partnerStatus')}
                 </h2>
                 <span className="badge-success">{t('referral.partner.active')}</span>
@@ -991,9 +997,7 @@ export default function Referral() {
             </div>
             {/* Ссылка в комментарии администратора распирала колонку — обрезался заголовок. */}
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-semibold text-dark-100">
-                {t('referral.partner.rejected')}
-              </h2>
+              <h2 className="rv-d text-[30px] text-dark-100">{t('referral.partner.rejected')}</h2>
               {partnerStatus?.latest_application?.admin_comment && (
                 <p className="mt-1 text-sm text-dark-300 [overflow-wrap:anywhere]">
                   {partnerStatus.latest_application.admin_comment}
@@ -1021,7 +1025,7 @@ export default function Referral() {
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-500/10 text-accent-400">
                 <LinkIcon />
               </div>
-              <h2 className="text-lg font-semibold text-dark-100">
+              <h2 className="rv-d text-[30px] text-dark-100">
                 {t('referral.partner.yourCampaigns')}
               </h2>
             </div>
@@ -1043,9 +1047,7 @@ export default function Referral() {
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-500/10 text-accent-400">
                   <WalletIcon className="h-8 w-8" />
                 </div>
-                <h2 className="text-lg font-semibold text-dark-100">
-                  {t('referral.withdrawal.title')}
-                </h2>
+                <h2 className="rv-d text-[30px] text-dark-100">{t('referral.withdrawal.title')}</h2>
               </div>
 
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -1112,7 +1114,7 @@ export default function Referral() {
 
           {/* Withdrawal History */}
           <div className="bento-card">
-            <h2 className="mb-4 text-lg font-semibold text-dark-100">
+            <h2 className="rv-d mb-4 text-[30px] text-dark-100">
               {t('referral.withdrawal.history')}
             </h2>
             {withdrawalHistory?.items && withdrawalHistory.items.length > 0 ? (

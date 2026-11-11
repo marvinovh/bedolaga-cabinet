@@ -10191,6 +10191,19 @@
       "title": "Sign in",
       "subtitle": "No passwords — via Telegram or an account.",
       "fastest": "The fastest way — one tap"
+    },
+    "ref": {
+      "badge": "Partner program",
+      "title1": "Earn",
+      "title2": "with us",
+      "yourPercent": "your percent",
+      "friends": "friends",
+      "earned": "earned",
+      "inviteTitle": "Invite a friend",
+      "inviteText": "Send the link. When your friend pays, you get {{percent}}% of it.",
+      "tapToCopy": "Tap to copy",
+      "more": "More",
+      "copyCabinet": "Copy cabinet link"
     }
   }
 }
