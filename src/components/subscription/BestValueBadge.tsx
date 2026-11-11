@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { StarIcon } from '@/components/icons';
 
 /**
  * Отметка периода, выбранного оператором как самый выгодный.
@@ -11,18 +10,11 @@ import { StarIcon } from '@/components/icons';
 export function BestValueBadge({ className }: { className?: string }) {
   const { t } = useTranslation();
 
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full bg-urgent-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-urgent-400 ${className ?? ''}`}
-    >
-      <StarIcon filled className="h-3 w-3" />
-      {t('subscription.bestValue')}
-    </span>
-  );
+  return <span className={`rv-badge ${className ?? ''}`}>{t('subscription.bestValue')}</span>;
 }
 
 /** Цвет рамки выделенного периода — тот же токен, что и у отметки. */
-export const BEST_VALUE_BORDER = 'rgb(var(--color-urgent-400))';
+export const BEST_VALUE_BORDER = 'rgb(var(--color-accent-500))';
 
 /**
  * Рамка отмеченного варианта — одна на все витрины: золотой контур снаружи,
@@ -32,7 +24,6 @@ export const BEST_VALUE_BORDER = 'rgb(var(--color-urgent-400))';
  * BEST_VALUE_BORDER — там стили карточки инлайновые.
  */
 export function bestValueFrame(selected: boolean): string {
-  return selected
-    ? 'border-2 border-urgent-400 ring-2 ring-inset ring-accent-500'
-    : 'border-2 border-urgent-400';
+  // RichVPN: «хит» — лаймовая карточка (как в макете «Выбор тарифа»).
+  return selected ? 'rv-card-acc rv-shadow' : 'rv-card-acc';
 }

@@ -223,26 +223,31 @@ export default function SubscriptionPurchase() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <WebBackButton
           to={subscriptionId ? `/subscriptions/${subscriptionId}` : '/subscriptions'}
         />
-        <h1 className="text-2xl font-bold text-dark-50 sm:text-3xl">
-          {needsTariff(subscription)
-            ? t('subscription.cta.moveToTariff')
-            : isTariffsMode && subscriptionId && canOpenTariffSwitch(subscription)
-              ? t('subscription.switchTariff.title')
-              : isMultiTariff && !subscriptionId
-                ? t('subscription.newTariff', 'Новый тариф')
-                : !isMultiTariff && subscription?.is_daily && !subscription?.is_trial
-                  ? t('subscription.switchTariff.title')
-                  : subscription && !subscription.is_trial
-                    ? t('subscription.extend')
-                    : t('subscription.getSubscription')}
-        </h1>
+        <div className="min-w-0">
+          <p className="text-[13px] font-medium text-dark-400">
+            {needsTariff(subscription)
+              ? t('subscription.cta.moveToTariff')
+              : isTariffsMode && subscriptionId && canOpenTariffSwitch(subscription)
+                ? t('subscription.switchTariff.title')
+                : isMultiTariff && !subscriptionId
+                  ? t('subscription.newTariff', 'Новый тариф')
+                  : !isMultiTariff && subscription?.is_daily && !subscription?.is_trial
+                    ? t('subscription.switchTariff.title')
+                    : subscription && !subscription.is_trial
+                      ? t('subscription.extend')
+                      : t('subscription.getSubscription')}
+          </p>
+        </div>
       </div>
+      <h1 className="rv-title !text-[48px] lg:!text-[64px]">
+        {t('rv.pick.a')} <span className="rv-pill">{t('rv.pick.b')}</span> {t('rv.pick.c')}
+      </h1>
 
       {/* Tariffs Section */}
       {isTariffsMode && tariffs.length > 0 && (

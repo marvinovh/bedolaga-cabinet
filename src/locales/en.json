@@ -10105,6 +10105,11 @@
       "qrHint": "For a TV or a second phone",
       "active": "Active",
       "gb": "GB"
+    },
+    "pick": {
+      "a": "Pick",
+      "b": "your",
+      "c": "plan"
     }
   }
 }

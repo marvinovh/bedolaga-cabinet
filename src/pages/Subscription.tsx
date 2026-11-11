@@ -49,6 +49,7 @@ export default function Subscription() {
   const haptic = useHaptic();
   const [copied, setCopied] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const [showDevices, setShowDevices] = useState(false);
 
   // Device/traffic topup state
   const [showDeviceTopup, setShowDeviceTopup] = useState(false);
@@ -440,9 +441,17 @@ export default function Subscription() {
                   <ManagedTrafficSummary subscription={subscription} refreshed={trafficData} />
                 </section>
 
-                <a
-                  href="#devices"
-                  className="bento-card bento-card-hover flex flex-col !p-4 sm:!p-5"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDevices(true);
+                    setTimeout(
+                      () =>
+                        document.getElementById('devices')?.scrollIntoView({ behavior: 'smooth' }),
+                      50,
+                    );
+                  }}
+                  className="bento-card bento-card-hover flex flex-col !p-4 text-left sm:!p-5"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[15px] font-bold text-dark-100">{t('rv.devices')}</span>
@@ -477,7 +486,7 @@ export default function Subscription() {
                         ? t('rv.subp.allTaken')
                         : t('rv.subp.canAddMore', { count: freeSlots })}
                   </p>
-                </a>
+                </button>
               </div>
 
               {/* ─── Страны ─── */}
@@ -561,7 +570,13 @@ export default function Subscription() {
                     isDark={isDark}
                   />
                 )}
-                <a href="#devices" className="rv-action">
+                <button
+                  type="button"
+                  id="devices"
+                  onClick={() => setShowDevices((v) => !v)}
+                  aria-expanded={showDevices}
+                  className="rv-action scroll-mt-24"
+                >
                   <div className="flex items-center gap-4">
                     <span className="rv-ic">
                       <RvPhoneIcon />
@@ -572,9 +587,16 @@ export default function Subscription() {
                         {t('rv.subp.myDevicesHint', { count: connectedDevices })}
                       </div>
                     </div>
-                    <ChevronRightIcon className="text-dark-400" />
+                    <ChevronRightIcon
+                      className={`text-dark-400 transition-transform ${showDevices ? 'rotate-90' : ''}`}
+                    />
                   </div>
-                </a>
+                </button>
+                {showDevices && (
+                  <div className="rv-panel">
+                    <DevicesPanel subscription={subscription} subscriptionId={subscriptionId} />
+                  </div>
+                )}
                 {showsAddonOptions(subscription) && (
                   <>
                     <DeviceTopupSheet
@@ -704,13 +726,6 @@ export default function Subscription() {
             />
           </div>
         )}
-
-      {/* My Devices Section */}
-      {subscription && (
-        <div id="devices" className="bento-card scroll-mt-24 !p-5">
-          <DevicesPanel subscription={subscription} subscriptionId={subscriptionId} />
-        </div>
-      )}
     </div>
   );
 }

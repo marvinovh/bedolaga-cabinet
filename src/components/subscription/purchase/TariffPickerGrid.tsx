@@ -150,9 +150,9 @@ export function TariffPickerGrid({
             return (
               <div
                 key={tariff.id}
-                className={`bento-card-hover p-5 text-left transition-all ${
+                className={`bento-card bento-card-hover !p-5 text-left transition-all ${
                   isCurrentTariff
-                    ? 'bento-card-glow border-accent-500'
+                    ? '!border-accent-500'
                     : tariff.is_highlighted
                       ? // Текущий тариф важнее подсказки: две «активные» рамки
                         // сразу не дают понять, что именно сейчас куплено.
@@ -163,7 +163,7 @@ export function TariffPickerGrid({
                 {tariff.is_highlighted && !isCurrentTariff && <BestValueBadge className="mb-2" />}
                 <div className="mb-3 flex items-start justify-between">
                   <div>
-                    <div className="text-lg font-semibold text-dark-100">{tariff.name}</div>
+                    <div className="rv-d text-[32px] text-dark-100">{tariff.name}</div>
                     {tariff.description && (
                       <div className="mt-1 whitespace-pre-line text-sm text-dark-400">
                         {tariff.description}
@@ -199,13 +199,13 @@ export function TariffPickerGrid({
                   )}
                 </div>
                 {/* Price info */}
-                <div className="mt-3 border-t border-dark-700/50 pt-3 text-sm text-dark-400">
+                <div className="mt-4 border-t-2 border-dark-700 pt-3 text-sm text-dark-400">
                   {(() => {
                     const promoDaily = dailyPriceQuote(tariff, applyPromoDiscount);
                     if (promoDaily) {
                       return (
                         <span className="flex items-center gap-2">
-                          <span className="font-medium text-accent-400">
+                          <span className="rv-num text-[40px] text-dark-100">
                             {formatPrice(promoDaily.price)}
                           </span>
                           {promoDaily.original && promoDaily.original > promoDaily.price && (
@@ -237,7 +237,7 @@ export function TariffPickerGrid({
                       return (
                         <span className="flex flex-wrap items-center gap-2">
                           <span>{t('subscription.from')}</span>
-                          <span className="font-medium text-accent-400">
+                          <span className="rv-num text-[40px] text-dark-100">
                             {formatPrice(promoPeriod.price)}
                           </span>
                           {promoPeriod.original && promoPeriod.original > promoPeriod.price && (

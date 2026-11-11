@@ -2921,3 +2921,29 @@ main h1.text-3xl {
     white-space: nowrap;
   }
 }
+
+/* Содержимое лаймовой карточки — чернилами, что бы ни задали утилиты */
+.rv-card-acc :is([class*="text-dark-"], [class*="text-accent-"], [class*="text-success-"]) {
+  color: #111 !important;
+}
+.rv-card-acc :is([class*="border-dark-"]) {
+  border-color: rgba(17, 17, 17, 0.35) !important;
+}
+.rv-card-acc .rv-badge {
+  background: #111;
+  color: var(--rv-acc);
+}
+.rv-card-acc .btn-primary {
+  background: #111 !important;
+  color: var(--rv-acc) !important;
+  border-color: #111 !important;
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.25) !important;
+}
+.rv-card-acc .btn-secondary {
+  color: #111 !important;
+  border-color: #111 !important;
+}
+.rv-card-acc .badge-success {
+  background: #111;
+  color: var(--rv-acc);
+}
