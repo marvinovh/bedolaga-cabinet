@@ -10,9 +10,12 @@ import type {
 } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { CardsBlock, TimelineBlock, AccordionBlock, MinimalBlock, BlockButtons } from './blocks';
+import { RvStepsBlock } from './blocks/RvStepsBlock';
 import type { BlockRendererProps, RenderBlock } from './blocks';
 import TvQuickConnect from './TvQuickConnect';
-import { BackIcon, BookOpenIcon, ChevronIcon, QrCodeIcon } from '@/components/icons';
+import { BackIcon, BookOpenIcon, QrCodeIcon } from '@/components/icons';
+import { QRCodeSVG } from 'qrcode.react';
+import { Link } from 'react-router';
 
 const platformOrder = ['ios', 'android', 'windows', 'macos', 'linux', 'androidTV', 'appleTV'];
 
@@ -27,12 +30,17 @@ function detectPlatform(): string | null {
   return null;
 }
 
+// RichVPN: все стили конфига рисуются шагами макета «03 · Подключение».
 const RENDERERS: Record<string, React.ComponentType<BlockRendererProps>> = {
-  cards: CardsBlock,
-  timeline: TimelineBlock,
-  accordion: AccordionBlock,
-  minimal: MinimalBlock,
+  cards: RvStepsBlock,
+  timeline: RvStepsBlock,
+  accordion: RvStepsBlock,
+  minimal: RvStepsBlock,
 };
+void CardsBlock;
+void TimelineBlock;
+void AccordionBlock;
+void MinimalBlock;
 
 /** TV quick-connect is a Happ-only feature (check.happ.su/sendtv) — show it only
  *  for the Happ app, detected by its happ:// deep-link scheme (name as fallback). */
@@ -191,12 +199,9 @@ export default function InstallationGuide({
     [appConfig.platforms, appConfig.platformNames, getLocalizedText],
   );
 
-  // Platform SVG icon for dropdown
-  const currentPlatformSvg = getSvgHtml(currentPlatformData?.svgIconKey);
-
   // Block renderer
   const blockType = appConfig.uiConfig?.installationGuidesBlockType || 'cards';
-  const Renderer = RENDERERS[blockType] || CardsBlock;
+  const Renderer = RENDERERS[blockType] || RvStepsBlock;
 
   // For the Happ TV app (Android TV / Apple TV), inject the TV connect widget as
   // customNode so it renders THROUGH the active block style (cards/timeline/
@@ -223,68 +228,60 @@ export default function InstallationGuide({
           <button
             onClick={onGoBack}
             aria-label={t('common.back', 'Back')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 transition-colors hover:border-dark-600"
+            className="rv-ibtn transition-colors hover:border-dark-600"
           >
             <BackIcon className="h-6 w-6" />
           </button>
         )}
-        <h2 className="min-w-0 flex-1 text-lg font-bold text-dark-100">
+        <h2 className="rv-d min-w-0 flex-1 text-[30px] text-dark-100">
           {getBaseTranslation('installationGuideHeader', 'subscription.connection.title')}
         </h2>
         {appConfig.subscriptionUrl && onOpenQR && (
           <button
             onClick={() => onOpenQR()}
             aria-label={t('subscription.connection.openQr', 'Open QR code')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 text-dark-200 transition-colors hover:border-dark-600"
+            className="rv-ibtn transition-colors hover:border-dark-600"
           >
             <QrCodeIcon className="h-5 w-5" />
           </button>
         )}
-        {availablePlatforms.length > 1 && (
-          <div className="relative flex w-full items-center sm:w-auto sm:max-w-[45%]">
-            {currentPlatformSvg && (
-              <div
-                className="pointer-events-none absolute left-3 z-10 h-5 w-5 text-dark-400 [&>svg]:h-full [&>svg]:w-full"
-                dangerouslySetInnerHTML={{ __html: currentPlatformSvg }}
-              />
-            )}
-            <select
-              value={currentPlatformKey || ''}
-              onChange={(e) => {
-                const newPlatform = e.target.value;
-                setActivePlatformKey(newPlatform);
-                const data = appConfig.platforms[newPlatform] as RemnawavePlatformData | undefined;
-                if (data?.apps?.length) {
-                  // Keep the user's current app (by name) if it also exists on the
-                  // new platform; only fall back to featured/first otherwise.
-                  const app =
-                    data.apps.find((a) => a.name === selectedApp?.name) ||
-                    data.apps.find((a) => a.featured) ||
-                    data.apps[0];
-                  if (app) setSelectedApp(app);
-                }
-              }}
-              className={`w-full min-w-0 appearance-none truncate rounded-xl border py-2 pr-8 text-sm font-medium outline-none transition-colors ${
-                isLight
-                  ? 'border-dark-700/60 bg-white/80 text-dark-200 shadow-sm hover:border-dark-600'
-                  : 'border-dark-700 bg-dark-800 text-dark-200 hover:border-dark-600'
-              } ${currentPlatformSvg ? 'pl-10' : 'pl-4'}`}
-            >
-              {availablePlatforms.map((p) => (
-                <option key={p} value={p}>
-                  {getPlatformDisplayName(p)}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute right-2.5 text-dark-400">
-              <ChevronIcon className="h-4 w-4" />
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* Платформа — чипами (макет: «Куда подключаем?») */}
+      {availablePlatforms.length > 1 && (
+        <div>
+          <p className="mb-2.5 text-base font-bold text-dark-100">{t('rv.connect.where')}</p>
+          <div className="flex flex-wrap gap-2">
+            {availablePlatforms.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => {
+                  setActivePlatformKey(p);
+                  const data = appConfig.platforms[p] as RemnawavePlatformData | undefined;
+                  if (data?.apps?.length) {
+                    const app =
+                      data.apps.find((a) => a.name === selectedApp?.name) ||
+                      data.apps.find((a) => a.featured) ||
+                      data.apps[0];
+                    if (app) setSelectedApp(app);
+                  }
+                }}
+                className={`min-h-[44px] rounded-[12px] border-2 px-4 text-[15px] font-bold transition-colors ${
+                  p === currentPlatformKey
+                    ? 'border-accent-500 bg-accent-500 text-[#111]'
+                    : 'border-dark-600 bg-transparent text-dark-100 hover:border-dark-400'
+                }`}
+              >
+                {getPlatformDisplayName(p)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* App chips */}
-      {currentPlatformApps.length > 0 && (
+      {currentPlatformApps.length > 1 && (
         <div className="flex flex-wrap gap-2">
           {currentPlatformApps.map((app, idx) => {
             const isSelected = selectedApp?.name === app.name;
@@ -293,14 +290,10 @@ export default function InstallationGuide({
               <button
                 key={app.name + idx}
                 onClick={() => setSelectedApp(app)}
-                className={`relative flex min-w-[calc(50%-0.25rem)] items-center gap-2 overflow-hidden rounded-xl px-4 py-2 text-sm font-medium transition-all active:scale-[0.97] ${
+                className={`relative flex min-h-[44px] min-w-[calc(50%-0.25rem)] items-center gap-2 overflow-hidden rounded-[12px] border-2 px-4 text-[15px] font-bold transition-colors ${
                   isSelected
-                    ? isLight
-                      ? 'bg-accent-500/15 text-accent-600 ring-1 ring-accent-500/40'
-                      : 'bg-accent-500/15 text-accent-400 ring-1 ring-accent-500/40'
-                    : isLight
-                      ? 'border border-dark-700/60 bg-white/80 text-dark-200 shadow-sm hover:border-dark-600/50 hover:bg-white'
-                      : 'border border-dark-700/50 bg-dark-800/80 text-dark-200 hover:border-dark-600/50 hover:bg-dark-700/80'
+                    ? 'border-accent-500 bg-[var(--rv-acc-bg)] text-dark-100'
+                    : 'border-dark-700 bg-dark-900 text-dark-200 hover:border-dark-600'
                 }`}
               >
                 {app.featured && <span className="h-2 w-2 shrink-0 rounded-full bg-warning-400" />}
@@ -343,6 +336,26 @@ export default function InstallationGuide({
           renderBlockButtons={renderBlockButtons}
         />
       )}
+      {/* Второе устройство по QR + помощь (макет «03 · Подключение») */}
+      {appConfig.subscriptionUrl && !appConfig.hideLink && (
+        <section className="bento-card flex items-center gap-4 !p-5">
+          <div className="shrink-0 rounded-xl bg-white p-2">
+            <QRCodeSVG value={appConfig.subscriptionUrl} size={132} level="M" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-base font-bold leading-tight text-dark-100">
+              {t('rv.connect.qrTitle')}
+            </p>
+            <p className="mt-1.5 text-sm leading-snug text-dark-400">{t('rv.connect.qrText')}</p>
+          </div>
+        </section>
+      )}
+      <p className="flex items-center justify-center gap-2 text-sm text-dark-300">
+        {t('rv.connect.stuck')}{' '}
+        <Link to="/support" className="link">
+          {t('rv.connect.stuckLink')}
+        </Link>
+      </p>
     </div>
   );
 }

@@ -10245,6 +10245,15 @@
       "disconnect": "Remove",
       "needMore": "Need more than {{count}} devices?",
       "needMoreHint": "Add a slot or pick a bigger plan"
+    },
+    "connect": {
+      "step": "step {{n}} of {{total}}",
+      "next": "Done — next",
+      "where": "What are you connecting?",
+      "qrTitle": "TV or another phone?",
+      "qrText": "Open the app on it and point the camera at this code.",
+      "stuck": "Stuck?",
+      "stuckLink": "Write to us — we will guide you"
     }
   }
 }
