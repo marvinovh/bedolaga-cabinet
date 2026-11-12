@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { subscriptionApi } from '@/api/subscription';
-import { CheckIcon, PencilIcon, PhoneIcon, TrashIcon, XIcon } from '@/components/icons';
+import { CheckIcon, PencilIcon, PhoneIcon, XIcon } from '@/components/icons';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
 import { DEVICE_ALIAS_MAX_LENGTH } from '@/constants/devices';
 import { useHaptic } from '@/platform';
@@ -79,9 +79,7 @@ export function DevicesPanel({ subscription, subscriptionId }: DevicesPanelProps
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-bold tracking-tight text-dark-50">
-          {t('subscription.myDevices')}
-        </h2>
+        <h2 className="text-base font-bold text-dark-100">{t('subscription.myDevices')}</h2>
         {devicesData && devicesData.devices.length > 0 && (
           <button
             onClick={async () => {
@@ -97,8 +95,7 @@ export function DevicesPanel({ subscription, subscriptionId }: DevicesPanelProps
               if (confirmed) deleteAllDevicesMutation.mutate();
             }}
             disabled={deleteAllDevicesMutation.isPending}
-            className="text-[11px] font-medium transition-colors"
-            style={{ color: 'rgb(var(--color-critical-500))' }}
+            className="text-sm font-bold text-[var(--rv-bad)] transition-opacity hover:opacity-80"
           >
             {t('subscription.deleteAllDevices')}
           </button>
@@ -110,33 +107,18 @@ export function DevicesPanel({ subscription, subscriptionId }: DevicesPanelProps
           <Skeleton variant="card" count={3} className="h-16" />
         </SkeletonGroup>
       ) : devicesData && devicesData.devices.length > 0 ? (
-        <div className="space-y-2">
-          <div className="mb-2 font-mono text-[11px] text-dark-400">
-            {devicesData.device_limit === 0
-              ? `${devicesData.total} · ∞`
-              : `${devicesData.total} / ${t('subscription.devices', { count: devicesData.device_limit })}`}
-          </div>
+        <div>
           {devicesData.devices.map((device) => {
             const isEditing = editingDeviceHwid === device.hwid;
             // Display priority: user alias → device model → platform.
             const displayName = device.local_name?.trim() || device.device_model || device.platform;
 
             return (
-              <div
-                key={device.hwid}
-                className="flex items-center justify-between rounded-[12px] p-3.5"
-                style={{
-                  background: g.innerBg,
-                  border: `1px solid ${g.innerBorder}`,
-                }}
-              >
+              <div key={device.hwid} className="rv-row !px-0">
                 <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <div
-                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px]"
-                    style={{ background: g.trackBg, color: g.textSecondary }}
-                  >
-                    <PhoneIcon className="h-4 w-4" />
-                  </div>
+                  <span className="rv-ic">
+                    <PhoneIcon className="h-5 w-5" />
+                  </span>
                   <div className="min-w-0 flex-1">
                     {isEditing ? (
                       <input
@@ -167,15 +149,17 @@ export function DevicesPanel({ subscription, subscriptionId }: DevicesPanelProps
                         }}
                       />
                     ) : (
-                      <div className="truncate text-sm font-semibold text-dark-50">
+                      <div className="truncate text-base font-bold text-dark-100">
                         {displayName}
                       </div>
                     )}
-                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-dark-400">
-                      <span className="truncate">{device.platform}</span>
-                      <span className="min-w-0 select-all break-all font-mono text-dark-400">
-                        {device.hwid}
-                      </span>
+                    <div className="mt-0.5 truncate text-[13px] text-dark-400">
+                      {[
+                        device.device_model !== displayName ? device.device_model : null,
+                        device.platform,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </div>
                   </div>
                 </div>
@@ -240,12 +224,10 @@ export function DevicesPanel({ subscription, subscriptionId }: DevicesPanelProps
                           if (confirmed) deleteDeviceMutation.mutate(device.hwid);
                         }}
                         disabled={deleteDeviceMutation.isPending}
-                        className="p-2 transition-colors"
-                        style={{ color: g.textFaint }}
+                        className="btn btn-danger !min-h-9 !rounded-[9px] !px-3 !py-2 !text-[16px]"
                         title={t('subscription.deleteDevice')}
-                        aria-label={t('subscription.deleteDevice')}
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        {t('rv.dev.disconnect')}
                       </button>
                     </>
                   )}

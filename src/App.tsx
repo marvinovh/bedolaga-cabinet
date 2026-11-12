@@ -79,6 +79,7 @@ const QuickPurchase = lazyWithRetry(() => import('./pages/QuickPurchase'));
 const PurchaseSuccess = lazyWithRetry(() => import('./pages/PurchaseSuccess'));
 const GiftClaim = lazyWithRetry(() => import('./pages/GiftClaim'));
 const RenewSubscription = lazyWithRetry(() => import('./pages/RenewSubscription'));
+const SubscriptionDevices = lazyWithRetry(() => import('./pages/SubscriptionDevices'));
 const AutoLogin = lazyWithRetry(() => import('./pages/AutoLogin'));
 const TopUpMethodSelect = lazyWithRetry(() => import('./pages/TopUpMethodSelect'));
 const TopUpAmount = lazyWithRetry(() => import('./pages/TopUpAmount'));
@@ -394,6 +395,16 @@ function App() {
             <ProtectedRoute>
               <LazyPage>
                 <RenewSubscription />
+              </LazyPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/subscriptions/:subscriptionId/devices"
+          element={
+            <ProtectedRoute>
+              <LazyPage>
+                <SubscriptionDevices />
               </LazyPage>
             </ProtectedRoute>
           }

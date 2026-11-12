@@ -28,7 +28,6 @@ import {
   canReissueLink,
   ReissueLinkButton,
 } from '../components/subscription/manage/ReissueLinkButton';
-import { DevicesPanel } from '../components/subscription/manage/DevicesPanel';
 import { RecurringPanels } from '../components/subscription/manage/RecurringPanels';
 import { DeviceTopupSheet } from '../components/subscription/sheets/DeviceTopupSheet';
 import { DeviceReductionSheet } from '../components/subscription/sheets/DeviceReductionSheet';
@@ -49,7 +48,6 @@ export default function Subscription() {
   const haptic = useHaptic();
   const [copied, setCopied] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
-  const [showDevices, setShowDevices] = useState(false);
 
   // Device/traffic topup state
   const [showDeviceTopup, setShowDeviceTopup] = useState(false);
@@ -444,12 +442,7 @@ export default function Subscription() {
                 <button
                   type="button"
                   onClick={() => {
-                    setShowDevices(true);
-                    setTimeout(
-                      () =>
-                        document.getElementById('devices')?.scrollIntoView({ behavior: 'smooth' }),
-                      50,
-                    );
+                    navigate(`/subscriptions/${subscription.id}/devices`);
                   }}
                   className="bento-card bento-card-hover flex flex-col !p-4 text-left sm:!p-5"
                 >
@@ -570,13 +563,7 @@ export default function Subscription() {
                     isDark={isDark}
                   />
                 )}
-                <button
-                  type="button"
-                  id="devices"
-                  onClick={() => setShowDevices((v) => !v)}
-                  aria-expanded={showDevices}
-                  className="rv-action scroll-mt-24"
-                >
+                <Link to={`/subscriptions/${subscription.id}/devices`} className="rv-action">
                   <div className="flex items-center gap-4">
                     <span className="rv-ic">
                       <RvPhoneIcon />
@@ -587,16 +574,10 @@ export default function Subscription() {
                         {t('rv.subp.myDevicesHint', { count: connectedDevices })}
                       </div>
                     </div>
-                    <ChevronRightIcon
-                      className={`text-dark-400 transition-transform ${showDevices ? 'rotate-90' : ''}`}
-                    />
+                    <ChevronRightIcon className="text-dark-400" />
                   </div>
-                </button>
-                {showDevices && (
-                  <div className="rv-panel">
-                    <DevicesPanel subscription={subscription} subscriptionId={subscriptionId} />
-                  </div>
-                )}
+                </Link>
+
                 {showsAddonOptions(subscription) && (
                   <>
                     <DeviceTopupSheet

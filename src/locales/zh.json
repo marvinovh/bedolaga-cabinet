@@ -10109,6 +10109,14 @@
       "language": "Language",
       "docs": "Documents and offer",
       "logout": "Sign out"
+    },
+    "dev": {
+      "title": "My devices",
+      "taken": "In use",
+      "hint": "Remove a device you no longer use to free a slot for a new one.",
+      "disconnect": "Remove",
+      "needMore": "Need more than {{count}} devices?",
+      "needMoreHint": "Add a slot or pick a bigger plan"
     }
   }
 }
