@@ -122,3 +122,8 @@ export const useBlockingStore = create<BlockingState>((set) => ({
       accountDeletedInfo: null,
     }),
 }));
+
+// Отладка вёрстки служебных экранов: только в сборке с VITE_RV_DEBUG.
+if (import.meta.env.VITE_RV_DEBUG && typeof window !== 'undefined') {
+  (window as unknown as { __rvBlocking: typeof useBlockingStore }).__rvBlocking = useBlockingStore;
+}
