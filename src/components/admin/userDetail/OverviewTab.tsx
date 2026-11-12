@@ -1,3 +1,4 @@
+import { deviceDisplayName } from './DevicesCard';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +13,6 @@ import type {
 import type { PromoGroup } from '@/api/promocodes';
 import { backTo } from '@/components/admin/AdminBackButton';
 import { dayTimeLabel, relativeLabel } from '@/components/admin/users';
-import { CampaignIcon, ClockIcon, GlobeIcon, ShieldIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { formatShortDate } from '@/utils/format';
 import { formatGb } from '@/utils/formatNumber';
@@ -56,48 +56,164 @@ export function OverviewTab(props: OverviewTabProps) {
   // Слева — факты о человеке, справа — лента последних событий. Подписки отдельной
   // карточкой здесь нет: срок, трафик и устройства в плитках над вкладками, а кнопки
   // управления — во вкладке «Подписка» и «Продлить» в шапке. Повторять их тут незачем.
+  const { user } = props;
+  const sub = user.subscription;
+  const money = (kopeks: number) =>
+    `${(kopeks / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}\u00A0₽`;
+  const usedDevices = devices?.length ?? 0;
+
+  // Макет «A3 · Карточка пользователя»: слева подписка, баланс, устройства и лента;
+  // справа факты о человеке, подключение и ограничения.
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-2">
-      <Section icon={<GlobeIcon className="h-5 w-5" />} title={t(`${ns}.connection`)}>
-        {panelInfo?.found ? (
-          <ConnectionFacts panelInfo={panelInfo} devices={devices} />
-        ) : (
-          <p className="text-sm text-dark-500">{t(`${ns}.noPanelData`)}</p>
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="min-w-0 space-y-5">
+        {sub && (
+          <section className="bento-card !p-5 lg:!p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="rv-kicker">{t('rv.ud.subNo', { id: sub.id })}</p>
+                <h2 className="rv-d mt-2 text-[44px] text-dark-100">
+                  {sub.tariff_name || t('subscription.defaultName', 'Подписка')}
+                </h2>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-dark-400">{t('rv.ud.validUntil')}</p>
+                <p className="mt-1 text-lg font-bold text-dark-100">
+                  {sub.end_date
+                    ? new Date(sub.end_date).toLocaleDateString(undefined, {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })
+                    : '—'}
+                </p>
+                <p className="mt-0.5 text-xs text-dark-400">
+                  {t('rv.ud.daysLeft', { count: sub.days_remaining })}
+                  {sub.autopay_enabled ? ` · ${t('rv.ud.autopayOn')}` : ''}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="mb-2 flex justify-between text-sm">
+                  <b className="text-dark-100">{t('rv.traffic')}</b>
+                  <span className="text-dark-400">
+                    {Math.round(sub.traffic_used_gb)} / {sub.traffic_limit_gb || '∞'} {t('rv.gb')}
+                  </span>
+                </p>
+                <div className="rv-meter !h-2">
+                  <i
+                    style={{
+                      width: `${sub.traffic_limit_gb ? Math.min(100, (sub.traffic_used_gb / sub.traffic_limit_gb) * 100) : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="mb-2 flex justify-between text-sm">
+                  <b className="text-dark-100">{t('rv.devices')}</b>
+                  <span className="text-dark-400">
+                    {usedDevices} / {sub.device_limit || '∞'}
+                  </span>
+                </p>
+                {sub.device_limit > 0 && sub.device_limit <= 12 ? (
+                  <div className="rv-slots">
+                    {Array.from({ length: sub.device_limit }, (_, i) => (
+                      <i key={i} className={cn('!h-2', i < usedDevices && 'on')} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rv-meter !h-2" />
+                )}
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {['extend', 'traffic', 'devices', 'tariff', 'squads'].map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onGoTo('subscription')}
+                  className="btn btn-secondary !min-h-10 !px-3.5 !py-2 !text-[16px]"
+                >
+                  {t(`rv.ud.quick.${key}`)}
+                </button>
+              ))}
+            </div>
+          </section>
         )}
-      </Section>
 
-      <Section
-        className="lg:col-start-1"
-        icon={<CampaignIcon className="h-5 w-5" />}
-        title={t(`${ns}.origin`)}
-      >
-        <OriginFacts {...props} editor={editor} onEditor={setEditor} />
-      </Section>
+        <div className="grid gap-5 md:grid-cols-2">
+          <section className="bento-card !p-5">
+            <p className="rv-kicker">{t('rv.ud.balance')}</p>
+            <p className="rv-num mt-3 text-[56px] text-dark-100">{money(user.balance_kopeks)}</p>
+            <button
+              type="button"
+              onClick={() => onGoTo('balance')}
+              className="btn btn-primary mt-4 w-full !shadow-none"
+            >
+              {t('rv.ud.credit')}
+            </button>
+          </section>
+          <section className="bento-card !p-5">
+            <p className="rv-kicker">{t('rv.ud.devices')}</p>
+            <div className="mt-2">
+              {(devices ?? []).length === 0 && (
+                <p className="py-3 text-sm text-dark-400">{t('rv.ud.noDevices')}</p>
+              )}
+              {(devices ?? []).slice(0, 4).map((d) => (
+                <div key={d.hwid} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-dark-100">
+                      {deviceDisplayName(d)}
+                    </p>
+                    <p className="truncate text-xs text-dark-400">{d.platform}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => onGoTo('subscription')}
+              className="link mt-2 text-sm"
+            >
+              {t('rv.ud.manageDevices')}
+            </button>
+          </section>
+        </div>
 
-      <Section
-        className="lg:col-start-1"
-        icon={<ShieldIcon className="h-5 w-5" />}
-        title={t(`${ns}.restrictionsAndSupport`)}
-      >
-        <SupportFacts {...props} editor={editor} onEditor={setEditor} />
-      </Section>
+        <section className="bento-card !p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="rv-d text-[32px] text-dark-100">{t('rv.ud.whatHappened')}</h2>
+            <button type="button" onClick={() => onGoTo('activity')} className="link text-sm">
+              {t('rv.ud.allHistory')}
+            </button>
+          </div>
+          <div className="mt-3">
+            {props.recentActivity && props.recentActivity.length > 0 ? (
+              <ActivityRows items={props.recentActivity} compact />
+            ) : (
+              <p className="text-sm text-dark-500">{t(`${ns}.noActivity`)}</p>
+            )}
+          </div>
+        </section>
+      </div>
 
-      <Section
-        className="lg:col-start-2 lg:row-span-3 lg:row-start-1"
-        icon={<ClockIcon className="h-5 w-5" />}
-        title={t(`${ns}.recent`)}
-        action={
-          <LinkAction arrow short={t(`${ns}.all`)} onClick={() => onGoTo('activity')}>
-            {t(`${ns}.allActivity`)}
-          </LinkAction>
-        }
-      >
-        {props.recentActivity && props.recentActivity.length > 0 ? (
-          <ActivityRows items={props.recentActivity} compact />
-        ) : (
-          <p className="text-sm text-dark-500">{t(`${ns}.noActivity`)}</p>
-        )}
-      </Section>
+      <div className="min-w-0 space-y-5">
+        <Section title={t(`${ns}.origin`)}>
+          <OriginFacts {...props} editor={editor} onEditor={setEditor} />
+        </Section>
+        <Section title={t(`${ns}.connection`)}>
+          {panelInfo?.found ? (
+            <ConnectionFacts panelInfo={panelInfo} devices={devices} />
+          ) : (
+            <p className="text-sm text-dark-500">{t(`${ns}.noPanelData`)}</p>
+          )}
+        </Section>
+        <Section title={t(`${ns}.restrictionsAndSupport`)}>
+          <SupportFacts {...props} editor={editor} onEditor={setEditor} />
+        </Section>
+        <p className="hidden">{money(user.total_spent_kopeks)}</p>
+      </div>
     </div>
   );
 }

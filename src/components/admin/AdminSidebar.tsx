@@ -14,7 +14,13 @@ import { icons, sections } from './adminNav';
  * Боковое меню админки на компьютере — макет «A0 · Меню админки»: группы со
  * счётчиками, раскрыта та, где текущая страница; активный пункт лаймовый.
  */
-export function AdminSidebar() {
+export function AdminSidebar({
+  drawer = false,
+  onClose,
+}: {
+  drawer?: boolean;
+  onClose?: () => void;
+} = {}) {
   const { t } = useTranslation();
   const location = useLocation();
   const hasPermission = usePermissionStore((s) => s.hasPermission);
@@ -43,10 +49,32 @@ export function AdminSidebar() {
   const openId = query.trim() ? 'all' : (open ?? activeGroup);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[264px] flex-col gap-3.5 border-r-2 border-[#222] bg-[#0B0B0B] px-3 pb-6 pt-[18px] text-[#E9E7DF] lg:flex">
+    <aside
+      className={cn(
+        'fixed inset-y-0 left-0 flex-col gap-3.5 bg-[#0B0B0B] px-3 pb-6 text-[#E9E7DF]',
+        drawer
+          ? 'z-[70] flex w-full pt-[max(18px,env(safe-area-inset-top))] lg:hidden'
+          : 'z-40 hidden w-[264px] border-r-2 border-[#222] pt-[18px] lg:flex',
+      )}
+      onClickCapture={(e) => {
+        if (drawer && (e.target as HTMLElement).closest('a')) onClose?.();
+      }}
+    >
       <div className="flex items-center justify-between gap-2 px-1.5">
         <Brand size={34} className="[&>span:last-child]:!text-[#F2F0E8]" />
-        <span className="rv-badge rv-badge-lime !rotate-0">{t('rv.admin.badge')}</span>
+        <div className="flex items-center gap-2">
+          <span className="rv-badge rv-badge-lime !rotate-0">{t('rv.admin.badge')}</span>
+          {drawer && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('common.close')}
+              className="grid h-10 w-10 place-items-center rounded-xl border-2 border-[#2A2A2A] text-[#F2F0E8]"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       <label className="flex items-center gap-2.5 rounded-xl border-2 border-[#2A2A2A] bg-[#1B1B1B] px-3 py-2.5 text-sm text-[#8E8D86]">
@@ -60,17 +88,6 @@ export function AdminSidebar() {
       </label>
 
       <nav className="scrollbar-hide -mx-1 flex-1 overflow-y-auto px-1">
-        <Link
-          to="/admin"
-          className={cn(
-            'mb-1 flex items-center gap-3 rounded-[10px] px-2.5 py-2 text-sm font-bold',
-            location.pathname === '/admin'
-              ? 'bg-accent-500 text-[#111]'
-              : 'text-[#F2F0E8] hover:bg-[#1B1B1B]',
-          )}
-        >
-          {t('admin.panel.title')}
-        </Link>
         {groups.map((group) => {
           const expanded = openId === 'all' || openId === group.id;
           const groupActive = group.id === activeGroup;

@@ -14,7 +14,7 @@ import type {
   TopCampaignsResponse,
 } from '@/api/admin';
 
-type Period = 1 | 7 | 30;
+type Period = 1 | 7 | 'month';
 
 const CABINET_VERSION = __APP_VERSION__;
 
@@ -47,16 +47,25 @@ export function RvAdminOverview({
 }) {
   const { t } = useTranslation();
   const { formatAmount, currencySymbol } = useCurrency();
-  const [period, setPeriod] = useState<Period>(7);
+  const [period, setPeriod] = useState<Period>(1);
+  const [hover, setHover] = useState<number | null>(null);
 
   const chart = stats.revenue_chart ?? [];
-  const cur = chart.slice(-period);
-  const prev = chart.slice(-period * 2, -period);
+  // «Этот месяц» — дни с 1-го числа; сравнение — с тем же числом дней до них.
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const span =
+    period === 'month'
+      ? Math.max(1, chart.filter((r) => new Date(r.date) >= monthStart).length)
+      : period;
+  const cur = chart.slice(-span);
+  const prev = chart.slice(-span * 2, -span);
   const sum = (rows: typeof chart) => rows.reduce((a, r) => a + r.amount_rubles, 0);
   const revenue =
     period === 1
       ? stats.financial.income_today_rubles
-      : period === 30
+      : period === 'month'
         ? stats.financial.income_month_rubles
         : sum(cur);
   const prevRevenue = sum(prev);
@@ -70,7 +79,7 @@ export function RvAdminOverview({
         : stats.subscriptions.purchased_month;
   const rub = (v: number) => `${formatAmount(v, 0)} ${currencySymbol}`;
 
-  const bars = chart.slice(-Math.max(14, period * 2));
+  const bars = chart.slice(-Math.max(14, span * 2));
   const maxBar = Math.max(1, ...bars.map((b) => b.amount_rubles));
   const nodes = [...(stats.nodes.nodes ?? [])].sort(
     (a, b) => Number(a.is_connected) - Number(b.is_connected),
@@ -122,8 +131,11 @@ export function RvAdminOverview({
           <h1 className="rv-title !text-[44px] lg:!text-[56px]">{t('rv.adm.stats')}</h1>
         </div>
         <div className="flex items-center gap-2.5">
-          <div className="rv-seg min-w-[280px]" role="tablist">
-            {([1, 7, 30] as Period[]).map((p) => (
+          <div
+            className="rv-seg min-w-0 flex-1 sm:min-w-[340px] [&>*]:whitespace-nowrap [&>*]:!px-3"
+            role="tablist"
+          >
+            {([1, 7, 'month'] as Period[]).map((p) => (
               <button
                 key={p}
                 type="button"
@@ -192,19 +204,48 @@ export function RvAdminOverview({
                 </span>
               </div>
             </div>
-            <div className="mt-5 flex h-[180px] items-end gap-[5px]">
+            <div
+              className="mt-3 flex h-[230px] items-end gap-[5px] pt-12"
+              onMouseLeave={() => setHover(null)}
+            >
               {bars.map((b, i) => (
                 <i
                   key={b.date}
-                  title={`${b.date}: ${rub(b.amount_rubles)}`}
+                  onMouseEnter={() => setHover(i)}
+                  onClick={() => setHover(i)}
                   className={cn(
-                    'flex-1 rounded-t-[5px]',
-                    i >= bars.length - Math.min(period, bars.length)
+                    'relative flex-1 cursor-pointer rounded-t-[5px] transition-opacity',
+                    i >= bars.length - Math.min(span, bars.length)
                       ? 'bg-accent-500'
                       : 'bg-dark-700',
+                    hover !== null && hover !== i && 'opacity-60',
                   )}
                   style={{ height: `${Math.max(3, (b.amount_rubles / maxBar) * 100)}%` }}
-                />
+                >
+                  {hover === i && (
+                    <span
+                      className={cn(
+                        'pointer-events-none absolute bottom-full z-10 mb-2 whitespace-nowrap rounded-xl border-2 border-dark-600 bg-dark-950 px-3 py-2 text-left not-italic shadow-[4px_4px_0_rgba(0,0,0,.5)]',
+                        i < 3
+                          ? 'left-0'
+                          : i > bars.length - 4
+                            ? 'right-0'
+                            : 'left-1/2 -translate-x-1/2',
+                      )}
+                    >
+                      <span className="block text-xs text-dark-400">
+                        {new Date(b.date).toLocaleDateString(uiLocale(), {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'long',
+                        })}
+                      </span>
+                      <span className="rv-num block text-[24px] text-dark-100">
+                        {rub(b.amount_rubles)}
+                      </span>
+                    </span>
+                  )}
+                </i>
               ))}
             </div>
             {bars.length > 0 && (

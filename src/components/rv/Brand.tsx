@@ -30,7 +30,13 @@ export function Brand({ className, size = 36, onAccent = false, onClick }: Brand
       <span
         className={cn(
           'relative grid shrink-0 place-items-center overflow-hidden',
-          onAccent ? 'bg-[#111] text-[rgb(var(--color-accent-500))]' : 'bg-accent-500 text-[#111]',
+          // Своё лого рисуется как есть — без лаймовой подложки, иначе по углам
+          // скруглённой картинки просвечивала зелёная рамка.
+          hasCustomLogo && logoUrl
+            ? 'bg-transparent'
+            : onAccent
+              ? 'bg-[#111] text-[rgb(var(--color-accent-500))]'
+              : 'bg-accent-500 text-[#111]',
         )}
         style={{ width: size, height: size, borderRadius: Math.round(size * 0.28) }}
       >

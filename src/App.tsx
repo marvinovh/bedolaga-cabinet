@@ -1,4 +1,5 @@
 import { safeSession } from './utils/safeStorage';
+import AdminHome from './components/admin/AdminHome';
 import { lazy, Suspense, type ComponentType } from 'react';
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router';
 import { useAuthStore } from './store/auth';
@@ -89,7 +90,6 @@ const LinkTelegramCallback = lazyWithRetry(() => import('./pages/LinkTelegramCal
 const MergeAccounts = lazyWithRetry(() => import('./pages/MergeAccounts'));
 
 // Admin pages - lazy load (only for admins)
-const AdminPanel = lazyWithRetry(() => import('./pages/AdminPanel'));
 const AdminTickets = lazyWithRetry(() => import('./pages/AdminTickets'));
 const AdminTicketSettings = lazyWithRetry(() => import('./pages/AdminTicketSettings'));
 const AdminSettings = lazyWithRetry(() => import('./pages/AdminSettings'));
@@ -667,9 +667,7 @@ function App() {
           path="/admin"
           element={
             <AdminRoute>
-              <LazyPage>
-                <AdminPanel />
-              </LazyPage>
+              <AdminHome />
             </AdminRoute>
           }
         />

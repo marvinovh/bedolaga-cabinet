@@ -10319,7 +10319,8 @@
     },
     "admin": {
       "badge": "Admin",
-      "toCabinet": "Back to cabinet"
+      "toCabinet": "Back to cabinet",
+      "menu": "Admin menu"
     },
     "adm": {
       "overview": "Overview",
@@ -10359,7 +10360,9 @@
       "days": "{{count}} d",
       "minAgo": "{{count}} min ago",
       "hAgo": "{{count}} h ago",
-      "details": "Detailed statistics"
+      "details": "Detailed statistics",
+      "segmonth": "This month",
+      "pmonth": "this month"
     },
     "subs": {
       "title1": "My",

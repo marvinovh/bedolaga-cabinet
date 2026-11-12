@@ -34,6 +34,7 @@ import {
   SunIcon,
   MoonIcon,
   UserIcon,
+  MenuIcon,
 } from '@/components/icons';
 
 import { MobileBottomNav } from './MobileBottomNav';
@@ -110,6 +111,7 @@ export function AppShell({ children }: AppShellProps) {
   ];
 
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -162,6 +164,21 @@ export function AppShell({ children }: AppShellProps) {
           переходах между страницами со скроллом и без. 100vw даёт ту же ось
           центрирования, что и у body (тоже 100vw). */}
       {isAdminRoute && <AdminSidebar />}
+      {isAdminRoute && adminMenuOpen && (
+        <AdminSidebar drawer onClose={() => setAdminMenuOpen(false)} />
+      )}
+      {/* Телефон: меню админки — кнопкой снизу (на компьютере — боковое меню) */}
+      {isAdminRoute && !adminMenuOpen && (
+        <button
+          type="button"
+          onClick={() => setAdminMenuOpen(true)}
+          className="btn btn-primary fixed left-1/2 z-50 -translate-x-1/2 shadow-[0_14px_34px_rgba(0,0,0,.45)] lg:hidden"
+          style={{ bottom: 'var(--mobile-nav-offset)' }}
+        >
+          <MenuIcon className="h-5 w-5" />
+          {t('rv.admin.menu')}
+        </button>
+      )}
       <header
         className={cn(
           'fixed left-0 top-0 z-50 hidden w-screen bg-accent-500 text-[#111]',
@@ -277,7 +294,9 @@ export function AppShell({ children }: AppShellProps) {
         data-admin={isAdminRoute ? '' : undefined}
         className={cn(
           'mx-auto py-4 pb-[calc(var(--mobile-nav-clearance)+0.5rem)] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] lg:px-6 lg:pb-8 lg:py-8',
-          isAdminRoute ? 'lg:ml-[264px] lg:max-w-[1600px] lg:!px-8 lg:!py-6' : 'max-w-[1184px]',
+          isAdminRoute
+            ? '!pb-28 lg:ml-[264px] lg:max-w-[1600px] lg:!px-8 lg:!py-6'
+            : 'max-w-[1184px]',
         )}
       >
         {children}

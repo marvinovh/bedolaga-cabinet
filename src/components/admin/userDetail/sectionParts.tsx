@@ -18,11 +18,9 @@ export function Section({ icon, title, action, className, id, children }: Sectio
   return (
     <Card size="md" id={id} className={cn('flex scroll-mt-24 flex-col gap-3', className)}>
       <div className="flex min-h-7 items-center gap-2.5">
-        {icon && <span className="shrink-0 text-accent-400">{icon}</span>}
-        {/* Переносится, а не обрезается: многоточие съедало счётчик «3 из 10» у устройств. */}
-        <h2 className="min-w-0 flex-1 text-lg font-semibold leading-tight text-dark-100 [overflow-wrap:anywhere]">
-          {title}
-        </h2>
+        {/* RichVPN: заголовок секции — подпись UI-кита «— ПОДПИСКА», иконка не нужна. */}
+        {icon && <span className="hidden">{icon}</span>}
+        <h2 className="rv-kicker min-w-0 flex-1 [overflow-wrap:anywhere]">{title}</h2>
         {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
       </div>
       {children}
@@ -54,7 +52,7 @@ export function LinkAction({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="btn-secondary min-h-0 shrink-0 gap-1 whitespace-nowrap px-2.5 py-1 text-xs"
+      className="btn btn-secondary !min-h-0 shrink-0 gap-1 whitespace-nowrap !px-3 !py-1.5 !text-[15px]"
     >
       {short ? (
         <>
