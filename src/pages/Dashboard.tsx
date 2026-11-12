@@ -17,6 +17,7 @@ import SubscriptionCardActive from '../components/dashboard/SubscriptionCardActi
 import SubscriptionCardExpired from '../components/dashboard/SubscriptionCardExpired';
 import { hasLegacySubscription } from '../utils/legacySubscription';
 import TrialOfferCard from '../components/dashboard/TrialOfferCard';
+import { NewUserHome } from '../components/dashboard/NewUserHome';
 import ReminderCards from '../components/dashboard/ReminderCards';
 import {
   ConnectPhoneCard,
@@ -312,6 +313,48 @@ export default function Dashboard() {
   };
 
   const userName = displayName(user);
+
+  // Новичок: подписки нет (макеты 02e/19) или пробный только что включён, а
+  // устройство ещё не подключено — состояние «Готово. Теперь подключаемся».
+  const trialJustOn =
+    !multiView &&
+    !!subscription?.is_trial &&
+    subscription.is_active &&
+    !subscription.is_expired &&
+    devicesData !== undefined &&
+    devicesData.total === 0;
+  if ((hasNoSubscription && !trialLoading) || trialJustOn) {
+    return (
+      <>
+        {pendingGifts && pendingGifts.length > 0 && (
+          <div className="mb-3.5">
+            <PendingGiftCard gifts={pendingGifts} />
+          </div>
+        )}
+        <NewUserHome
+          userName={userName}
+          groupName={promoGroupData?.group_name}
+          trialInfo={trialInfo}
+          trialSub={trialJustOn ? subscription : null}
+          activateTrialMutation={activateTrialMutation}
+          trialError={trialError}
+          balanceKopeks={balanceData?.balance_kopeks ?? 0}
+          tariffs={
+            purchaseOptions && 'tariffs' in purchaseOptions ? purchaseOptions.tariffs : undefined
+          }
+          referralPercent={referralInfo?.commission_percent}
+          referralEnabled={!!referralEnabled}
+        />
+        {showOnboarding && (
+          <Onboarding
+            steps={onboardingSteps}
+            onComplete={handleOnboardingComplete}
+            onSkip={handleOnboardingComplete}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-5">
