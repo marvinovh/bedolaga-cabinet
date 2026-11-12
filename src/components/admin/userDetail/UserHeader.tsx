@@ -1,9 +1,9 @@
+import { Link } from 'react-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { UserDetailResponse, UserPanelInfo } from '@/api/adminUsers';
 import { AdminBackButton } from '@/components/admin/AdminBackButton';
-import { AccountStatusChip, UserAvatar } from '@/components/admin/users';
-import { CopyIcon, TelegramSmallIcon } from '@/components/icons';
+import { AccountStatusChip } from '@/components/admin/users';
 import { cn } from '@/lib/utils';
 import { useNotify } from '@/platform/hooks/useNotify';
 import { copyToClipboard } from '@/utils/clipboard';
@@ -17,9 +17,6 @@ interface UserHeaderProps {
   /** Меню «⋯»: на телефоне стоит у имени, на широком экране — после кнопок. */
   menu: ReactNode;
 }
-
-const CHIP =
-  'inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold';
 
 /**
  * Шапка отвечает на первые вопросы поддержки, не заставляя листать: кто это,
@@ -41,108 +38,85 @@ export function UserHeader({ user, panelInfo, actions, menu }: UserHeaderProps) 
     }
   };
 
+  const sub = user.subscription;
+  const subChip = sub
+    ? sub.is_active
+      ? { cls: 'badge-success', text: t('rv.ud.subActive') }
+      : { cls: 'badge-error', text: t('rv.ud.subInactive') }
+    : { cls: 'badge-neutral', text: t('rv.ud.noSub') };
+
+  // Макет «A3 · Карточка пользователя»: крошки, лаймовый аватар, имя Bebas, теги.
   return (
-    // Одна сетка на оба экрана: «Написать» и «⋯» справа в строке имени, чипы — строкой ниже.
-    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-4">
-      <div className="flex items-start gap-3">
+    <div>
+      <p className="mb-4 hidden text-[13px] text-dark-400 lg:block">
+        <Link to="/admin/users" className="underline underline-offset-2">
+          {t('admin.users.title')}
+        </Link>{' '}
+        / {user.full_name}
+      </p>
+      <div className="flex items-start gap-3 lg:items-center lg:gap-4">
         <AdminBackButton to="/admin/users" />
-        <UserAvatar
-          firstName={user.first_name}
-          username={user.username}
-          muted={muted}
-          size="lg"
-          className="hidden sm:flex"
-        />
-      </div>
-      <div className="min-w-0">
-        <h1 className="truncate text-xl font-bold text-dark-100">{user.full_name}</h1>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dark-400">
-          {user.telegram_id > 0 && (
-            <CopyValue
-              icon={<TelegramSmallIcon className="h-3.5 w-3.5" />}
-              value={String(user.telegram_id)}
-              onCopy={copy}
-              label={t('admin.users.detail.header.copy')}
-            />
+        <span
+          className={cn(
+            'grid h-14 w-14 shrink-0 place-items-center rounded-full text-2xl font-bold lg:h-[76px] lg:w-[76px] lg:text-3xl',
+            muted ? 'bg-dark-700 text-dark-300' : 'bg-accent-500 text-[#111]',
           )}
-          {user.username && (
-            <CopyValue
-              value={`@${user.username}`}
-              onCopy={copy}
-              label={t('admin.users.detail.header.copy')}
-            />
-          )}
-          {user.email && (
-            <span className="inline-flex min-w-0 items-center gap-1">
-              <span className="truncate">{user.email}</span>
-              <span
-                className={cn(
-                  'hidden text-xs sm:inline',
-                  user.email_verified ? 'text-dark-500' : 'text-warning-400',
-                )}
-              >
-                ·{' '}
-                {user.email_verified
-                  ? t('admin.users.detail.header.emailVerified')
-                  : t('admin.users.detail.header.emailUnverified')}
+        >
+          {(user.first_name || user.username || '?').charAt(0).toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h1 className="rv-d break-words text-[34px] text-dark-100 lg:text-[52px]">
+            {user.full_name}
+          </h1>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {user.status !== 'active' ? (
+              <AccountStatusChip status={user.status} />
+            ) : (
+              <span className={subChip.cls}>
+                <i className="rv-tag-dot" />
+                {subChip.text}
               </span>
-            </span>
-          )}
-          <span className="hidden xl:inline">
-            {t(`languages.${user.language}`, { defaultValue: user.language.toUpperCase() })}
-          </span>
+            )}
+            {online && (
+              <span className="badge-neutral">
+                <i className="rv-tag-dot text-accent-500" />
+                {panelInfo?.last_connected_node_name
+                  ? t('admin.users.detail.header.onlineAt', {
+                      node: panelInfo.last_connected_node_name,
+                    })
+                  : t('common.relative.online')}
+              </span>
+            )}
+            {user.username && (
+              <button
+                type="button"
+                onClick={() => copy(`@${user.username}`)}
+                className="badge-neutral"
+              >
+                @{user.username}
+              </button>
+            )}
+            {user.telegram_id > 0 && (
+              <button
+                type="button"
+                onClick={() => copy(String(user.telegram_id))}
+                className="badge-neutral"
+              >
+                ID {user.telegram_id}
+              </button>
+            )}
+            {user.promo_group && (
+              <span className="badge-neutral">
+                {t('admin.users.detail.header.group', { name: user.promo_group.name })}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {actions}
+          {menu}
         </div>
       </div>
-      {/* Чипы — своей ячейкой: на телефоне им тесно в колонке под именем рядом с «⋯». */}
-      <div className="col-span-2 col-start-2 row-start-2 -mt-2 flex flex-wrap items-center gap-1.5">
-        {/* «Активен» — обычное состояние, чипом только отклонение: заблокирован, удалён.
-            Тариф и срок — в плитке «Подписка до», здесь не повторяются. */}
-        {user.status !== 'active' && <AccountStatusChip status={user.status} />}
-        {user.promo_group && (
-          <span className={cn(CHIP, 'bg-dark-800 text-dark-300')}>
-            {t('admin.users.detail.header.group', { name: user.promo_group.name })}
-          </span>
-        )}
-        {online && (
-          <span className={cn(CHIP, 'gap-1.5 bg-success-500/15 text-success-400')}>
-            <span
-              aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full bg-success-400 shadow-[0_0_6px_rgba(var(--color-success-400),0.6)]"
-            />
-            {panelInfo?.last_connected_node_name
-              ? t('admin.users.detail.header.onlineAt', {
-                  node: panelInfo.last_connected_node_name,
-                })
-              : t('common.relative.online')}
-          </span>
-        )}
-      </div>
-      <div className="col-start-3 row-start-1 flex items-center gap-2">
-        {actions}
-        {menu}
-      </div>
     </div>
-  );
-}
-
-interface CopyValueProps {
-  value: string;
-  onCopy: (value: string) => void;
-  label: string;
-  icon?: ReactNode;
-}
-
-function CopyValue({ value, onCopy, label, icon }: CopyValueProps) {
-  return (
-    <button
-      type="button"
-      onClick={() => onCopy(value.replace(/^@/, ''))}
-      title={label}
-      className="group inline-flex items-center gap-1 rounded-md text-dark-300 transition-colors hover:text-dark-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40"
-    >
-      {icon}
-      <span className="tabular-nums">{value}</span>
-      <CopyIcon className="h-3.5 w-3.5 text-dark-600 transition-colors group-hover:text-dark-300" />
-    </button>
   );
 }

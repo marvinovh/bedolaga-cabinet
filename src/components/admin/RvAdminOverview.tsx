@@ -130,7 +130,7 @@ export function RvAdminOverview({
           <p className="mb-2 text-[13px] font-medium text-dark-400">{t('rv.adm.overview')}</p>
           <h1 className="rv-title !text-[44px] lg:!text-[56px]">{t('rv.adm.stats')}</h1>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex w-full items-center gap-2.5 sm:w-auto">
           <div
             className="rv-seg min-w-0 flex-1 sm:min-w-[340px] [&>*]:whitespace-nowrap [&>*]:!px-3"
             role="tablist"

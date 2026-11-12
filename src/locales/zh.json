@@ -10268,6 +10268,32 @@
       "until": "Until",
       "traffic": "Traffic",
       "seen": "Seen"
+    },
+    "ud": {
+      "subNo": "Subscription #{{id}}",
+      "validUntil": "Valid until",
+      "daysLeft_one": "{{count}} day",
+      "daysLeft_few": "{{count}} days",
+      "daysLeft_many": "{{count}} days",
+      "daysLeft_other": "{{count}} days",
+      "autopayOn": "auto-renewal on",
+      "quick": {
+        "extend": "Extend",
+        "traffic": "Traffic",
+        "devices": "Devices",
+        "tariff": "Change plan",
+        "squads": "Squads"
+      },
+      "balance": "Balance",
+      "credit": "Credit",
+      "devices": "Devices",
+      "noDevices": "No devices yet",
+      "manageDevices": "Manage devices",
+      "whatHappened": "What happened",
+      "allHistory": "Full history",
+      "subActive": "Subscription active",
+      "subInactive": "Subscription inactive",
+      "noSub": "No subscription"
     }
   }
 }

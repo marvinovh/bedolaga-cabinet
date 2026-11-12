@@ -164,7 +164,7 @@ export default function AdminUserDetail() {
       }
       aria-label={t('admin.users.detail.header.writeEmail')}
       title={t('admin.users.detail.header.writeEmail')}
-      className="btn-secondary h-11 w-11 shrink-0 p-0 sm:h-10 sm:w-auto sm:px-4"
+      className="btn btn-secondary !h-11 !w-11 shrink-0 !p-0 sm:!w-auto sm:!px-4"
     >
       <EmailIcon className="h-4 w-4" />
       <span className="hidden sm:inline">{t('admin.users.detail.header.writeEmail')}</span>
@@ -181,7 +181,7 @@ export default function AdminUserDetail() {
           ? t('admin.users.sendMessage.noTelegram')
           : t('admin.users.detail.header.write')
       }
-      className="btn-secondary h-11 w-11 shrink-0 p-0 sm:h-10 sm:w-auto sm:px-4"
+      className="btn btn-secondary !h-11 !w-11 shrink-0 !p-0 sm:!w-auto sm:!px-4"
     >
       <TelegramSmallIcon className="h-4 w-4" />
       <span className="hidden sm:inline">{t('admin.users.detail.header.write')}</span>
@@ -211,18 +211,21 @@ export default function AdminUserDetail() {
     <div className="animate-fade-in space-y-5">
       <UserHeader user={user} panelInfo={data.panelInfo} actions={headerActions} menu={menu} />
 
-      <UserFacts
-        user={user}
-        mode={mode}
-        subscription={selectedSub}
-        devicesTotal={devices ? devices.length : null}
-      />
+      {/* KPI-плитки — только на телефоне; на компьютере их место заняли карточки «Обзора». */}
+      <div className="lg:hidden">
+        <UserFacts
+          user={user}
+          mode={mode}
+          subscription={selectedSub}
+          devicesTotal={devices ? devices.length : null}
+        />
+      </div>
 
       <div
         ref={tabsRef}
         role="tablist"
         aria-label={t('admin.users.title')}
-        className="scrollbar-hide -mx-4 flex gap-1.5 overflow-x-auto px-4 py-1 sm:gap-2"
+        className="scrollbar-hide -mx-4 flex gap-1 overflow-x-auto border-b-2 border-dark-700 px-4 lg:mx-0 lg:px-0"
       >
         {TABS.map((tab) => (
           <button
@@ -232,17 +235,15 @@ export default function AdminUserDetail() {
             aria-selected={activeTab === tab}
             onClick={() => goTo(tab)}
             className={cn(
-              'shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-colors sm:px-4',
+              '-mb-[2px] shrink-0 whitespace-nowrap border-b-[3px] px-3.5 py-3 text-[15px] font-bold transition-colors',
               activeTab === tab
-                ? 'bg-accent-500/15 text-accent-400 ring-1 ring-accent-500/30'
-                : 'bg-dark-800/50 text-dark-400 hover:text-dark-200',
+                ? 'border-accent-500 text-dark-100'
+                : 'border-transparent text-dark-400 hover:text-dark-100',
             )}
           >
             {t(`admin.users.detail.tabs.${tab}`)}
             {tab === 'referrals' && user.referral.referrals_count > 0 && (
-              <span className="ml-1.5 rounded-full bg-dark-700 px-1.5 text-[11px] tabular-nums text-dark-200">
-                {user.referral.referrals_count}
-              </span>
+              <span className="ml-1 tabular-nums">· {user.referral.referrals_count}</span>
             )}
           </button>
         ))}
