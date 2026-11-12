@@ -10431,6 +10431,15 @@
       "subActive": "Subscription active",
       "subInactive": "Subscription inactive",
       "noSub": "No subscription"
+    },
+    "at": {
+      "traffic": "Traffic per month",
+      "devices": "Devices",
+      "servers": "Servers",
+      "subscribers": "Subscribers",
+      "prices": "Prices by period",
+      "preview": "What the customer sees",
+      "previewNote": "Active subscribers: {{count}}. Price changes do not affect paid periods."
     }
   }
 }

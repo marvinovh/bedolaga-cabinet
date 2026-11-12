@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { tariffsApi, type TariffListItem } from '../api/tariffs';
@@ -22,21 +23,13 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
-import {
-  BackIcon,
-  CheckIcon,
-  EditIcon,
-  GiftIcon,
-  GripIcon,
-  PlusIcon,
-  SaveIcon,
-  TrashIcon,
-  XIcon,
-} from '@/components/icons';
+import { BackIcon, GripIcon, PlusIcon, SaveIcon } from '@/components/icons';
 
 // ============ Sortable Tariff Card ============
 
 interface SortableTariffCardProps {
+  selected?: boolean;
+  onSelect?: () => void;
   tariff: TariffListItem;
   onEdit: () => void;
   onDelete: () => void;
@@ -44,13 +37,7 @@ interface SortableTariffCardProps {
   onToggleTrial: () => void;
 }
 
-function SortableTariffCard({
-  tariff,
-  onEdit,
-  onDelete,
-  onToggle,
-  onToggleTrial,
-}: SortableTariffCardProps) {
+function SortableTariffCard({ selected, onSelect, tariff, onToggle }: SortableTariffCardProps) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tariff.id,
@@ -67,129 +54,68 @@ function SortableTariffCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-xl border bg-dark-800 p-4 transition-colors ${
-        isDragging
-          ? 'border-accent-500/50 shadow-xl shadow-accent-500/20'
-          : tariff.is_active
-            ? 'border-dark-700'
-            : 'border-dark-700/50 opacity-60'
-      }`}
+      onClick={onSelect}
+      className={cn(
+        'flex cursor-pointer items-center gap-3 rounded-[18px] border-2 bg-dark-900 px-3 py-3.5 transition-colors',
+        isDragging && 'shadow-[6px_6px_0_rgba(0,0,0,.6)]',
+        selected
+          ? 'border-accent-500 bg-[var(--rv-acc-bg)]'
+          : 'border-dark-700 hover:border-dark-600',
+        !tariff.is_active && 'opacity-55',
+      )}
     >
-      <div className="flex gap-3">
-        <button
-          {...attributes}
-          {...listeners}
-          className="mt-1 flex-shrink-0 cursor-grab touch-none rounded-lg p-2.5 text-dark-500 hover:bg-dark-700/50 hover:text-dark-300 active:cursor-grabbing sm:p-1.5"
-          title={t('admin.tariffs.dragToReorder')}
-        >
-          <GripIcon />
-        </button>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex flex-wrap items-center gap-2">
-                <h3 className="truncate font-medium text-dark-100">{tariff.name}</h3>
-                {tariff.is_daily ? (
-                  <span className="rounded bg-warning-500/20 px-2 py-0.5 text-xs text-warning-400">
-                    {t('admin.tariffs.dailyType')}
-                  </span>
-                ) : (
-                  <span className="rounded bg-accent-500/20 px-2 py-0.5 text-xs text-accent-400">
-                    {t('admin.tariffs.periodType')}
-                  </span>
-                )}
-                {tariff.panel_tag && (
-                  <span
-                    className="rounded bg-dark-600 px-2 py-0.5 font-mono text-xs text-dark-200"
-                    title={t('admin.tariffs.panelTagLabel')}
-                  >
-                    {tariff.panel_tag}
-                  </span>
-                )}
-                {tariff.is_trial_available && (
-                  <span className="rounded bg-success-500/20 px-2 py-0.5 text-xs text-success-400">
-                    {t('admin.tariffs.trial')}
-                  </span>
-                )}
-                {tariff.show_in_gift && (
-                  <span className="inline-flex items-center gap-1 rounded bg-purple-500/20 px-2 py-0.5 text-xs text-purple-400">
-                    <GiftIcon className="h-3 w-3" />
-                    {t('admin.tariffs.giftBadge')}
-                  </span>
-                )}
-                {!tariff.is_active && (
-                  <span className="rounded bg-dark-600 px-2 py-0.5 text-xs text-dark-400">
-                    {t('admin.tariffs.inactive')}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-dark-400">
-                {tariff.is_daily && tariff.daily_price_kopeks > 0 && (
-                  <span className="text-warning-400">
-                    {(tariff.daily_price_kopeks / 100).toFixed(2)}{' '}
-                    {t('admin.tariffs.currencyPerDay')}
-                  </span>
-                )}
-                <span>
-                  {tariff.traffic_limit_gb === 0
-                    ? t('admin.tariffs.unlimited')
-                    : `${tariff.traffic_limit_gb} GB`}
-                </span>
-                <span>{t('admin.tariffs.devices', { count: tariff.device_limit })}</span>
-                <span>{t('admin.tariffs.servers', { count: tariff.servers_count })}</span>
-                <span>
-                  {t('admin.tariffs.subscriptions', { count: tariff.subscriptions_count })}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 sm:flex-shrink-0">
-              <button
-                onClick={onToggle}
-                className={`rounded-lg p-2 transition-colors ${
-                  tariff.is_active
-                    ? 'bg-success-500/20 text-success-400 hover:bg-success-500/30'
-                    : 'bg-dark-700 text-dark-400 hover:bg-dark-600'
-                }`}
-                title={
-                  tariff.is_active ? t('admin.tariffs.deactivate') : t('admin.tariffs.activate')
-                }
-              >
-                {tariff.is_active ? <CheckIcon /> : <XIcon />}
-              </button>
-
-              <button
-                onClick={onToggleTrial}
-                className={`rounded-lg p-2 transition-colors ${
-                  tariff.is_trial_available
-                    ? 'bg-accent-500/20 text-accent-400 hover:bg-accent-500/30'
-                    : 'bg-dark-700 text-dark-400 hover:bg-dark-600'
-                }`}
-                title={t('admin.tariffs.toggleTrial')}
-              >
-                <GiftIcon />
-              </button>
-
-              <button
-                onClick={onEdit}
-                className="rounded-lg bg-dark-700 p-2 text-dark-300 transition-colors hover:bg-dark-600 hover:text-dark-100"
-                title={t('admin.tariffs.edit')}
-              >
-                <EditIcon />
-              </button>
-
-              <button
-                onClick={onDelete}
-                className="rounded-lg bg-dark-700 p-2 text-dark-300 transition-colors hover:bg-error-500/20 hover:text-error-400"
-                title={t('admin.tariffs.delete')}
-              >
-                <TrashIcon className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+      <button
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+        className="shrink-0 cursor-grab touch-none rounded-lg p-2 text-dark-400 hover:text-dark-100 active:cursor-grabbing"
+        title={t('admin.tariffs.dragToReorder')}
+      >
+        <GripIcon />
+      </button>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="truncate text-base font-bold text-dark-100">{tariff.name}</h3>
+          {tariff.is_daily && (
+            <span className="rounded-md border-2 border-accent-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-400">
+              {t('admin.tariffs.dailyType')}
+            </span>
+          )}
+          {tariff.is_trial_available && (
+            <span className="rounded-md border-2 border-accent-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-400">
+              {t('admin.tariffs.trial')}
+            </span>
+          )}
+          {tariff.show_in_gift && (
+            <span className="rounded-md border-2 border-dark-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-dark-300">
+              {t('admin.tariffs.giftBadge')}
+            </span>
+          )}
         </div>
+        <p className="mt-0.5 truncate text-xs text-dark-400">
+          {tariff.is_daily && tariff.daily_price_kopeks > 0
+            ? `${(tariff.daily_price_kopeks / 100).toFixed(0)} ${t('admin.tariffs.currencyPerDay')} · `
+            : ''}
+          {tariff.traffic_limit_gb === 0
+            ? t('admin.tariffs.unlimited')
+            : `${tariff.traffic_limit_gb} ГБ`}
+          {' · '}
+          {t('admin.tariffs.devices', { count: tariff.device_limit })}
+          {' · '}
+          {t('admin.tariffs.subscriptions', { count: tariff.subscriptions_count })}
+        </p>
       </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={tariff.is_active}
+        aria-label={tariff.is_active ? t('admin.tariffs.deactivate') : t('admin.tariffs.activate')}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        className="rv-tog shrink-0"
+      />
     </div>
   );
 }
@@ -206,6 +132,7 @@ export default function AdminTariffs() {
 
   const [localTariffs, setLocalTariffs] = useState<TariffListItem[]>([]);
   const [orderChanged, setOrderChanged] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   // Queries
   const { data: tariffsData, isLoading } = useQuery({
@@ -301,23 +228,27 @@ export default function AdminTariffs() {
     saveOrderMutation.mutate(localTariffs.map((t) => t.id));
   };
 
+  const selectedTariff = localTariffs.find((x) => x.id === selectedId) ?? localTariffs[0];
+
   return (
     <div className="animate-fade-in">
-      {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          {/* Show back button only on web, not in Telegram Mini App */}
+      {/* Шапка (макет «A4 · Тарифы») */}
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div className="flex items-end gap-3">
           {!capabilities.hasBackButton && (
             <button
               onClick={() => navigate('/admin')}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 transition-colors hover:border-dark-600"
+              className="rv-ibtn lg:hidden"
+              aria-label={t('common.back')}
             >
               <BackIcon />
             </button>
           )}
           <div>
-            <h1 className="text-xl font-bold text-dark-100">{t('admin.tariffs.title')}</h1>
-            <p className="text-sm text-dark-400">{t('admin.tariffs.subtitle')}</p>
+            <p className="mb-1.5 text-[13px] font-medium text-dark-400">
+              {t('admin.groups.tariffs')}
+            </p>
+            <h1 className="rv-title !text-[44px] lg:!text-[56px]">{t('admin.tariffs.title')}</h1>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -325,62 +256,205 @@ export default function AdminTariffs() {
             <button
               onClick={handleSaveOrder}
               disabled={saveOrderMutation.isPending}
-              className="flex items-center gap-2 rounded-lg bg-success-500 px-4 py-2 text-white transition-colors hover:bg-success-600"
+              className="btn btn-secondary"
             >
-              {saveOrderMutation.isPending ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              ) : (
-                <SaveIcon className="h-4 w-4" />
-              )}
+              <SaveIcon className="h-4 w-4" />
               {t('admin.tariffs.saveOrder')}
             </button>
           )}
-          <button
-            onClick={() => navigate('/admin/tariffs/create')}
-            className="flex items-center justify-center gap-2 rounded-lg bg-accent-500 px-4 py-2 text-on-accent transition-colors hover:bg-accent-600"
-          >
+          <button onClick={() => navigate('/admin/tariffs/create')} className="btn btn-primary">
             <PlusIcon />
             {t('admin.tariffs.create')}
           </button>
         </div>
       </div>
 
-      {/* Drag hint */}
-      <div className="mb-4 flex items-center gap-2 text-sm text-dark-500">
-        <GripIcon />
-        {t('admin.tariffs.dragToReorder')}
-      </div>
-
-      {/* Tariffs List */}
-      {isLoading ? (
-        <SkeletonGroup className="space-y-3">
-          <Skeleton variant="card" count={3} className="h-16" />
-        </SkeletonGroup>
-      ) : localTariffs.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-dark-400">{t('admin.tariffs.noTariffs')}</p>
-        </div>
-      ) : (
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={localTariffs.map((t) => t.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-3">
-              {localTariffs.map((tariff) => (
-                <SortableTariffCard
-                  key={tariff.id}
-                  tariff={tariff}
-                  onEdit={() => navigate(`/admin/tariffs/${tariff.id}/edit`)}
-                  onDelete={() => handleDelete(tariff)}
-                  onToggle={() => toggleMutation.mutate(tariff.id)}
-                  onToggleTrial={() => toggleTrialMutation.mutate(tariff.id)}
-                />
-              ))}
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+        <div>
+          <p className="mb-3 text-sm text-dark-400">{t('admin.tariffs.dragToReorder')}</p>
+          {isLoading ? (
+            <SkeletonGroup className="space-y-3">
+              <Skeleton variant="card" count={3} className="h-16" />
+            </SkeletonGroup>
+          ) : localTariffs.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-dark-400">{t('admin.tariffs.noTariffs')}</p>
             </div>
-          </SortableContext>
-        </DndContext>
-      )}
+          ) : (
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              <SortableContext
+                items={localTariffs.map((x) => x.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2.5">
+                  {localTariffs.map((tariff) => (
+                    <SortableTariffCard
+                      key={tariff.id}
+                      tariff={tariff}
+                      selected={tariff.id === selectedTariff?.id}
+                      onSelect={() =>
+                        window.matchMedia('(min-width: 1024px)').matches
+                          ? setSelectedId(tariff.id)
+                          : navigate(`/admin/tariffs/${tariff.id}/edit`)
+                      }
+                      onEdit={() => navigate(`/admin/tariffs/${tariff.id}/edit`)}
+                      onDelete={() => handleDelete(tariff)}
+                      onToggle={() => toggleMutation.mutate(tariff.id)}
+                      onToggleTrial={() => toggleTrialMutation.mutate(tariff.id)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
+
+        {selectedTariff && (
+          <TariffPanel
+            tariff={selectedTariff}
+            onEdit={() => navigate(`/admin/tariffs/${selectedTariff.id}/edit`)}
+            onDelete={() => handleDelete(selectedTariff)}
+            onToggleTrial={() => toggleTrialMutation.mutate(selectedTariff.id)}
+          />
+        )}
+      </div>
     </div>
+  );
+}
+
+/** Правая панель выбранного тарифа: превью «Так увидит клиент» и действия. */
+function TariffPanel({
+  tariff,
+  onEdit,
+  onDelete,
+  onToggleTrial,
+}: {
+  tariff: TariffListItem;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleTrial: () => void;
+}) {
+  const { t } = useTranslation();
+  const { data: detail } = useQuery({
+    queryKey: ['admin-tariff', tariff.id],
+    queryFn: () => tariffsApi.getTariff(tariff.id),
+    staleTime: 30_000,
+  });
+  const periods = [...(detail?.period_prices ?? [])].sort((a, b) => a.days - b.days);
+  const shown =
+    periods.find((p) => p.days === detail?.highlight_period_days) ??
+    periods.find((p) => p.days === 90) ??
+    periods[0];
+  const month = periods.find((p) => p.days === 30);
+  return (
+    <section className="bento-card hidden !p-6 lg:block">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h2 className="rv-d text-[40px] text-dark-100">{tariff.name}</h2>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onDelete}
+            className="btn btn-danger !min-h-10 !py-2 !text-[16px]"
+          >
+            {t('admin.tariffs.delete')}
+          </button>
+          <button
+            type="button"
+            onClick={onEdit}
+            className="btn btn-primary !min-h-10 !py-2 !text-[16px] !shadow-none"
+          >
+            {t('admin.tariffs.edit')}
+          </button>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="space-y-4">
+          <dl className="grid grid-cols-2 gap-3">
+            {[
+              [
+                t('rv.at.traffic'),
+                tariff.traffic_limit_gb === 0
+                  ? t('admin.tariffs.unlimited')
+                  : `${tariff.traffic_limit_gb} ГБ`,
+              ],
+              [t('rv.at.devices'), String(tariff.device_limit)],
+              [t('rv.at.servers'), String(tariff.servers_count)],
+              [t('rv.at.subscribers'), String(tariff.subscriptions_count)],
+            ].map(([k, v]) => (
+              <div key={k} className="rounded-xl border-2 border-dark-700 bg-dark-800 px-4 py-3">
+                <dt className="text-xs font-bold text-dark-400">{k}</dt>
+                <dd className="mt-1 text-lg font-bold text-dark-100">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          {periods.length > 0 && (
+            <div>
+              <p className="mb-2 text-sm font-bold text-dark-200">{t('rv.at.prices')}</p>
+              <div className="grid grid-cols-3 gap-2.5">
+                {periods.map((p) => {
+                  const off =
+                    month && p.days > 30
+                      ? Math.round((1 - p.price_kopeks / (p.days / 30) / month.price_kopeks) * 100)
+                      : 0;
+                  return (
+                    <div
+                      key={p.days}
+                      className="rounded-xl border-2 border-dark-700 bg-dark-800 px-4 py-3"
+                    >
+                      <p className="text-xs text-dark-400">
+                        {t('rv.pick.days', { count: p.days })}
+                        {off > 0 ? ` · −${off}%` : ''}
+                      </p>
+                      <p className="mt-1 text-lg font-bold text-dark-100">
+                        {Math.round(p.price_kopeks / 100)} ₽
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={tariff.is_trial_available}
+              onClick={onToggleTrial}
+              className="rv-tog"
+              aria-label={t('admin.tariffs.toggleTrial')}
+            />
+            <span className="text-[15px] text-dark-200">{t('admin.tariffs.toggleTrial')}</span>
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-sm font-bold text-dark-200">{t('rv.at.preview')}</p>
+          <div className="rv-card-acc relative rounded-[22px] border-2 p-5">
+            <h3 className="rv-d text-[30px]">{tariff.name}</h3>
+            {tariff.description && (
+              <p className="mt-1.5 text-sm leading-snug">{tariff.description}</p>
+            )}
+            {shown && (
+              <p className="mt-3 flex items-baseline gap-2">
+                <span className="rv-num text-[52px]">
+                  {Math.round(shown.price_kopeks / 100)}
+                  <span className="rv-rub">₽</span>
+                </span>
+                <span className="text-sm">/ {t('rv.pick.days', { count: shown.days })}</span>
+              </p>
+            )}
+            <p className="mt-3 border-t-2 border-[#111]/35 pt-3 text-[15px] font-bold">
+              {tariff.traffic_limit_gb === 0
+                ? t('admin.tariffs.unlimited')
+                : `${tariff.traffic_limit_gb} ГБ`}
+              {' · '}
+              {t('subscription.devices', { count: tariff.device_limit })}
+            </p>
+          </div>
+          <p className="mt-2 text-xs leading-snug text-dark-400">
+            {t('rv.at.previewNote', { count: tariff.subscriptions_count })}
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
