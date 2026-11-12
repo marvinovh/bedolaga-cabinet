@@ -272,9 +272,9 @@ export default function Profile() {
       </motion.div>
 
       {/* Внешний вид */}
-      <motion.div variants={staggerItem} className="space-y-2.5">
+      <motion.div variants={staggerItem} className="relative z-10 space-y-2.5">
         <p className="rv-kicker">{t('rv.profile.appearance')}</p>
-        <section className="bento-card space-y-4 !p-5">
+        <section className="bento-card space-y-4 !overflow-visible !p-5">
           {canToggleTheme && (
             <div>
               <p className="mb-2.5 text-base font-bold text-dark-100">{t('rv.profile.theme')}</p>

@@ -7,21 +7,13 @@ import { backTo } from '@/components/admin';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { adminApi, type AdminTicket, type AdminTicketDetail } from '../api/admin';
+import { adminUsersApi } from '../api/adminUsers';
+import { useCurrency } from '../hooks/useCurrency';
+import { uiLocale } from '../utils/uiLocale';
+import { cn } from '@/lib/utils';
 import { ticketsApi } from '../api/tickets';
 import { copyToClipboard as copyText } from '../utils/clipboard';
-import { usePlatform } from '../platform/hooks/usePlatform';
-import {
-  BackIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  InboxIcon,
-  PaperclipIcon,
-  SettingsIcon,
-  TicketIcon,
-  XCircleIcon,
-  XIcon,
-} from '@/components/icons';
-import { StatCard } from '@/components/stats';
+import { BackIcon, PaperclipIcon, SettingsIcon, TicketIcon, XIcon } from '@/components/icons';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
 
 interface MediaAttachment {
@@ -59,7 +51,6 @@ export default function AdminTickets() {
   const location = useLocation();
   const { ticketId } = useParams<{ ticketId: string }>();
   const queryClient = useQueryClient();
-  const { capabilities } = usePlatform();
 
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
 
@@ -80,7 +71,8 @@ export default function AdminTickets() {
       setSelectedTicketId(id);
     }
   }, [ticketId]);
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('open');
+  const { formatAmount, currencySymbol } = useCurrency();
   const [replyText, setReplyText] = useState('');
   const [isReplying, setIsReplying] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
@@ -244,32 +236,6 @@ export default function AdminTickets() {
     queryClient.invalidateQueries({ queryKey: ['admin-ticket-stats'] });
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'badge-info';
-      case 'pending':
-        return 'badge-warning';
-      case 'answered':
-        return 'badge-success';
-      case 'closed':
-        return 'badge-neutral';
-      default:
-        return 'badge-neutral';
-    }
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'badge-error';
-      case 'high':
-        return 'badge-warning';
-      default:
-        return 'badge-neutral';
-    }
-  };
-
   const formatUser = (ticket: AdminTicket | AdminTicketDetail) => {
     if (!ticket.user) return 'Unknown';
     const { first_name, last_name, username } = ticket.user;
@@ -282,161 +248,184 @@ export default function AdminTickets() {
     void copyText(text);
   };
 
+  const ticketUserId = selectedTicket?.user?.id;
+  const { data: ticketUser } = useQuery({
+    queryKey: ['admin-user', ticketUserId],
+    queryFn: () => adminUsersApi.getUser(ticketUserId!),
+    enabled: !!ticketUserId,
+  });
+  const userSub = ticketUser?.subscription ?? ticketUser?.subscriptions?.[0] ?? null;
+  const { data: userDevices } = useQuery({
+    queryKey: ['admin-user-devices', ticketUserId, userSub?.id],
+    queryFn: () => adminUsersApi.getUserDevices(ticketUserId!, userSub?.id),
+    enabled: !!ticketUserId && !!userSub,
+  });
+  const [quickDone, setQuickDone] = useState<string | null>(null);
+  const quick = useMutation({
+    mutationFn: async (kind: 'gift' | 'reset') => {
+      if (!ticketUserId) return;
+      if (kind === 'gift')
+        await adminUsersApi.updateSubscription(ticketUserId, {
+          action: 'extend',
+          days: 3,
+          subscription_id: userSub?.id,
+        });
+      else await adminUsersApi.resetUserDevices(ticketUserId, userSub?.id);
+      return kind;
+    },
+    onSuccess: (kind) => {
+      setQuickDone(kind ?? null);
+      queryClient.invalidateQueries({ queryKey: ['admin-user', ticketUserId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-user-devices', ticketUserId] });
+    },
+  });
+
+  const ago = (iso: string) => {
+    const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    if (min < 60) return t('rv.tk.min', { count: min });
+    const h = Math.round(min / 60);
+    if (h < 48) return t('rv.tk.hour', { count: h });
+    return t('rv.tk.day', { count: Math.round(h / 24) });
+  };
+  const hhmm = (iso: string) =>
+    new Date(iso).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' });
+  const waitingTag = (ticket: AdminTicket) => {
+    const last = ticket.last_message;
+    if (ticket.status === 'closed' || (last && last.is_from_admin)) return null;
+    if (!last || ticket.messages_count <= 1)
+      return { cls: 'rv-badge rv-badge-lime', text: t('rv.tk.new') };
+    const min = (Date.now() - new Date(ticket.updated_at).getTime()) / 60000;
+    return {
+      cls: min >= 30 ? 'badge-error' : 'badge-warning',
+      text: ago(ticket.updated_at),
+      dot: true,
+    };
+  };
+
+  const templates = [
+    { key: 'qrTv', text: t('rv.tk.tpl.qrTvText', { url: `${window.location.origin}/connection` }) },
+    { key: 'country', text: t('rv.tk.tpl.countryText') },
+    { key: 'whitelist', text: t('rv.tk.tpl.whitelistText') },
+    { key: 'refund', text: t('rv.tk.tpl.refundText') },
+  ];
+  const insert = (text: string) =>
+    setReplyText((prev) => (prev.trim() ? `${prev}\n\n${text}` : text));
+
+  const segments: { value: string; label: string; count?: number }[] = [
+    { value: 'open', label: t('rv.tk.open'), count: stats?.open },
+    ...(stats?.pending
+      ? [{ value: 'pending', label: t('rv.tk.pending'), count: stats.pending }]
+      : []),
+    { value: 'answered', label: t('rv.tk.waiting') },
+    { value: 'closed', label: t('rv.tk.closed') },
+  ];
+
+  const userName = (ticket: AdminTicket | AdminTicketDetail) => formatUser(ticket);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* Show back button only on web, not in Telegram Mini App */}
-          {!capabilities.hasBackButton && (
-            <button
-              onClick={() => navigate('/admin')}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 transition-colors hover:border-dark-600"
-            >
-              <BackIcon />
-            </button>
-          )}
-          <h1 className="text-xl font-bold text-dark-100">{t('admin.tickets.title')}</h1>
+    <div className="flex flex-col gap-5">
+      {/* Шапка */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-[13px] font-medium text-dark-400">{t('rv.tk.crumb')}</p>
+          <h1 className="rv-d mt-1 text-[44px] text-dark-100 lg:text-[56px]">{t('rv.tk.title')}</h1>
         </div>
-        <button
-          onClick={() => navigate('/admin/tickets/settings')}
-          className="btn-secondary flex items-center gap-2"
-        >
-          <SettingsIcon className="h-5 w-5" />
-          {t('admin.tickets.settings')}
-        </button>
+        <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
+          <div className="rv-seg min-w-0 flex-1 lg:flex-none" role="tablist">
+            {segments.map((seg) => (
+              <button
+                key={seg.value}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === seg.value}
+                className={cn('whitespace-nowrap', statusFilter === seg.value && 'on')}
+                onClick={() => {
+                  setStatusFilter(seg.value);
+                  setPage(1);
+                }}
+              >
+                {seg.label}
+                {seg.count ? ` · ${seg.count}` : ''}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/tickets/settings')}
+            className="btn btn-secondary !min-h-12 shrink-0"
+            aria-label={t('admin.tickets.settings')}
+          >
+            <SettingsIcon className="h-5 w-5 lg:hidden" />
+            <span className="hidden lg:inline">{t('admin.tickets.settings')}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Stats */}
-      {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <StatCard
-            label={t('admin.tickets.total')}
-            value={stats.total}
-            icon={<TicketIcon className="h-5 w-5" />}
-            tone="neutral"
-          />
-          <StatCard
-            label={t('admin.tickets.statusOpen')}
-            value={stats.open}
-            icon={<InboxIcon className="h-5 w-5" />}
-            tone="accent"
-          />
-          <StatCard
-            label={t('admin.tickets.statusPending')}
-            value={stats.pending}
-            icon={<ClockIcon className="h-5 w-5" />}
-            tone="warning"
-          />
-          <StatCard
-            label={t('admin.tickets.statusAnswered')}
-            value={stats.answered}
-            icon={<CheckCircleIcon className="h-5 w-5" />}
-            tone="success"
-          />
-          <div className="col-span-2 sm:col-span-1">
-            <StatCard
-              label={t('admin.tickets.statusClosed')}
-              value={stats.closed}
-              icon={<XCircleIcon className="h-5 w-5" />}
-              tone="neutral"
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Ticket List */}
-        <div className="card lg:col-span-1">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-dark-100">{t('admin.tickets.list')}</h2>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="input w-auto px-3 py-1.5 text-sm"
-            >
-              <option value="">{t('admin.tickets.allStatuses')}</option>
-              <option value="open">{t('admin.tickets.statusOpen')}</option>
-              <option value="pending">{t('admin.tickets.statusPending')}</option>
-              <option value="answered">{t('admin.tickets.statusAnswered')}</option>
-              <option value="closed">{t('admin.tickets.statusClosed')}</option>
-            </select>
-          </div>
-
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_260px]">
+        {/* Список */}
+        <section
+          className={cn(
+            'bento-card flex flex-col !p-2.5 lg:min-h-[680px]',
+            selectedTicketId && 'hidden lg:flex',
+          )}
+        >
           {ticketsLoading ? (
-            <SkeletonGroup className="space-y-3">
-              <Skeleton variant="card" count={3} className="h-16" />
+            <SkeletonGroup className="space-y-2 p-1">
+              <Skeleton variant="card" count={4} className="h-16" />
             </SkeletonGroup>
           ) : ticketsData?.items.length === 0 ? (
-            <div className="py-12 text-center text-dark-500">{t('admin.tickets.noTickets')}</div>
+            <div className="px-4 py-12 text-center text-sm text-dark-400">
+              {t('admin.tickets.noTickets')}
+            </div>
           ) : (
-            <div className="scrollbar-hide max-h-[500px] space-y-2 overflow-y-auto">
-              {ticketsData?.items.map((ticket) => (
-                <button
-                  key={ticket.id}
-                  onClick={() => {
-                    setSelectedTicketId(ticket.id);
-                    setReplyText('');
-                    clearAttachments();
-                  }}
-                  className={`w-full rounded-xl border p-4 text-left transition-all ${
-                    selectedTicketId === ticket.id
-                      ? 'border-accent-500 bg-accent-500/10'
-                      : 'border-dark-700/50 bg-dark-800/30 hover:border-dark-600'
-                  }`}
-                >
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <span className="truncate font-medium text-dark-100">
-                      #{ticket.id} {ticket.title}
+            <div className="scrollbar-hide flex flex-col gap-1 overflow-y-auto">
+              {ticketsData?.items.map((ticket) => {
+                const tag = waitingTag(ticket);
+                const sel = selectedTicketId === ticket.id;
+                return (
+                  <button
+                    key={ticket.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTicketId(ticket.id);
+                      setReplyText('');
+                      setQuickDone(null);
+                      clearAttachments();
+                    }}
+                    className={cn(
+                      'flex w-full items-start gap-2 rounded-2xl border-2 px-3.5 py-3 text-left transition-colors',
+                      sel
+                        ? 'border-accent-500 bg-[var(--rv-acc-bg)]'
+                        : 'border-transparent hover:bg-dark-800',
+                    )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="line-clamp-2 text-base font-bold leading-snug text-dark-100">
+                        {ticket.title}
+                      </span>
+                      <span className="mt-1 block truncate text-xs text-dark-400">
+                        {userName(ticket)} · {ago(ticket.updated_at)}
+                      </span>
                     </span>
-                    <span className={getStatusBadge(ticket.status)}>
-                      {t(
-                        `admin.tickets.status${ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}`,
-                      )}
-                    </span>
-                  </div>
-                  <div className="text-xs text-dark-500">
-                    {formatUser(ticket)}
-                    {ticket.user?.telegram_id && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          copyToClipboard(String(ticket.user!.telegram_id));
-                        }}
-                        className="ml-1 text-dark-600 transition-colors hover:text-accent-400"
-                        title={t('admin.tickets.copyTelegramId')}
-                      >
-                        (TG: {ticket.user!.telegram_id})
-                      </button>
-                    )}{' '}
-                    | {new Date(ticket.updated_at).toLocaleDateString()}
-                  </div>
-                  {ticket.last_message && (
-                    <div className="mt-1 truncate text-xs text-dark-600">
-                      {ticket.last_message.is_from_admin
-                        ? t('admin.tickets.you')
-                        : t('admin.tickets.user')}
-                      :{' '}
-                      {ticket.last_message.message_text
-                        ? `${ticket.last_message.message_text.substring(0, 50)}${ticket.last_message.message_text.length > 50 ? '...' : ''}`
-                        : ticket.last_message.has_media
-                          ? `[${ticket.last_message.media_type}]`
-                          : '...'}
-                    </div>
-                  )}
-                </button>
-              ))}
+                    {tag && (
+                      <span className={cn(tag.cls, 'mt-1 shrink-0 !rotate-0')}>
+                        {tag.dot && <i className="rv-tag-dot" />}
+                        {tag.text}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
           {ticketsData && ticketsData.pages > 1 && (
-            <div className="mt-4 flex items-center justify-center gap-3 border-t border-dark-800/50 pt-4">
+            <div className="mt-auto flex items-center justify-center gap-3 border-t-2 border-dark-700 pt-3">
               <button
+                type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="btn-secondary px-3 py-1.5 text-sm disabled:opacity-50"
+                className="btn btn-secondary !min-h-9 !px-3 !text-sm disabled:opacity-50"
               >
                 {t('common.back')}
               </button>
@@ -444,146 +433,152 @@ export default function AdminTickets() {
                 {page} / {ticketsData.pages}
               </span>
               <button
+                type="button"
                 onClick={() => setPage((p) => Math.min(ticketsData.pages, p + 1))}
                 disabled={page === ticketsData.pages}
-                className="btn-secondary px-3 py-1.5 text-sm disabled:opacity-50"
+                className="btn btn-secondary !min-h-9 !px-3 !text-sm disabled:opacity-50"
               >
                 {t('common.next')}
               </button>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Ticket Detail */}
-        <div className="card lg:col-span-2">
+        {/* Переписка */}
+        <section
+          className={cn(
+            'bento-card flex min-h-[560px] flex-col !p-5 lg:min-h-[680px]',
+            !selectedTicketId && 'hidden lg:flex',
+          )}
+        >
           {!selectedTicketId ? (
-            <div className="flex h-64 flex-col items-center justify-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-dark-800">
-                <TicketIcon className="h-8 w-8 text-dark-500" />
+            <div className="m-auto flex flex-col items-center gap-3 text-center">
+              <span className="rv-ic">
+                <TicketIcon className="h-6 w-6" />
+              </span>
+              <p className="text-sm text-dark-400">{t('admin.tickets.selectTicket')}</p>
+            </div>
+          ) : ticketLoading || !selectedTicket ? (
+            <SkeletonGroup className="space-y-3">
+              <Skeleton className="h-7 w-2/3" />
+              <Skeleton variant="card" count={2} className="h-20" />
+            </SkeletonGroup>
+          ) : (
+            <>
+              <div className="flex items-start gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/admin/tickets')}
+                  className="rv-ibtn shrink-0 lg:hidden"
+                  aria-label={t('common.back')}
+                >
+                  <BackIcon />
+                </button>
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold leading-tight text-dark-100 [overflow-wrap:anywhere]">
+                    {selectedTicket.title}
+                  </h2>
+                  <p className="mt-1 text-xs text-dark-400">
+                    № {selectedTicket.id} ·{' '}
+                    {t('rv.tk.openedAt', { time: hhmm(selectedTicket.created_at) })}
+                    {selectedTicket.priority === 'urgent' || selectedTicket.priority === 'high'
+                      ? ` · ${t(`admin.tickets.priorities.${selectedTicket.priority}`, { defaultValue: selectedTicket.priority })}`
+                      : ''}
+                  </p>
+                </div>
               </div>
-              <div className="text-dark-400">{t('admin.tickets.selectTicket')}</div>
-            </div>
-          ) : ticketLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-500 border-t-transparent" />
-            </div>
-          ) : selectedTicket ? (
-            <div className="flex h-full flex-col">
-              {/* Header */}
-              <div className="mb-4 border-b border-dark-800/50 pb-4">
-                <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-                  <h3 className="min-w-0 flex-1 basis-48 text-lg font-semibold text-dark-100 [overflow-wrap:anywhere]">
-                    #{selectedTicket.id} {selectedTicket.title}
-                  </h3>
-                  <div className="flex shrink-0 gap-2">
-                    <span className={getStatusBadge(selectedTicket.status)}>
-                      {t(
-                        `admin.tickets.status${selectedTicket.status.charAt(0).toUpperCase() + selectedTicket.status.slice(1)}`,
-                      )}
-                    </span>
-                    <span className={getPriorityBadge(selectedTicket.priority)}>
-                      {t(`admin.tickets.priorities.${selectedTicket.priority}`, {
-                        defaultValue: selectedTicket.priority,
-                      })}
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-dark-500">
-                  <span>
-                    {t('admin.tickets.from')}:{' '}
-                    {selectedTicket.user ? (
-                      <Link
-                        to={`/admin/users/${selectedTicket.user.id}`}
-                        {...backTo(location)}
-                        title={t('admin.tickets.viewUser')}
-                        className="font-medium text-accent-400 underline decoration-accent-400/40 underline-offset-2 transition-colors hover:text-accent-300 hover:decoration-accent-300"
-                      >
-                        {formatUser(selectedTicket)}
-                      </Link>
-                    ) : (
-                      formatUser(selectedTicket)
-                    )}
-                    {selectedTicket.user?.telegram_id && (
+              <div className="mt-4 flex flex-wrap gap-2.5 border-b-2 border-dark-700 pb-4">
+                {selectedTicket.status === 'closed' ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      statusMutation.mutate({ ticketId: selectedTicket.id, status: 'open' })
+                    }
+                    disabled={statusMutation.isPending}
+                    className="btn btn-secondary !min-h-9 !px-3.5 !text-sm"
+                  >
+                    {t('rv.tk.reopen')}
+                  </button>
+                ) : (
+                  <>
+                    {selectedTicket.status !== 'pending' && (
                       <button
-                        onClick={() => copyToClipboard(String(selectedTicket.user!.telegram_id))}
-                        className="ml-1 rounded bg-dark-700 px-2 py-0.5 text-xs transition-colors hover:bg-dark-600"
-                        title={t('admin.tickets.copyTelegramId')}
+                        type="button"
+                        onClick={() =>
+                          statusMutation.mutate({ ticketId: selectedTicket.id, status: 'pending' })
+                        }
+                        disabled={statusMutation.isPending}
+                        className="btn btn-secondary !min-h-9 !px-3.5 !text-sm"
                       >
-                        TG: {selectedTicket.user!.telegram_id}
+                        {t('rv.tk.take')}
                       </button>
-                    )}{' '}
-                    | {t('admin.tickets.created')}:{' '}
-                    {new Date(selectedTicket.created_at).toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {['open', 'pending', 'answered', 'closed'].map((s) => (
+                    )}
                     <button
-                      key={s}
+                      type="button"
                       onClick={() =>
-                        statusMutation.mutate({ ticketId: selectedTicket.id, status: s })
+                        statusMutation.mutate({ ticketId: selectedTicket.id, status: 'closed' })
                       }
-                      disabled={selectedTicket.status === s || statusMutation.isPending}
-                      className={`rounded-lg border px-3 py-1.5 text-xs transition-all ${
-                        selectedTicket.status === s
-                          ? 'border-accent-500/50 bg-accent-500/20 text-accent-400'
-                          : 'border-dark-700/50 text-dark-400 hover:border-dark-600 hover:text-dark-200'
-                      } disabled:opacity-50`}
+                      disabled={statusMutation.isPending}
+                      className="btn btn-primary !min-h-9 !px-3.5 !text-sm !shadow-none"
                     >
-                      {t(`admin.tickets.status${s.charAt(0).toUpperCase() + s.slice(1)}`)}
+                      {t('rv.tk.resolve')}
                     </button>
-                  ))}
-                </div>
+                  </>
+                )}
               </div>
 
-              {/* Messages */}
-              <div className="scrollbar-hide mb-4 max-h-[400px] flex-1 space-y-4 overflow-y-auto">
+              <div className="scrollbar-hide -mx-1 flex max-h-[52vh] flex-1 flex-col gap-3 overflow-y-auto px-1 py-4 lg:max-h-none">
                 {selectedTicket.messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`rounded-xl p-4 ${
-                      msg.is_from_admin
-                        ? 'ml-4 border border-accent-500/20 bg-accent-500/10'
-                        : 'mr-4 border border-dark-700/30 bg-dark-800/50'
-                    }`}
+                    className={cn(
+                      'rv-msg !max-w-[78%]',
+                      msg.is_from_admin ? 'rv-msg-me' : 'rv-msg-them',
+                    )}
                   >
-                    <div className="mb-2 flex items-center justify-between">
-                      <span
-                        className={`text-xs font-medium ${msg.is_from_admin ? 'text-accent-400' : 'text-dark-400'}`}
-                      >
-                        {msg.is_from_admin
-                          ? t('admin.tickets.adminLabel')
-                          : t('admin.tickets.userLabel')}
-                      </span>
-                      <span className="text-xs text-dark-500">
-                        {new Date(msg.created_at).toLocaleString()}
-                      </span>
-                    </div>
                     {msg.message_text && (
                       <p
-                        className="whitespace-pre-wrap break-words text-dark-200 [&_a]:text-accent-400 [&_a]:underline"
+                        className={cn(
+                          'whitespace-pre-wrap break-words [&_a]:underline',
+                          !msg.is_from_admin && 'text-dark-100',
+                        )}
                         dangerouslySetInnerHTML={{ __html: linkifyText(msg.message_text) }}
                       />
                     )}
                     <MessageMediaGrid message={msg} translateError={t('support.imageLoadFailed')} />
+                    <p
+                      className={cn(
+                        'mt-1.5 text-[11px] font-medium',
+                        msg.is_from_admin ? 'text-[#111]/70' : 'text-dark-400',
+                      )}
+                    >
+                      {msg.is_from_admin
+                        ? t('admin.tickets.adminLabel')
+                        : selectedTicket.user?.first_name || userName(selectedTicket)}{' '}
+                      · {hhmm(msg.created_at)}
+                    </p>
                   </div>
                 ))}
               </div>
 
-              {/* Reply form */}
               {selectedTicket.status !== 'closed' && (
-                <form onSubmit={handleReply} className="border-t border-dark-800/50 pt-4">
-                  <textarea
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder={t('admin.tickets.replyPlaceholder')}
-                    rows={3}
-                    className="input resize-none"
-                  />
+                <form onSubmit={handleReply} className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[13px] text-dark-400">{t('rv.tk.templates')}</span>
+                    {templates.map((tpl) => (
+                      <button
+                        key={tpl.key}
+                        type="button"
+                        onClick={() => insert(tpl.text)}
+                        className="rounded-full border-2 border-dashed border-dark-600 px-3 py-1.5 text-[13px] font-bold text-dark-200 hover:border-accent-500"
+                      >
+                        {t(`rv.tk.tpl.${tpl.key}`)}
+                      </button>
+                    ))}
+                  </div>
 
-                  {/* Attachments preview */}
                   {attachments.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {attachments.map((att, idx) => (
                         <div key={att.id} className="relative">
                           {att.mediaType === 'photo' && att.preview ? (
@@ -630,22 +625,30 @@ export default function AdminTickets() {
                   />
 
                   {replyError && (
-                    <div className="mt-2 rounded-lg border border-error-500/30 bg-error-500/10 px-3 py-2 text-sm text-error-300">
+                    <div className="rounded-xl bg-[var(--rv-bad-bg)] px-3 py-2 text-sm text-[var(--rv-bad)]">
                       {replyError}
                     </div>
                   )}
 
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={attachments.length >= 10 || attachments.some((a) => a.uploading)}
-                      className="flex items-center gap-2 rounded-lg border border-dark-700/50 px-3 py-2 text-sm text-dark-400 transition-colors hover:border-dark-600 hover:text-dark-200 disabled:opacity-50"
-                    >
-                      <PaperclipIcon className="h-4 w-4" />
-                      {t('admin.tickets.attachMedia')}{' '}
-                      {attachments.length > 0 && `(${attachments.length}/10)`}
-                    </button>
+                  <div className="flex items-stretch gap-2.5">
+                    <div className="relative min-w-0 flex-1">
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder={t('rv.tk.replyPlaceholder')}
+                        rows={3}
+                        className="input h-full min-h-[76px] resize-none !pr-11"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={attachments.length >= 10 || attachments.some((a) => a.uploading)}
+                        className="absolute bottom-2.5 right-2.5 grid h-8 w-8 place-items-center rounded-lg text-dark-400 hover:text-dark-100 disabled:opacity-50"
+                        aria-label={t('admin.tickets.attachMedia')}
+                      >
+                        <PaperclipIcon className="h-4 w-4" />
+                      </button>
+                    </div>
                     <button
                       type="submit"
                       disabled={
@@ -653,23 +656,124 @@ export default function AdminTickets() {
                         isReplying ||
                         attachments.some((a) => a.uploading || a.error)
                       }
-                      className="btn-primary"
+                      className="btn btn-primary shrink-0 !px-4 !shadow-none lg:!px-[18px]"
                     >
-                      {isReplying ? (
-                        <span className="flex items-center gap-2">
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                          {t('common.loading')}
-                        </span>
-                      ) : (
-                        t('admin.tickets.sendReply')
-                      )}
+                      {isReplying ? t('common.loading') : t('rv.tk.send')}
                     </button>
                   </div>
                 </form>
               )}
+            </>
+          )}
+        </section>
+
+        {/* Клиент */}
+        {selectedTicket?.user && (
+          <aside
+            className={cn(
+              'bento-card flex flex-col gap-4 !p-5 lg:col-span-2 xl:col-span-1',
+              !selectedTicketId && 'hidden',
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-500 text-sm font-bold text-[#111]">
+                {(selectedTicket.user.first_name || selectedTicket.user.username || '?')
+                  .charAt(0)
+                  .toUpperCase()}
+              </span>
+              <span className="min-w-0">
+                <Link
+                  to={`/admin/users/${selectedTicket.user.id}`}
+                  {...backTo(location)}
+                  className="link block truncate text-base"
+                >
+                  {userName(selectedTicket)}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(String(selectedTicket.user!.telegram_id))}
+                  className="block truncate text-xs text-dark-400 hover:text-dark-200"
+                  title={t('admin.tickets.copyTelegramId')}
+                >
+                  {selectedTicket.user.username
+                    ? `@${selectedTicket.user.username}`
+                    : `TG ${selectedTicket.user.telegram_id}`}
+                </button>
+              </span>
             </div>
-          ) : null}
-        </div>
+            {userSub ? (
+              <span
+                className={cn('self-start', userSub.is_active ? 'badge-success' : 'badge-error')}
+              >
+                <i className="rv-tag-dot" />
+                {userSub.tariff_name || (userSub.is_trial ? t('rv.tk.trial') : t('rv.tk.sub'))}
+                {userSub.end_date &&
+                  ` ${t('rv.tk.until', {
+                    date: new Date(userSub.end_date).toLocaleDateString(uiLocale(), {
+                      day: 'numeric',
+                      month: 'short',
+                    }),
+                  })}`}
+              </span>
+            ) : (
+              ticketUser && <span className="badge-neutral self-start">{t('rv.tk.noSub')}</span>
+            )}
+            <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-2 text-sm">
+              {userSub && (
+                <>
+                  <dt className="text-dark-400">{t('rv.traffic')}</dt>
+                  <dd className="text-right font-bold text-dark-100">
+                    {Math.round(userSub.traffic_used_gb)} /{' '}
+                    {userSub.traffic_limit_gb ? `${userSub.traffic_limit_gb} ${t('rv.gb')}` : '∞'}
+                  </dd>
+                  <dt className="text-dark-400">{t('rv.devices')}</dt>
+                  <dd className="text-right font-bold text-dark-100">
+                    {userDevices?.total ?? '—'} / {userSub.device_limit || '∞'}
+                  </dd>
+                </>
+              )}
+              {ticketUser && (
+                <>
+                  <dt className="text-dark-400">{t('nav.balance')}</dt>
+                  <dd className="text-right font-bold text-dark-100">
+                    {formatAmount(ticketUser.balance_rubles)} {currencySymbol}
+                  </dd>
+                </>
+              )}
+            </dl>
+
+            <div className="mt-2 flex flex-col gap-2.5 xl:mt-auto">
+              <p className="text-[13px] font-bold text-dark-200">{t('rv.tk.quick')}</p>
+              {userSub && (
+                <>
+                  <button
+                    type="button"
+                    disabled={quick.isPending}
+                    onClick={() => quick.mutate('gift')}
+                    className="btn btn-secondary !min-h-10 !text-sm"
+                  >
+                    {quickDone === 'gift' ? `✓ ${t('rv.tk.giftDone')}` : t('rv.tk.gift')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={quick.isPending}
+                    onClick={() => quick.mutate('reset')}
+                    className="btn btn-secondary !min-h-10 !text-sm"
+                  >
+                    {quickDone === 'reset' ? `✓ ${t('rv.tk.resetDone')}` : t('rv.tk.reset')}
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => insert(templates[0].text)}
+                className="btn btn-secondary !min-h-10 !text-sm"
+              >
+                {t('rv.tk.qr')}
+              </button>
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );

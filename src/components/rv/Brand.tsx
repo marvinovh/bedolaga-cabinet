@@ -1,4 +1,3 @@
-import { Link } from 'react-router';
 import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -14,15 +13,19 @@ interface BrandProps {
   onClick?: () => void;
 }
 
-/** Лого + название, как в шапке макета («richvpn»). */
+/** Куда ведёт логотип: сайт сервиса (можно переопределить VITE_BRAND_HOME_URL). */
+const BRAND_HOME_URL =
+  (import.meta.env.VITE_BRAND_HOME_URL as string | undefined) || 'https://richvpn.fun';
+
+/** Лого + название, как в шапке макета («richvpn»). Клик ведёт на сайт сервиса. */
 export function Brand({ className, size = 36, onAccent = false, onClick }: BrandProps) {
   const { appName, logoLetter, hasCustomLogo, logoUrl } = useBranding();
   const [loaded, setLoaded] = useState(() => isLogoPreloaded());
   const name = (appName || '').trim();
 
   return (
-    <Link
-      to="/"
+    <a
+      href={BRAND_HOME_URL}
       onClick={onClick}
       aria-label={name || 'Home'}
       className={cn('flex min-w-0 shrink-0 items-center gap-2.5', className)}
@@ -70,6 +73,6 @@ export function Brand({ className, size = 36, onAccent = false, onClick }: Brand
           {name.replace(/\s+/g, '').toLowerCase()}
         </span>
       )}
-    </Link>
+    </a>
   );
 }

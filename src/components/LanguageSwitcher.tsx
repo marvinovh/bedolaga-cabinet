@@ -62,15 +62,15 @@ export default function LanguageSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-40 animate-fade-in rounded-xl border border-dark-700/50 bg-dark-800 py-1 shadow-lg">
+        <div className="absolute right-0 z-50 mt-2 w-44 animate-fade-in overflow-hidden rounded-2xl border-2 border-dark-700 bg-dark-900 py-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
           {availableLanguages.map((lang) => (
             <button
               key={lang.code}
               onClick={() => changeLanguage(lang.code)}
               className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                 lang.code === i18n.language
-                  ? 'bg-accent-500/10 text-accent-400'
-                  : 'text-dark-300 hover:bg-dark-700/50'
+                  ? 'bg-[var(--rv-acc-bg)] font-bold text-accent-400'
+                  : 'font-medium text-dark-200 hover:bg-dark-800'
               }`}
             >
               <span>{lang.flag}</span>
