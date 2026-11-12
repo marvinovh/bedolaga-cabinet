@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { usePlatform } from '@/platform';
-import { copyToClipboard } from '@/utils/clipboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/auth';
@@ -18,7 +17,6 @@ import {
   type NotificationSettings,
   type NotificationSettingsUpdate,
 } from '../api/notifications';
-import { referralApi } from '../api/referral';
 import { brandingApi, type EmailAuthEnabled } from '../api/branding';
 import { UI } from '../config/constants';
 import { Card } from '@/components/data-display/Card';
@@ -26,19 +24,32 @@ import { InfoRow } from '@/components/data-display/InfoRow';
 import { Button } from '@/components/primitives/Button';
 import { Switch } from '@/components/primitives/Switch';
 import { staggerContainer, staggerItem } from '@/components/motion/transitions';
-import { CopyIcon, CheckIcon, ShareIcon, ArrowRightIcon, PencilIcon } from '@/components/icons';
+import { CheckIcon, ArrowRightIcon, PencilIcon } from '@/components/icons';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
+import { WebBackButton } from '@/components/WebBackButton';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useTheme } from '@/hooks/useTheme';
+import { useIsTelegram } from '@/platform/hooks/usePlatform';
+import { themeColorsApi } from '@/api/themeColors';
 
 export default function Profile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
+  const logout = useAuthStore((state) => state.logout);
+  const isTelegram = useIsTelegram();
+  const { isDark, toggleTheme } = useTheme();
+  const { data: enabledThemes } = useQuery({
+    queryKey: ['enabled-themes'],
+    queryFn: themeColorsApi.getEnabledThemes,
+    staleTime: 1000 * 60 * 5,
+  });
+  const canToggleTheme = !!(enabledThemes?.dark && enabledThemes?.light);
   const queryClient = useQueryClient();
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // Inline email change flow
   const [changeEmailStep, setChangeEmailStep] = useState<'email' | 'code' | 'success' | null>(null);
@@ -50,23 +61,6 @@ export default function Profile() {
   const newEmailInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
 
-  // Referral data
-  const { data: referralInfo } = useQuery({
-    queryKey: ['referral-info'],
-    queryFn: referralApi.getReferralInfo,
-  });
-
-  const { data: referralTerms } = useQuery({
-    queryKey: ['referral-terms'],
-    queryFn: referralApi.getReferralTerms,
-  });
-
-  const { data: branding } = useQuery({
-    queryKey: ['branding'],
-    queryFn: brandingApi.getBranding,
-    staleTime: 60000,
-  });
-
   // Check if email auth is enabled
   const { data: emailAuthConfig } = useQuery<EmailAuthEnabled>({
     queryKey: ['email-auth-enabled'],
@@ -75,41 +69,6 @@ export default function Profile() {
   });
   const isEmailAuthEnabled = emailAuthConfig?.enabled ?? true;
   const isEmailVerificationEnabled = emailAuthConfig?.verification_enabled ?? true;
-
-  // Build referral link for cabinet
-  const referralLink = referralInfo?.referral_code
-    ? `${window.location.origin}/login?ref=${referralInfo.referral_code}`
-    : '';
-
-  const copyReferralLink = () => {
-    if (referralLink) {
-      void copyToClipboard(referralLink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const shareReferralLink = () => {
-    if (!referralLink) return;
-    const shareText = t('referral.shareMessage', {
-      percent: referralInfo?.commission_percent || 0,
-      botName: branding?.name || import.meta.env.VITE_APP_NAME || 'Cabinet',
-    });
-
-    if (navigator.share) {
-      navigator
-        .share({
-          title: t('referral.title'),
-          text: shareText,
-          url: referralLink,
-        })
-        .catch(() => {});
-      return;
-    }
-
-    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
-    openTelegramLink(telegramUrl);
-  };
 
   const resendVerificationMutation = useMutation({
     mutationFn: authApi.resendVerification,
@@ -176,7 +135,7 @@ export default function Profile() {
   });
 
   // Auto-focus inputs on step change (skip on Telegram — keyboard hides bottom nav)
-  const { platform: profilePlatform, openTelegramLink } = usePlatform();
+  const { platform: profilePlatform } = usePlatform();
   useEffect(() => {
     if (profilePlatform === 'telegram') return;
     const timer = setTimeout(() => {
@@ -260,93 +219,89 @@ export default function Profile() {
 
   return (
     <motion.div
-      className="space-y-6"
+      className="space-y-3 lg:space-y-5"
       variants={staggerContainer}
       initial="initial"
       animate="animate"
     >
-      <motion.div variants={staggerItem}>
-        <h1 className="text-2xl font-bold text-dark-50 sm:text-3xl">{t('profile.title')}</h1>
+      <motion.div variants={staggerItem} className="flex items-center gap-3">
+        <WebBackButton to="/" />
+        <h1 className="rv-title !text-[30px] lg:!text-[44px]">{t('profile.title')}</h1>
       </motion.div>
 
-      {/* User Info Card */}
+      {/* Пользователь (макет «12 · Профиль») */}
       <motion.div variants={staggerItem}>
-        <Card>
-          <h2 className="mb-6 text-lg font-semibold text-dark-100">{t('profile.accountInfo')}</h2>
-          <div className="space-y-4">
-            <InfoRow divider label={t('profile.telegramId')} value={user?.telegram_id} />
-            {user?.username && (
-              <InfoRow divider label={t('profile.username')} value={`@${user.username}`} />
-            )}
-            <InfoRow divider label={t('profile.name')} value={displayName(user)} />
-            <InfoRow
-              label={t('profile.registeredAt')}
-              value={
-                user?.created_at ? new Date(user.created_at).toLocaleDateString(uiLocale()) : '-'
-              }
-            />
-          </div>
-        </Card>
-      </motion.div>
-
-      {/* Connected Accounts Link */}
-      <motion.div variants={staggerItem}>
-        <Card interactive onClick={() => navigate('/profile/accounts')}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-dark-100">
-                {t('profile.accounts.goToAccounts')}
-              </h2>
-              <p className="text-sm text-dark-400">{t('profile.accounts.subtitle')}</p>
-            </div>
-            <ArrowRightIcon className="h-5 w-5 text-dark-400" />
-          </div>
-        </Card>
-      </motion.div>
-
-      {/* Referral Link Widget — self-animated: mounts after the referral queries
-          resolve, when the parent stagger orchestration has already finished and
-          would leave it stuck at opacity 0 */}
-      {referralTerms?.is_enabled && referralLink && (
-        <motion.div variants={staggerItem} initial="initial" animate="animate">
-          <Card>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-dark-100">{t('referral.yourLink')}</h2>
-              <Link
-                to="/referral"
-                className="flex items-center gap-1 text-accent-400 transition-colors hover:text-accent-300"
-              >
-                <span className="text-sm">{t('referral.title')}</span>
-                <ArrowRightIcon className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="flex-1">
-                <input type="text" readOnly value={referralLink} className="input w-full text-sm" />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={copyReferralLink}
-                  variant={copied ? 'primary' : 'primary'}
-                  className={copied ? 'bg-success-500 hover:bg-success-500' : ''}
-                >
-                  {copied ? <CheckIcon /> : <CopyIcon />}
-                  <span className="ml-2">
-                    {copied ? t('referral.copied') : t('referral.copyLink')}
-                  </span>
-                </Button>
-                <Button onClick={shareReferralLink} variant="secondary">
-                  <ShareIcon className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">{t('referral.shareButton')}</span>
-                </Button>
-              </div>
-            </div>
-            <p className="mt-3 text-sm text-dark-500">
-              {t('referral.shareHint', { percent: referralInfo?.commission_percent || 0 })}
+        <section className="bento-card flex items-center gap-4 !p-5">
+          <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-accent-500 text-2xl font-bold text-[#111]">
+            {(displayName(user) || '?').trim().charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="rv-d truncate text-[28px] text-dark-100">{displayName(user)}</p>
+            <p className="mt-1 truncate text-sm text-dark-400">
+              {user?.telegram_id ? `ID ${user.telegram_id}` : user?.email || ''}
+              {user?.username ? ` · @${user.username}` : ''}
+              {user?.created_at
+                ? ` · ${t('rv.profile.since', {
+                    date: new Date(user.created_at).toLocaleDateString(uiLocale(), {
+                      month: 'long',
+                      year: 'numeric',
+                    }),
+                  })}`
+                : ''}
             </p>
-          </Card>
-        </motion.div>
-      )}
+          </div>
+        </section>
+      </motion.div>
+
+      {/* Способы входа */}
+      <motion.div variants={staggerItem} className="space-y-2.5">
+        <p className="rv-kicker">{t('rv.profile.loginMethods')}</p>
+        <button
+          type="button"
+          onClick={() => navigate('/profile/accounts')}
+          className="bento-card bento-card-hover flex w-full items-center gap-4 !p-5 text-left"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-bold text-dark-100">
+              {t('profile.accounts.goToAccounts')}
+            </span>
+            <span className="block text-sm text-dark-400">{t('profile.accounts.subtitle')}</span>
+          </span>
+          <ArrowRightIcon className="h-5 w-5 text-dark-400" />
+        </button>
+      </motion.div>
+
+      {/* Внешний вид */}
+      <motion.div variants={staggerItem} className="space-y-2.5">
+        <p className="rv-kicker">{t('rv.profile.appearance')}</p>
+        <section className="bento-card space-y-4 !p-5">
+          {canToggleTheme && (
+            <div>
+              <p className="mb-2.5 text-base font-bold text-dark-100">{t('rv.profile.theme')}</p>
+              <div className="rv-seg">
+                <button
+                  type="button"
+                  className={isDark ? 'on' : undefined}
+                  onClick={() => !isDark && toggleTheme()}
+                >
+                  {t('rv.profile.dark')}
+                </button>
+                <button
+                  type="button"
+                  className={!isDark ? 'on' : undefined}
+                  onClick={() => isDark && toggleTheme()}
+                >
+                  {t('rv.profile.light')}
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-base font-bold text-dark-100">{t('rv.profile.language')}</p>
+            <LanguageSwitcher />
+          </div>
+        </section>
+      </motion.div>
 
       {/* Email Section - only show when email auth is enabled */}
       {isEmailAuthEnabled && (
@@ -576,12 +531,9 @@ export default function Profile() {
       )}
 
       {/* Notification Settings */}
-      <motion.div variants={staggerItem}>
+      <motion.div variants={staggerItem} className="space-y-2.5">
+        <p className="rv-kicker">{t('profile.notifications.title')}</p>
         <Card>
-          <h2 className="mb-6 text-lg font-semibold text-dark-100">
-            {t('profile.notifications.title')}
-          </h2>
-
           {notificationsLoading ? (
             <SkeletonGroup className="space-y-3">
               <Skeleton variant="card" count={3} className="h-16" />
@@ -592,7 +544,7 @@ export default function Profile() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-dark-100">
+                    <p className="font-bold text-dark-100">
                       {t('profile.notifications.subscriptionExpiry')}
                     </p>
                     <p className="text-sm text-dark-400">
@@ -616,7 +568,7 @@ export default function Profile() {
                       onChange={(e) =>
                         handleNotificationValue('subscription_expiry_days', Number(e.target.value))
                       }
-                      className="input w-20 py-1"
+                      className="input w-24 !py-2"
                     >
                       {[1, 2, 3, 5, 7, 14].map((d) => (
                         <option key={d} value={d}>
@@ -629,10 +581,10 @@ export default function Profile() {
               </div>
 
               {/* Traffic Warning */}
-              <div className="space-y-3 border-t border-dark-800/50 pt-6">
+              <div className="space-y-3 border-t-2 border-dark-700 pt-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-dark-100">
+                    <p className="font-bold text-dark-100">
                       {t('profile.notifications.trafficWarning')}
                     </p>
                     <p className="text-sm text-dark-400">
@@ -656,7 +608,7 @@ export default function Profile() {
                       onChange={(e) =>
                         handleNotificationValue('traffic_warning_percent', Number(e.target.value))
                       }
-                      className="input w-20 py-1"
+                      className="input w-24 !py-2"
                     >
                       {[50, 70, 80, 90, 95].map((p) => (
                         <option key={p} value={p}>
@@ -669,10 +621,10 @@ export default function Profile() {
               </div>
 
               {/* Balance Low */}
-              <div className="space-y-3 border-t border-dark-800/50 pt-6">
+              <div className="space-y-3 border-t-2 border-dark-700 pt-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-dark-100">
+                    <p className="font-bold text-dark-100">
                       {t('profile.notifications.balanceLow')}
                     </p>
                     <p className="text-sm text-dark-400">
@@ -698,16 +650,16 @@ export default function Profile() {
                         handleNotificationValue('balance_low_threshold', Number(e.target.value))
                       }
                       min={0}
-                      className="input w-24 py-1"
+                      className="input w-28 !py-2"
                     />
                   </div>
                 )}
               </div>
 
               {/* News */}
-              <div className="flex items-center justify-between border-t border-dark-800/50 pt-6">
+              <div className="flex items-center justify-between border-t-2 border-dark-700 pt-5">
                 <div>
-                  <p className="font-medium text-dark-100">{t('profile.notifications.news')}</p>
+                  <p className="font-bold text-dark-100">{t('profile.notifications.news')}</p>
                   <p className="text-sm text-dark-400">{t('profile.notifications.newsDesc')}</p>
                 </div>
                 <Switch
@@ -717,9 +669,9 @@ export default function Profile() {
               </div>
 
               {/* Promo Offers */}
-              <div className="flex items-center justify-between border-t border-dark-800/50 pt-6">
+              <div className="flex items-center justify-between border-t-2 border-dark-700 pt-5">
                 <div>
-                  <p className="font-medium text-dark-100">
+                  <p className="font-bold text-dark-100">
                     {t('profile.notifications.promoOffers')}
                   </p>
                   <p className="text-sm text-dark-400">
@@ -738,6 +690,22 @@ export default function Profile() {
             <p className="text-dark-400">{t('profile.notifications.unavailable')}</p>
           )}
         </Card>
+      </motion.div>
+
+      <motion.div variants={staggerItem}>
+        <section className="bento-card !px-5 !py-1">
+          <Link to="/info" className="rv-row">
+            <span className="flex-1 text-base font-bold text-dark-100">{t('rv.profile.docs')}</span>
+            <ArrowRightIcon className="h-5 w-5 text-dark-400" />
+          </Link>
+          {!isTelegram && (
+            <button type="button" onClick={logout} className="rv-row w-full text-left">
+              <span className="flex-1 text-base font-bold text-[var(--rv-bad)]">
+                {t('rv.profile.logout')}
+              </span>
+            </button>
+          )}
+        </section>
       </motion.div>
     </motion.div>
   );

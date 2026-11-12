@@ -10226,6 +10226,17 @@
       "notFoundText": "Write to us — real people answer, not a bot. You can attach a screenshot.",
       "write": "Write to support",
       "orTelegram": "or on Telegram {{user}}"
+    },
+    "profile": {
+      "since": "with us since {{date}}",
+      "loginMethods": "Sign-in methods",
+      "appearance": "Appearance",
+      "theme": "Theme",
+      "dark": "Dark",
+      "light": "Light",
+      "language": "Language",
+      "docs": "Documents and offer",
+      "logout": "Sign out"
     }
   }
 }
