@@ -10237,7 +10237,9 @@
       "heroBonus": "Your friend gets {{amount}} on balance right away.",
       "yourLevelN": "your level {{level}}",
       "invitedPaid": "invited, {{paid}} topped up",
-      "earnedTotal": "earned in total"
+      "earnedTotal": "earned in total",
+      "youAreHere": "You are here",
+      "now": "now"
     },
     "pay": {
       "title": "Payment",

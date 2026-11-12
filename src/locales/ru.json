@@ -10353,7 +10353,9 @@
       "heroBonus": "Друг сразу получает {{amount}} на баланс.",
       "yourLevelN": "твой уровень {{level}}",
       "invitedPaid": "приглашено, {{paid}} пополнили",
-      "earnedTotal": "заработано всего"
+      "earnedTotal": "заработано всего",
+      "youAreHere": "Ты здесь",
+      "now": "сейчас"
     },
     "pay": {
       "title": "Оплата",
