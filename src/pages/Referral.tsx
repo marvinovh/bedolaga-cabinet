@@ -14,11 +14,8 @@ import { useCurrency } from '../hooks/useCurrency';
 import { StatCard } from '@/components/stats';
 import { PageSkeleton, Skeleton } from '@/components/ui/skeleton';
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
   BanknotesIcon,
   CalendarIcon,
-  CardIcon,
   CheckIcon,
   ClockIcon,
   CopyIcon,
@@ -31,7 +28,6 @@ import {
   TelegramIcon,
   UserPlusIcon,
   UsersIcon,
-  WalletIcon,
 } from '@/components/icons';
 
 function getWithdrawalStatusBadge(status: string): string {
@@ -1042,74 +1038,52 @@ export default function Referral() {
         <div id="withdrawal-section" className="space-y-6">
           {/* Withdrawal Balance Card */}
           {withdrawalEnabled && withdrawalBalance && (
-            <div className="bento-card">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-500/10 text-accent-400">
-                  <WalletIcon className="h-8 w-8" />
-                </div>
-                <h2 className="rv-d text-[30px] text-dark-100">{t('referral.withdrawal.title')}</h2>
+            <section className="bento-card rv-card-ink !p-5">
+              <p className="rv-kicker">{t('rv.ref.canTake')}</p>
+              <div className="rv-num mt-3 text-[72px] text-[#F2F0E8]">
+                {formatAmount(withdrawalBalance.available_total / 100, 0)}
+                <span className="rv-rub">{currencySymbol}</span>
               </div>
-
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                <div className="col-span-2 md:col-span-1">
-                  <StatCard
-                    label={t('referral.withdrawal.available')}
-                    value={formatWithCurrency(withdrawalBalance.available_total / 100)}
-                    icon={<WalletIcon className="h-5 w-5" />}
-                    tone="success"
-                  />
-                </div>
-                <StatCard
-                  label={t('referral.withdrawal.totalEarned')}
-                  value={formatWithCurrency(withdrawalBalance.total_earned / 100)}
-                  icon={<BanknotesIcon className="h-5 w-5" />}
-                  tone="neutral"
-                />
-                <StatCard
-                  label={t('referral.withdrawal.withdrawn')}
-                  value={formatWithCurrency(withdrawalBalance.withdrawn / 100)}
-                  icon={<ArrowUpIcon className="h-5 w-5" />}
-                  tone="neutral"
-                />
-                <StatCard
-                  label={t('referral.withdrawal.spent')}
-                  value={formatWithCurrency(withdrawalBalance.referral_spent / 100)}
-                  icon={<CardIcon className="h-5 w-5" />}
-                  tone="neutral"
-                />
-                <StatCard
-                  label={t('referral.withdrawal.pending')}
-                  value={formatWithCurrency(withdrawalBalance.pending / 100)}
-                  icon={<ArrowDownIcon className="h-5 w-5" />}
-                  tone="warning"
-                />
-              </div>
-
-              <div className="mt-4">
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
                 <button
+                  type="button"
+                  onClick={() => navigate('/subscriptions')}
+                  className="btn btn-primary !shadow-none"
+                >
+                  {t('rv.ref.toVpn')}
+                </button>
+                <button
+                  type="button"
                   onClick={() => navigate('/referral/withdrawal/request')}
                   disabled={!withdrawalBalance.can_request}
-                  className={`btn-primary w-full px-6 sm:w-auto ${
-                    !withdrawalBalance.can_request ? 'cursor-not-allowed opacity-50' : ''
-                  }`}
+                  className="btn btn-secondary !border-[#4A4A46] !text-[#F2F0E8]"
                 >
-                  {t('referral.withdrawal.requestButton')}
+                  {t('rv.ref.withdraw')}
                 </button>
-                {!withdrawalBalance.can_request && withdrawalBalance.cannot_request_reason ? (
-                  <p className="mt-2 text-xs text-dark-500">
-                    {withdrawalBalance.cannot_request_reason}
-                  </p>
-                ) : (
-                  withdrawalBalance.min_amount_kopeks > 0 && (
-                    <p className="mt-2 text-xs text-dark-500">
-                      {t('referral.withdrawal.minAmount', {
-                        amount: formatWithCurrency(withdrawalBalance.min_amount_kopeks / 100),
-                      })}
-                    </p>
-                  )
-                )}
               </div>
-            </div>
+              <p className="mt-3 text-xs text-[#B9B8B0]">
+                {!withdrawalBalance.can_request && withdrawalBalance.cannot_request_reason
+                  ? withdrawalBalance.cannot_request_reason
+                  : withdrawalBalance.min_amount_kopeks > 0
+                    ? t('referral.withdrawal.minAmount', {
+                        amount: formatWithCurrency(withdrawalBalance.min_amount_kopeks / 100),
+                      })
+                    : null}
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-[#3D3D3A] pt-3 text-[13px]">
+                {[
+                  [t('referral.withdrawal.totalEarned'), withdrawalBalance.total_earned],
+                  [t('referral.withdrawal.withdrawn'), withdrawalBalance.withdrawn],
+                  [t('referral.withdrawal.spent'), withdrawalBalance.referral_spent],
+                  [t('referral.withdrawal.pending'), withdrawalBalance.pending],
+                ].map(([label, kopeks]) => (
+                  <div key={String(label)} className="flex justify-between gap-2">
+                    <span className="text-[#9C9B93]">{label}</span>
+                    <b className="text-[#F2F0E8]">{formatWithCurrency(Number(kopeks) / 100)}</b>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
           {/* Withdrawal History */}

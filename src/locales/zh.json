@@ -10066,7 +10066,10 @@
       "inviteText": "Send the link. When your friend pays, you get {{percent}}% of it.",
       "tapToCopy": "Tap to copy",
       "more": "More",
-      "copyCabinet": "Copy cabinet link"
+      "copyCabinet": "Copy cabinet link",
+      "canTake": "Available",
+      "toVpn": "Spend on VPN",
+      "withdraw": "Withdraw"
     },
     "pay": {
       "title": "Payment",
