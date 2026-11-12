@@ -10126,6 +10126,14 @@
       "qrText": "Open the app on it and point the camera at this code.",
       "stuck": "Stuck?",
       "stuckLink": "Write to us — we will guide you"
+    },
+    "wheel": {
+      "a": "Spin",
+      "b": "win",
+      "spins_one": "{{count}} spin",
+      "spins_few": "{{count}} spins",
+      "spins_many": "{{count}} spins",
+      "spins_other": "{{count}} spins"
     }
   }
 }

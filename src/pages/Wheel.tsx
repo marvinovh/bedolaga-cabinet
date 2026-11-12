@@ -2,9 +2,9 @@ import { uiLocale } from '@/utils/uiLocale';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { WebBackButton } from '../components/WebBackButton';
 import { wheelApi, type WheelPrize, type SpinResult, type SpinHistoryItem } from '../api/wheel';
 import FortuneWheel from '../components/wheel/FortuneWheel';
-import WheelLegend from '../components/wheel/WheelLegend';
 import { usePlatform, useHaptic } from '@/platform';
 import { useNotify } from '@/platform/hooks/useNotify';
 import { Card } from '@/components/data-display/Card/Card';
@@ -520,26 +520,29 @@ export default function Wheel() {
     (paymentType === 'telegram_stars' ? !starsEnabled : !config.can_spin);
 
   return (
-    <div className="animate-fade-in space-y-6 pb-8">
-      {/* Simple Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-dark-50">{t('wheel.title')}</h1>
+    <div className="animate-fade-in space-y-4 pb-8 lg:space-y-6">
+      {/* Шапка (макет «14 · Колесо удачи») */}
+      <div className="flex items-center gap-3">
+        <WebBackButton to="/" />
+        <h1 className="rv-title min-w-0 flex-1 !text-[30px] lg:!text-[44px]">{t('wheel.title')}</h1>
         {config.daily_limit > 0 && (
-          <p className="mt-1 text-dark-400">
-            {t('wheel.spinsRemaining')}:{' '}
-            <span className="inline-flex items-center rounded-full bg-accent-500/15 px-2 py-0.5 text-sm font-medium text-accent-400">
-              {Math.max(0, config.daily_limit - config.user_spins_today)}/{config.daily_limit}
-            </span>
-          </p>
+          <span className="badge-success shrink-0">
+            {t('rv.wheel.spins', {
+              count: Math.max(0, config.daily_limit - config.user_spins_today),
+            })}
+          </span>
         )}
       </div>
+      <p className="rv-d text-[52px] text-dark-100 lg:text-[72px]">
+        {t('rv.wheel.a')} — <span className="rv-pill inline-block">{t('rv.wheel.b')}</span>
+      </p>
 
       {/* Wheel Section */}
-      <Card>
+      <div>
         {/* grid-cols-1 = minmax(0,1fr): колонка не растёт по длинному названию
             приза (колесо уезжало вправо и обрезалось наполовину). Внутренний
             отступ — только с sm: у карточки свой, на телефоне двойной сжимал колесо. */}
-        <div className="grid grid-cols-1 gap-6 sm:p-2 lg:grid-cols-[minmax(0,1fr),280px] lg:p-4">
+        <div className="mx-auto max-w-[480px]">
           {/* Left: Wheel and Controls */}
           <div>
             {/* Wheel */}
@@ -551,22 +554,22 @@ export default function Wheel() {
             />
 
             {/* Spin Controls */}
-            <div className="mt-8 space-y-4">
+            <div className="mt-6 space-y-3">
               {/* Payment type selector */}
               {(starsEnabled || daysEnabled) && (
-                <div className="rounded-xl border border-dark-700/30 bg-dark-800/30 px-1 pb-1 pt-2">
-                  <p className="mb-1 text-center text-xs text-dark-400">{t('wheel.spinCost')}</p>
+                <div>
+                  <p className="mb-2 text-sm font-bold text-dark-300">{t('wheel.spinCost')}</p>
                   <div
-                    className={`grid gap-1 ${bothMethodsAvailable ? 'grid-cols-2' : 'grid-cols-1'}`}
+                    className={`grid gap-2.5 ${bothMethodsAvailable ? 'grid-cols-2' : 'grid-cols-1'}`}
                   >
                     {starsEnabled && (
                       <button
                         onClick={() => setPaymentType('telegram_stars')}
                         disabled={isSpinning}
-                        className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+                        className={`btn ${
                           paymentType === 'telegram_stars'
-                            ? 'bg-accent-500/15 text-accent-400'
-                            : 'text-dark-400 hover:text-dark-200'
+                            ? 'btn-secondary !border-accent-500 !bg-[var(--rv-acc-bg)]'
+                            : 'btn-secondary'
                         }`}
                       >
                         <StarIcon />
@@ -577,10 +580,10 @@ export default function Wheel() {
                       <button
                         onClick={() => setPaymentType('subscription_days')}
                         disabled={isSpinning}
-                        className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+                        className={`btn ${
                           paymentType === 'subscription_days'
-                            ? 'bg-accent-500/15 text-accent-400'
-                            : 'text-dark-400 hover:text-dark-200'
+                            ? 'btn-secondary !border-accent-500 !bg-[var(--rv-acc-bg)]'
+                            : 'btn-secondary'
                         }`}
                       >
                         <CalendarIcon />
@@ -650,6 +653,7 @@ export default function Wheel() {
                   variant="primary"
                   size="lg"
                   fullWidth
+                  className="rv-btn-lg"
                   onClick={handleUnifiedSpin}
                   disabled={spinDisabled}
                   loading={isSpinning || isPayingStars}
@@ -742,14 +746,8 @@ export default function Wheel() {
             </div>
             {/* End of left column: wheel and controls */}
           </div>
-
-          {/* Right column (desktop) / Bottom (mobile): Prize Legend */}
-          <div className="flex flex-col">
-            <h3 className="mb-3 text-sm font-semibold text-dark-300">{t('wheel.prizes')}</h3>
-            <WheelLegend prizes={config.prizes} />
-          </div>
         </div>
-      </Card>
+      </div>
 
       {/* History Section - full width, collapsible */}
       <Card>
