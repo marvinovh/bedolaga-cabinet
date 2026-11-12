@@ -72,7 +72,8 @@ export function AdminBackButton({ to = '/admin', replace, className }: AdminBack
       replace={replace}
       className={
         className ||
-        'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 transition-colors hover:border-dark-600'
+        // На компьютере вместо «назад» — боковое меню админки (макет A0).
+        'rv-ibtn transition-colors hover:border-dark-600 lg:hidden'
       }
     >
       <BackIcon />

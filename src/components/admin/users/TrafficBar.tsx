@@ -60,7 +60,7 @@ export function TrafficBar({
         aria-valuemax={100}
         aria-valuenow={unlimited ? undefined : percent}
         className={cn(
-          'h-1.5 overflow-hidden rounded-full bg-dark-700/60',
+          'h-2 overflow-hidden rounded-full bg-dark-700',
           barClassName ?? 'min-w-[48px] flex-1',
         )}
       >

@@ -173,7 +173,7 @@ export function UsersToolbar({ state, onChange, options }: UsersToolbarProps) {
   }));
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
           <label htmlFor={searchId} className="sr-only">
@@ -205,7 +205,7 @@ export function UsersToolbar({ state, onChange, options }: UsersToolbarProps) {
               }
             }}
             placeholder={wide ? t('admin.users.search') : t('admin.users.searchShort')}
-            className="h-11 w-full appearance-none rounded-xl border border-dark-700 bg-dark-800 pl-10 pr-10 text-sm text-dark-100 placeholder-dark-500 outline-none transition-colors focus:border-accent-500/40 focus:shadow-[0_0_0_3px_rgba(var(--color-accent-500),0.08)] [&::-webkit-search-cancel-button]:hidden"
+            className="input !min-h-12 appearance-none !pl-10 !pr-10 !text-[15px] [&::-webkit-search-cancel-button]:hidden"
           />
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-dark-500" />
           {text ? (

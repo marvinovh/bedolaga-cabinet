@@ -55,12 +55,10 @@ export function FiltersPopover({ fields, onChange, onReset }: FiltersPopoverProp
             : t('admin.users.filters.title')
         }
         className={cn(
-          'inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors',
+          'btn btn-secondary !min-h-12 shrink-0 !px-4',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40',
-          'data-[state=open]:border-accent-500/50',
-          applied > 0
-            ? 'border-accent-500/50 bg-accent-500/10 text-accent-400'
-            : 'border-dark-700 bg-dark-800 text-dark-300 hover:border-dark-600 hover:text-dark-100',
+          'data-[state=open]:!border-accent-500',
+          applied > 0 && '!border-accent-500 !bg-[var(--rv-acc-bg)]',
         )}
       >
         <FilterIcon className="h-5 w-5" />

@@ -38,9 +38,7 @@ export function UserAvatar({
       aria-hidden="true"
       className={cn(
         'relative flex shrink-0 items-center justify-center rounded-full font-bold',
-        muted
-          ? 'bg-dark-700 text-dark-300'
-          : 'bg-gradient-to-br from-accent-500 to-accent-700 text-on-accent',
+        muted ? 'bg-dark-700 text-dark-300' : 'bg-dark-700 text-dark-100',
         SIZE[size],
         className,
       )}

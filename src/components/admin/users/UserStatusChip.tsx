@@ -6,11 +6,12 @@ import { formatDayMonth } from '@/utils/format';
 export type ChipTone = 'success' | 'warning' | 'error' | 'accent' | 'neutral';
 
 const TONE: Record<ChipTone, string> = {
-  success: 'bg-success-500/15 text-success-400',
-  warning: 'bg-warning-500/15 text-warning-400',
-  error: 'bg-error-500/15 text-error-400',
-  accent: 'bg-accent-500/15 text-accent-400',
-  neutral: 'bg-dark-800 text-dark-400',
+  // RichVPN: теги UI-кита — точка + слово (статус всегда словами).
+  success: 'bg-[var(--rv-acc-bg)] text-[var(--rv-acc-tx)]',
+  warning: 'bg-[var(--rv-warn-bg)] text-[var(--rv-warn)]',
+  error: 'bg-[var(--rv-bad-bg)] text-[var(--rv-bad)]',
+  accent: 'bg-dark-700 text-dark-100',
+  neutral: 'bg-dark-700 text-dark-200',
 };
 
 /** Сколько дней осталось считать «скоро истекает» — окрашивает чип в предупреждение. */
@@ -96,7 +97,7 @@ export function UserStatusChip({ user, className }: { user: StatusSource; classN
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold',
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-bold leading-none before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']",
         TONE[tone],
         className,
       )}
@@ -116,7 +117,7 @@ export function AccountStatusChip({ status, className }: { status: string; class
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold',
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-bold leading-none before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']",
         TONE[tone],
         className,
       )}
@@ -148,7 +149,7 @@ export function SubscriptionStateChip({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold',
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-bold leading-none before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']",
         TONE[SUBSCRIPTION_STATE_TONE[status] ?? 'neutral'],
         className,
       )}
@@ -179,7 +180,7 @@ export function GraceAccessChip({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold',
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-bold leading-none before:h-1.5 before:w-1.5 before:rounded-full before:bg-current before:content-['']",
         TONE.warning,
         className,
       )}

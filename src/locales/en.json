@@ -10386,6 +10386,13 @@
       "autopayOnDate": "Auto-renewal: {{date}}",
       "autopayOff": "Auto-renewal is off",
       "open": "Open"
+    },
+    "au": {
+      "status": "Status",
+      "tariff": "Plan",
+      "until": "Until",
+      "traffic": "Traffic",
+      "seen": "Seen"
     }
   }
 }

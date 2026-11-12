@@ -16,7 +16,7 @@ import {
   UsersToolbar,
   useInfiniteScroll,
 } from '@/components/admin/users';
-import { ArrowRightIcon, RefreshIcon, UsersIcon } from '@/components/icons';
+import { ArrowRightIcon, RefreshIcon } from '@/components/icons';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
 import { useHeaderHeight } from '@/hooks/useHeaderHeight';
 import { cn } from '@/lib/utils';
@@ -46,7 +46,7 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
  * «1 873 человека · 944 с активной подпиской · 14 новых сегодня · 61 заблокирован».
  * Каждая часть со своим склонением; нулевые «новых» и «заблокированных» не показываются.
  */
-function summaryLine(
+export function summaryLine(
   stats: { total: number; subscribed: number; newToday: number; blocked: number },
   locale: string,
   t: Translate,
@@ -162,13 +162,6 @@ export default function AdminUsers() {
   }, []);
 
   const locale = i18n.language;
-  const stats = statsQuery.data;
-  const summaryStats = stats && {
-    total: stats.total_users,
-    subscribed: stats.users_with_active_subscription,
-    newToday: stats.new_today,
-    blocked: stats.blocked_users,
-  };
   const { mobileCss } = useHeaderHeight();
 
   const refreshing = usersQuery.isFetching && !usersQuery.isFetchingNextPage;
@@ -178,29 +171,14 @@ export default function AdminUsers() {
       className="animate-fade-in [--sticky-top:var(--mobile-header)] lg:[--sticky-top:3.5rem]"
       style={{ '--mobile-header': mobileCss } as CSSProperties}
     >
-      <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="mb-5 flex items-end justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <AdminBackButton to="/admin" />
-          <div
-            aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-500/10 text-accent-400"
-          >
-            <UsersIcon className="h-5 w-5" />
-          </div>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-dark-100">{t('admin.users.title')}</h1>
-            {summaryStats ? (
-              <>
-                <p className="hidden text-sm tabular-nums text-dark-400 sm:block">
-                  {summaryLine(summaryStats, locale, t, false)}
-                </p>
-                <p className="text-sm tabular-nums text-dark-400 sm:hidden">
-                  {summaryLine(summaryStats, locale, t, true)}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-dark-400">{t('admin.users.subtitle')}</p>
-            )}
+            <p className="mb-1.5 text-[13px] font-medium text-dark-400">
+              {t('admin.groups.users')}
+            </p>
+            <h1 className="rv-title !text-[44px] lg:!text-[56px]">{t('admin.users.title')}</h1>
           </div>
         </div>
         <button
@@ -212,7 +190,7 @@ export default function AdminUsers() {
           aria-label={t('common.refresh')}
           title={t('common.refresh')}
           disabled={refreshing}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 text-dark-300 transition-colors hover:border-dark-600 hover:text-dark-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40 disabled:cursor-wait"
+          className="rv-ibtn !h-[52px] !w-[52px] disabled:cursor-wait"
         >
           <RefreshIcon className={cn('h-5 w-5', refreshing && 'animate-spin')} />
         </button>
@@ -223,7 +201,7 @@ export default function AdminUsers() {
         <UsersToolbar state={state} onChange={update} options={options} />
       </div>
 
-      <p className="mb-3 text-sm tabular-nums text-dark-400">
+      <p className="mb-3 mt-1 text-sm tabular-nums text-dark-400">
         {usersQuery.isLoading
           ? t('common.loading')
           : t('admin.users.shown', {

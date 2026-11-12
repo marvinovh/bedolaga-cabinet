@@ -10,9 +10,15 @@ interface SegmentedProps<T extends string> {
   className?: string;
 }
 
+// RichVPN: md — отдельные «таблетки» с рамкой (макет A2: «Все · С подпиской · …»),
+// sm — компактный сегмент внутри секции.
 const ITEM = {
-  sm: 'h-7 px-3 text-xs',
-  md: 'h-8 px-3.5 text-sm',
+  sm: 'h-8 px-3 text-xs rounded-[9px]',
+  md: 'h-10 px-4 text-sm rounded-full border-2',
+} as const;
+const WRAP = {
+  sm: 'gap-1 rounded-xl border-2 border-dark-700 bg-dark-900 p-1',
+  md: 'gap-2',
 } as const;
 
 /**
@@ -32,10 +38,7 @@ export function Segmented<T extends string>({
     <div
       role="radiogroup"
       aria-label={label}
-      className={cn(
-        'scrollbar-hide flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-dark-800/70 p-1',
-        className,
-      )}
+      className={cn('scrollbar-hide flex w-fit max-w-full overflow-x-auto', WRAP[size], className)}
     >
       {options.map((option) => {
         const selected = value === option.value;
@@ -47,13 +50,14 @@ export function Segmented<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              'shrink-0 whitespace-nowrap rounded-lg font-medium transition-colors',
+              'shrink-0 whitespace-nowrap font-bold transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/50',
               ITEM[size],
               selected
-                ? // Заливка — как у главной кнопки (.btn-primary), и в светлой теме тоже.
-                  'bg-accent-500 text-on-accent shadow-sm light:bg-champagne-700 light:text-white'
-                : 'text-dark-400 hover:bg-dark-700/60 hover:text-dark-100',
+                ? 'border-accent-500 bg-accent-500 text-[#111]'
+                : size === 'md'
+                  ? 'border-dark-600 text-dark-100 hover:border-dark-400'
+                  : 'border-transparent text-dark-300 hover:bg-dark-800 hover:text-dark-100',
             )}
           >
             {option.label}

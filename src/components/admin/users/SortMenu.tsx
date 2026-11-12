@@ -38,11 +38,11 @@ export function SortMenu({ label, value, groups, onChange, direction, changed }:
         aria-label={title}
         title={title}
         className={cn(
-          'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors',
+          'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40',
           changed
-            ? 'border-accent-500/50 bg-accent-500/10 text-accent-400'
-            : 'border-dark-700 bg-dark-800 text-dark-300 hover:border-dark-600 hover:text-dark-100',
+            ? 'border-accent-500 bg-[var(--rv-acc-bg)] text-dark-100'
+            : 'border-dark-600 bg-transparent text-dark-100 hover:border-dark-400',
         )}
       >
         <Icon className="h-5 w-5" />

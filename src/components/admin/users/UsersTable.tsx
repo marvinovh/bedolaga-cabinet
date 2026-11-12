@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { UserListItem } from '@/api/adminUsers';
 import { backTo } from '@/components/admin/AdminBackButton';
-import { ChevronRightIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useNow } from '@/hooks/useNow';
 import { formatShortDate } from '@/utils/format';
@@ -18,8 +17,9 @@ interface UsersTableProps {
   className?: string;
 }
 
+// Колонки как в макете A2: пользователь · статус · тариф · до · трафик · баланс · был.
 const GRID =
-  'grid grid-cols-[minmax(0,1.35fr)_minmax(0,1.45fr)_140px_120px_20px] items-center gap-4 px-4';
+  'grid grid-cols-[minmax(0,1.5fr)_130px_minmax(0,1fr)_80px_minmax(0,1fr)_90px_110px] items-center gap-4 px-4';
 
 /** Сколько тарифов у человека сверх показанного в строке: `0` — показывать нечего. */
 export function extraTariffsCount(user: Pick<UserListItem, 'subscriptions'>): number {
@@ -49,22 +49,23 @@ export function UsersTable({ users, className }: UsersTableProps) {
   const now = useNow(ONLINE_TICK_MS);
 
   return (
-    <div className={cn('rounded-2xl border border-dark-700/60 bg-dark-900/40', className)}>
+    <div className={cn('rounded-[18px] border-2 border-dark-700 bg-dark-900', className)}>
       {/* Шапка прилипает под шапкой кабинета; скругления свои — у контейнера нет overflow. */}
       <div
         className={cn(
           GRID,
-          'sticky top-[var(--sticky-top,0px)] z-10 h-10 rounded-t-2xl border-b border-dark-700/60 bg-dark-900 text-[11px] font-semibold uppercase tracking-wider text-dark-500',
+          'sticky top-[var(--sticky-top,0px)] z-10 h-12 rounded-t-[16px] border-b-2 border-dark-700 bg-dark-900 text-[11px] font-bold uppercase tracking-[0.1em] text-dark-400 lg:top-0',
         )}
       >
         <span>{t('admin.users.columns.user')}</span>
-        <span>{t('admin.users.columns.subscription')}</span>
-        <span>{t('admin.users.columns.activity')}</span>
+        <span>{t('rv.au.status')}</span>
+        <span>{t('rv.au.tariff')}</span>
+        <span>{t('rv.au.until')}</span>
+        <span>{t('rv.au.traffic')}</span>
         <span className="text-right">{t('admin.users.columns.balance')}</span>
-        <span />
+        <span>{t('rv.au.seen')}</span>
       </div>
       {users.map((user) => {
-        const caption = subscriptionCaption(user, t);
         return (
           <Link
             key={user.id}
@@ -72,7 +73,7 @@ export function UsersTable({ users, className }: UsersTableProps) {
             state={backTo(location).state}
             className={cn(
               GRID,
-              'group min-h-[68px] border-b border-dark-800/80 py-2.5 transition-colors last:rounded-b-2xl last:border-b-0 hover:bg-dark-800/40 focus-visible:bg-dark-800/40 focus-visible:outline-none',
+              'group min-h-[66px] border-b border-dark-700 py-3 transition-colors last:rounded-b-[16px] last:border-b-0 hover:bg-[var(--rv-acc-bg)] focus-visible:bg-[var(--rv-acc-bg)] focus-visible:outline-none',
             )}
           >
             <div className="flex min-w-0 items-center gap-3">
@@ -83,7 +84,7 @@ export function UsersTable({ users, className }: UsersTableProps) {
                 online={isUserOnline(user, now)}
               />
               <div className="min-w-0">
-                <div className="relative truncate font-medium text-dark-100">
+                <div className="relative truncate font-bold text-dark-100">
                   {user.full_name}
                   {isUserOnline(user, now) && (
                     <span className="sr-only">, {t('admin.users.connectedNow')}</span>
@@ -97,44 +98,43 @@ export function UsersTable({ users, className }: UsersTableProps) {
               </div>
             </div>
 
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <div className="flex min-w-0 items-center gap-2">
-                {user.has_subscription && user.tariff_name && (
-                  <span className="truncate text-sm font-medium text-dark-100">
-                    {user.tariff_name}
-                  </span>
-                )}
-                {extraTariffsCount(user) > 0 && (
-                  <span className="shrink-0 rounded-full bg-dark-800 px-2 py-0.5 text-[11px] font-semibold text-dark-400">
-                    {t('admin.users.moreTariffs', { count: extraTariffsCount(user) })}
-                  </span>
-                )}
-                <UserStatusChip user={user} />
-                {caption && (
-                  <span className="hidden shrink-0 text-xs text-dark-500 xl:inline">{caption}</span>
-                )}
-              </div>
+            <div className="min-w-0">
+              <UserStatusChip user={user} />
+            </div>
+            <div className="min-w-0 truncate text-sm text-dark-100">
+              {user.has_subscription ? user.tariff_name || '—' : '—'}
+              {extraTariffsCount(user) > 0 && (
+                <span className="ml-1.5 rounded-full bg-dark-700 px-2 py-0.5 text-[11px] font-bold text-dark-300">
+                  {t('admin.users.moreTariffs', { count: extraTariffsCount(user) })}
+                </span>
+              )}
+            </div>
+            <div className="text-sm tabular-nums text-dark-200">
+              {user.has_subscription && user.subscription_end_date
+                ? new Date(user.subscription_end_date).toLocaleDateString(undefined, {
+                    day: 'numeric',
+                    month: 'short',
+                  })
+                : '—'}
+            </div>
+            <div className="min-w-0">
               {user.has_subscription && (
                 <TrafficBar
                   usedGb={user.traffic_used_gb}
                   limitGb={user.traffic_limit_gb}
-                  barClassName="w-32 flex-none"
+                  barClassName="w-28 flex-none"
                 />
               )}
             </div>
-
-            <RelativeTime value={user.last_activity} />
-
             <span
               className={cn(
-                'text-right text-sm font-medium tabular-nums',
-                user.balance_rubles > 0 ? 'text-dark-100' : 'text-dark-500',
+                'text-right text-sm font-bold tabular-nums',
+                user.balance_rubles > 0 ? 'text-dark-100' : 'text-dark-400',
               )}
             >
               {money(user.balance_rubles)}
             </span>
-
-            <ChevronRightIcon className="h-4 w-4 justify-self-end text-dark-600 transition-colors group-hover:text-dark-300" />
+            <RelativeTime value={user.last_activity} />
           </Link>
         );
       })}
