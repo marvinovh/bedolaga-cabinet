@@ -16,12 +16,13 @@ export interface StatCardDelta {
  * маленькой перед подписью без подложки. Классы — целиком строками: Tailwind
  * собирает их из исходника.
  */
+// RichVPN: KPI-плитка макета A1 — число белым Bebas, цвет только у предупреждений.
 const TONE = {
-  neutral: { chip: 'text-dark-300 tile-wide:bg-dark-700/60', value: 'text-dark-100' },
-  success: { chip: 'text-success-400 tile-wide:bg-success-500/15', value: 'text-success-400' },
-  accent: { chip: 'text-accent-400 tile-wide:bg-accent-500/15', value: 'text-accent-400' },
-  warning: { chip: 'text-warning-400 tile-wide:bg-warning-500/15', value: 'text-warning-400' },
-  error: { chip: 'text-error-400 tile-wide:bg-error-500/15', value: 'text-error-400' },
+  neutral: { chip: 'text-dark-400 tile-wide:bg-dark-700', value: 'text-dark-100' },
+  success: { chip: 'text-accent-400 tile-wide:bg-dark-700', value: 'text-dark-100' },
+  accent: { chip: 'text-accent-400 tile-wide:bg-dark-700', value: 'text-dark-100' },
+  warning: { chip: 'text-warning-400 tile-wide:bg-dark-700', value: 'text-warning-400' },
+  error: { chip: 'text-error-400 tile-wide:bg-dark-700', value: 'text-error-400' },
 } as const;
 
 /** С какой длины значение считается длинным (≈ «1 234 567,89 ₽» и длиннее). */
@@ -70,7 +71,7 @@ export function StatCard({
   //   значение отдельной строкой во всю ширину. Рядом с чипом места не хватало ни
   //   сумме («100,0…», «12 34…» — цифры пропадали), ни подписи («Всего заработа…»).
   return (
-    <div className="h-full rounded-xl bg-dark-800/30 p-3 transition-colors [container:stat-tile/inline-size] hover:bg-dark-800/50">
+    <div className="h-full rounded-[18px] border-2 border-dark-700 bg-dark-900 p-3.5 transition-colors [container:stat-tile/inline-size] sm:px-[18px] sm:py-4">
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1.5 gap-y-1.5 tile-wide:gap-x-2.5">
         <div
           className={cn(
@@ -85,7 +86,7 @@ export function StatCard({
             // responsive-вариант text-sm перебивает leading-tight и даёт 20px.
             <Skeleton className="h-[15px] w-24 sm:h-5" />
           ) : (
-            <span className="line-clamp-2 hyphens-auto text-xs leading-tight text-dark-500 sm:text-sm">
+            <span className="line-clamp-2 hyphens-auto text-xs font-bold leading-tight text-dark-400 sm:text-[13px]">
               {label}
             </span>
           )}
@@ -114,8 +115,10 @@ export function StatCard({
                   и во всю ширину — переносится. */}
               <div
                 className={cn(
-                  'font-semibold [overflow-wrap:anywhere] tile-wide:text-lg sm:tile-wide:text-xl',
-                  longValue ? 'text-[length:clamp(0.75rem,10cqi,1rem)]' : 'text-base',
+                  'rv-num mt-1.5 [overflow-wrap:anywhere]',
+                  longValue
+                    ? 'text-[length:clamp(1.25rem,14cqi,2.25rem)]'
+                    : 'text-[length:clamp(1.75rem,18cqi,2.875rem)]',
                   valueClass,
                 )}
               >

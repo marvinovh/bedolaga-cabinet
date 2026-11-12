@@ -1,20 +1,15 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router';
-import { backTo } from '@/components/admin';
 import { useTranslation } from 'react-i18next';
-import { getPaymentMethodLabel } from '../constants/paymentMethods';
 import { useQuery } from '@tanstack/react-query';
 import { statsApi, type NodeStatus } from '../api/admin';
 import { formatUptime, parseCalendarDate } from '../utils/format';
 
-const CABINET_VERSION = __APP_VERSION__;
 import { useCurrency } from '../hooks/useCurrency';
-import { usePlatform } from '../platform/hooks/usePlatform';
 
 import { StatCard } from '@/components/stats';
+import { RvAdminOverview } from '@/components/admin/RvAdminOverview';
 import { PageSkeleton, Skeleton } from '@/components/ui/skeleton';
 import {
-  BackIcon,
   BanknotesIcon,
   CalendarBlankIcon,
   CalendarIcon,
@@ -26,15 +21,12 @@ import {
   ExclamationIcon,
   MegaphoneIcon,
   PowerIcon,
-  RefreshIcon,
   RestartIcon,
   ServerIcon,
   SparklesIcon,
   StarIcon,
   TagIcon,
   UsersIcon,
-  UsersOnlineIcon,
-  WalletIcon,
   XCircleIcon,
 } from '@/components/icons';
 
@@ -206,10 +198,7 @@ function RevenueChart({ data }: { data: { date: string; amount_rubles: number }[
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
   const { formatAmount, currencySymbol } = useCurrency();
-  const { capabilities } = usePlatform();
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showAllNodes, setShowAllNodes] = useState(false);
@@ -295,62 +284,22 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 basis-48 items-center gap-3">
-          {/* Show back button only on web, not in Telegram Mini App */}
-          {!capabilities.hasBackButton && (
-            <button
-              onClick={() => navigate('/admin')}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 transition-colors hover:border-dark-600"
-            >
-              <BackIcon />
-            </button>
-          )}
-          <div>
-            <h1 className="text-2xl font-bold text-dark-100">{t('adminDashboard.title')}</h1>
-            <p className="text-dark-400">{t('adminDashboard.subtitle')}</p>
-          </div>
-        </div>
-        <button
-          onClick={() => statsQuery.refetch()}
-          disabled={loading}
-          className="flex items-center gap-2 rounded-lg bg-dark-800 px-4 py-2 text-dark-300 transition-colors hover:bg-dark-700 hover:text-dark-100 disabled:opacity-50"
-        >
-          <RefreshIcon className="h-5 w-5" />
-          {t('adminDashboard.refresh')}
-        </button>
-      </div>
+    <div className="animate-fade-in space-y-5">
+      {stats && (
+        <RvAdminOverview
+          stats={stats}
+          payments={payments}
+          campaigns={campaigns}
+          systemInfo={systemInfo}
+          onRefresh={() => {
+            statsQuery.refetch();
+            extendedQuery.refetch();
+          }}
+          refreshing={statsQuery.isFetching}
+        />
+      )}
 
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard
-          label={t('adminDashboard.stats.usersOnline')}
-          value={stats?.nodes.total_users_online || 0}
-          icon={<UsersOnlineIcon className="h-5 w-5" />}
-          tone="success"
-        />
-        <StatCard
-          label={t('adminDashboard.stats.activeSubscriptions')}
-          value={stats?.subscriptions.active || 0}
-          subValue={`${t('adminDashboard.stats.total')}: ${stats?.subscriptions.total || 0}`}
-          icon={<SparklesIcon className="h-5 w-5" />}
-          tone="accent"
-        />
-        <StatCard
-          label={t('adminDashboard.stats.incomeToday')}
-          value={`${formatAmount(stats?.financial.income_today_rubles || 0)}\u00A0${currencySymbol}`}
-          icon={<WalletIcon className="h-5 w-5" />}
-          tone="warning"
-        />
-        <StatCard
-          label={t('adminDashboard.stats.incomeMonth')}
-          value={`${formatAmount(stats?.financial.income_month_rubles || 0)}\u00A0${currencySymbol}`}
-          icon={<ChartBarIcon className="h-5 w-5" />}
-          tone="accent"
-        />
-      </div>
+      <p className="rv-kicker pt-4">{t('rv.adm.details')}</p>
 
       {/* Nodes Section */}
       <div className="rounded-xl border border-dark-700 bg-dark-800/30 p-5">
@@ -813,214 +762,6 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
-
-      {/* Recent Payments */}
-      {payments && payments.payments.length > 0 && (
-        <div className="rounded-xl border border-dark-700 bg-dark-800/30 p-4 sm:p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-success-500/20 p-2 text-success-400 sm:p-2.5">
-                <BanknotesIcon />
-              </div>
-              <div>
-                <h2 className="text-base font-semibold text-dark-100 sm:text-lg">
-                  {t('adminDashboard.recentPayments.title')}
-                </h2>
-                <p className="text-xs text-dark-400 sm:text-sm">
-                  {t('adminDashboard.recentPayments.today', {
-                    amount: `${formatAmount(payments.total_today_kopeks / 100)}\u00A0${currencySymbol}`,
-                  })}
-                  <span className="hidden sm:inline">
-                    {' '}
-                    ·{' '}
-                    {t('adminDashboard.recentPayments.week', {
-                      amount: `${formatAmount(payments.total_week_kopeks / 100)}\u00A0${currencySymbol}`,
-                    })}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Table */}
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-dark-700">
-                  <th className="px-2 py-3 text-left text-xs font-medium text-dark-500">
-                    {t('adminDashboard.table.user')}
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-dark-500">
-                    {t('adminDashboard.table.type')}
-                  </th>
-                  <th className="px-2 py-3 text-right text-xs font-medium text-dark-500">
-                    {t('adminDashboard.table.amount')}
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-dark-500">
-                    {t('adminDashboard.table.method')}
-                  </th>
-                  <th className="px-2 py-3 text-right text-xs font-medium text-dark-500">
-                    {t('adminDashboard.table.date')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.payments.slice(0, 10).map((payment) => (
-                  <tr
-                    key={payment.id}
-                    className="border-b border-dark-700/50 transition-colors hover:bg-dark-800/50"
-                  >
-                    <td className="px-2 py-3">
-                      <button
-                        onClick={() =>
-                          navigate(`/admin/users/${payment.user_id}`, backTo(location))
-                        }
-                        className="text-left transition-colors hover:opacity-80"
-                      >
-                        <div className="text-sm font-medium text-dark-100 underline decoration-dark-600 underline-offset-2 hover:decoration-dark-400">
-                          {payment.display_name}
-                        </div>
-                        {payment.username && (
-                          <div className="text-xs text-dark-500">@{payment.username}</div>
-                        )}
-                      </button>
-                    </td>
-                    <td className="px-2 py-3">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs ${
-                          payment.type === 'deposit'
-                            ? 'bg-success-500/20 text-success-400'
-                            : 'bg-accent-500/20 text-accent-400'
-                        }`}
-                      >
-                        {payment.type_display}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3 text-right">
-                      <span className="font-semibold text-dark-100">
-                        {formatAmount(payment.amount_rubles)}
-                        {'\u00A0'}
-                        {currencySymbol}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3">
-                      <span className="text-xs text-dark-400">
-                        {payment.payment_method
-                          ? (getPaymentMethodLabel(payment.payment_method, t) ??
-                            payment.payment_method)
-                          : '-'}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3 text-right">
-                      <span className="text-xs text-dark-400">
-                        {new Date(payment.created_at).toLocaleString('ru-RU', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards */}
-          <div className="space-y-2 md:hidden">
-            {payments.payments.slice(0, 10).map((payment) => (
-              <div key={payment.id} className="rounded-lg bg-dark-900/50 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <button
-                      onClick={() => navigate(`/admin/users/${payment.user_id}`, backTo(location))}
-                      className="truncate text-sm font-medium text-dark-100 underline decoration-dark-600 underline-offset-2 transition-colors hover:decoration-dark-400"
-                    >
-                      {payment.display_name}
-                    </button>
-                  </div>
-                  <span className="ml-2 whitespace-nowrap text-sm font-semibold text-dark-100">
-                    {formatAmount(payment.amount_rubles)}
-                    {'\u00A0'}
-                    {currencySymbol}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-2 text-xs text-dark-500">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span
-                      className={`shrink-0 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] ${
-                        payment.type === 'deposit'
-                          ? 'bg-success-500/20 text-success-400'
-                          : 'bg-accent-500/20 text-accent-400'
-                      }`}
-                    >
-                      {payment.type_display}
-                    </span>
-                    <span className="truncate">
-                      {payment.payment_method
-                        ? (getPaymentMethodLabel(payment.payment_method, t) ??
-                          payment.payment_method)
-                        : '-'}
-                    </span>
-                  </span>
-                  <span>
-                    {new Date(payment.created_at).toLocaleString('ru-RU', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* System Info */}
-      {systemInfo && (
-        <div className="rounded-xl border border-dark-700 bg-dark-800 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-dark-300">
-            {t('adminDashboard.systemInfo.title')}
-          </h3>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <div>
-              <span className="text-dark-500">{t('adminDashboard.systemInfo.cabinet')}: </span>
-              <span className="font-medium text-dark-200">v{CABINET_VERSION}</span>
-            </div>
-            <div>
-              <span className="text-dark-500">{t('adminDashboard.systemInfo.bot')}: </span>
-              <span className="font-medium text-dark-200">v{systemInfo.bot_version}</span>
-            </div>
-            <div>
-              <span className="text-dark-500">{t('adminDashboard.systemInfo.python')}: </span>
-              <span className="font-medium text-dark-200">{systemInfo.python_version}</span>
-            </div>
-            <div>
-              <span className="text-dark-500">{t('adminDashboard.systemInfo.uptime')}: </span>
-              <span className="font-medium text-dark-200">
-                {(() => {
-                  const s = systemInfo.uptime_seconds;
-                  const d = Math.floor(s / 86400);
-                  const h = Math.floor((s % 86400) / 3600);
-                  const m = Math.floor((s % 3600) / 60);
-                  return [d > 0 && `${d}d`, h > 0 && `${h}h`, `${m}m`].filter(Boolean).join(' ');
-                })()}
-              </span>
-            </div>
-            <div>
-              <span className="text-dark-500">{t('adminDashboard.systemInfo.users')}: </span>
-              <span className="font-medium text-dark-200">{systemInfo.users_total}</span>
-            </div>
-            <div>
-              <span className="text-dark-500">{t('adminDashboard.systemInfo.activeSubs')}: </span>
-              <span className="font-medium text-dark-200">{systemInfo.subscriptions_active}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
