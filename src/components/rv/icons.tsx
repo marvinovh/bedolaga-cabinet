@@ -96,3 +96,8 @@ export const RvRefreshIcon = ({ className }: P) => (
     <path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" />
   </svg>
 );
+export const TgPlaneIcon = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M21.4 3.6 2.9 10.8c-1.3.5-1.3 1.2-.2 1.6l4.7 1.5 1.8 5.6c.2.6.1.9.8.9.5 0 .7-.2 1-.5l2.3-2.2 4.8 3.5c.9.5 1.5.2 1.7-.8l3.1-14.7c.3-1.3-.5-1.9-1.5-1.5zM8.7 13.6l9.3-5.9c.4-.3.9-.1.5.2l-7.9 7.2-.3 3.3-1.6-4.8z" />
+  </svg>
+);

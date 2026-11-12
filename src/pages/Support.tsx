@@ -7,14 +7,15 @@ import { ticketsApi } from '../api/tickets';
 import { MessageMediaGrid } from '../components/tickets/MessageMediaGrid';
 import { infoApi } from '../api/info';
 import { useAuthStore } from '../store/auth';
+import { copyToClipboard } from '../utils/clipboard';
+import { TgPlaneIcon } from '@/components/rv';
 import { logger } from '../utils/logger';
 import { checkRateLimit, getRateLimitResetTime, RATE_LIMIT_KEYS } from '../utils/rateLimit';
 
 import { isOpenTicketConflict } from '../utils/ticketErrors';
 import type { SupportConfig, TicketDetail } from '../types';
-import { Card } from '@/components/data-display/Card';
 import { Button } from '@/components/primitives/Button';
-import { BackIcon, ChatIcon, CloseIcon, ImageIcon, SendIcon } from '@/components/icons';
+import { BackIcon, CloseIcon, ImageIcon, SendIcon } from '@/components/icons';
 import { formatContent } from '../utils/legalContent';
 import { usePlatform } from '@/platform';
 import { linkifyText } from '../utils/linkify';
@@ -48,7 +49,7 @@ export default function Support() {
   log.debug('Component loaded');
 
   const { t, i18n } = useTranslation();
-  const isAdmin = useAuthStore((state) => state.isAdmin);
+  const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const { openTelegramLink, openLink } = usePlatform();
 
@@ -74,6 +75,7 @@ export default function Support() {
   // Формы create и reply взаимоисключающие, поэтому состояние одно на обе.
   const [formError, setFormError] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [idCopied, setIdCopied] = useState(false);
   // Чат (макет 11) — без нижней панели: её место занимает строка ввода.
   const chatOpen = !!selectedTicket && !showCreateForm;
   useEffect(() => {
@@ -275,44 +277,69 @@ export default function Support() {
     // нечего (пустой/битый конфиг), и кнопку тогда не рендерим вовсе.
     const contact = resolveSupportContact(supportConfig);
 
-    const getSupportMessage = () => {
-      log.debug('Getting support message for type:', supportConfig.support_type);
-
-      const title = isAdmin ? t('support.ticketsDisabled') : t('support.title');
-
-      if (supportConfig.support_type === 'url' && supportConfig.support_url) {
-        return {
-          title,
-          message: t('support.useExternalLink'),
-          buttonText: t('support.openSupport'),
-        };
-      }
-
-      // profile и любой fallback — контакт в телеграме
-      const supportUsername = supportConfig.support_username || '@support';
-      return {
-        title,
-        message: t('support.contactSupport', { username: supportUsername }),
-        buttonText: t('support.contactUs'),
-      };
-    };
-
-    const supportMessage = getSupportMessage();
-
+    const userId = user?.telegram_id ?? user?.id;
+    const isUrl = supportConfig.support_type === 'url' && !!supportConfig.support_url;
     return (
-      <div className="mx-auto mt-12 max-w-md">
-        <Card className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-dark-800">
-            <ChatIcon className="h-8 w-8 text-dark-400" />
-          </div>
-          <h2 className="mb-2 text-xl font-semibold text-dark-100">{supportMessage.title}</h2>
-          <p className="mb-6 text-dark-400">{supportMessage.message}</p>
+      <div className="mx-auto max-w-[760px] space-y-3 lg:space-y-5">
+        <h1 className="rv-title !text-[52px] lg:!text-[64px]">
+          {t('rv.help.title1')} <span className="rv-pill">{t('rv.help.title2')}</span>
+        </h1>
+
+        {/* Поддержка в Telegram (макет «10b · Помощь — поддержка в Telegram») */}
+        <section className="bento-card rv-card-acc rv-topo !p-5 sm:!p-7">
+          <span className="grid h-16 w-16 -rotate-3 place-items-center rounded-[18px] bg-[#111] text-[rgb(var(--color-accent-500))]">
+            <TgPlaneIcon className="h-8 w-8" />
+          </span>
+          <h2 className="rv-d mt-5 text-[52px]">
+            {isUrl ? t('rv.help.supportTitle') : t('rv.help.tgTitle1')}
+            <br />
+            <span className="rv-pill rv-pill-ink inline-block">
+              {isUrl ? t('rv.help.supportTitle2') : t('rv.help.tgTitle2')}
+            </span>
+          </h2>
+          <p className="mt-4 text-[17px] leading-snug">
+            {isUrl ? t('support.useExternalLink') : t('rv.help.tgText')}
+          </p>
           {contact && (
-            <Button onClick={() => openSupportContact(supportConfig)} fullWidth>
-              {supportMessage.buttonText}
-            </Button>
+            <button
+              type="button"
+              onClick={() => openSupportContact(supportConfig)}
+              className="btn rv-btn-lg rv-btn-ink mt-5 w-full"
+            >
+              {!isUrl && <TgPlaneIcon className="h-5 w-5" />}
+              {t('rv.help.write')}
+            </button>
           )}
-        </Card>
+          {!isUrl && supportConfig.support_username && (
+            <p className="mt-3 text-center text-sm font-medium">{supportConfig.support_username}</p>
+          )}
+        </section>
+
+        {userId && (
+          <section className="bento-card !p-5">
+            <h3 className="text-lg font-bold text-dark-100">{t('rv.help.faster')}</h3>
+            <p className="mt-1.5 text-[15px] leading-snug text-dark-300">
+              {t('rv.help.fasterText')}
+            </p>
+            <div className="mt-4 flex items-center gap-3 rounded-2xl border-2 border-dark-600 bg-dark-800 p-3 pl-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-dark-400">{t('rv.help.yourId')}</p>
+                <p className="truncate text-lg font-bold tabular-nums text-dark-100">{userId}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  void copyToClipboard(String(userId));
+                  setIdCopied(true);
+                  setTimeout(() => setIdCopied(false), 2000);
+                }}
+                className="btn btn-primary !min-h-10 !px-4 !py-2 !text-[17px] !shadow-none"
+              >
+                {idCopied ? t('rv.subp.copied') : t('rv.help.copy')}
+              </button>
+            </div>
+          </section>
+        )}
       </div>
     );
   }

@@ -33,7 +33,6 @@ import {
   InfoIcon,
   SunIcon,
   MoonIcon,
-  ChevronDownIcon,
   UserIcon,
 } from '@/components/icons';
 
@@ -176,38 +175,6 @@ export function AppShell({ children }: AppShellProps) {
             {desktopNav
               .filter((item) => !DESKTOP_MORE.includes(item.path))
               .map((item) => renderNavLink(item.path, item.label, item.icon))}
-            {desktopNav.some((item) => DESKTOP_MORE.includes(item.path)) && (
-              <details className="group relative">
-                <summary
-                  className={cn(
-                    'flex cursor-pointer list-none items-center gap-1 rounded-[10px] px-3.5 py-2 text-[15px] font-bold leading-none text-[#111] hover:bg-[#111]/10 [&::-webkit-details-marker]:hidden',
-                    DESKTOP_MORE.some((p) => isActive(p)) &&
-                      'bg-[#111] text-[rgb(var(--color-accent-500))]',
-                  )}
-                >
-                  {t('rv.more')}
-                  <ChevronDownIcon className="h-4 w-4 transition-transform group-open:rotate-180" />
-                </summary>
-                <div className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-2xl border-2 border-dark-700 bg-dark-900 p-1.5 shadow-[6px_6px_0_rgba(0,0,0,.6)]">
-                  {desktopNav
-                    .filter((item) => DESKTOP_MORE.includes(item.path))
-                    .map((item) => (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={(e) => {
-                          handleNavClick();
-                          e.currentTarget.closest('details')?.removeAttribute('open');
-                        }}
-                        className={isActive(item.path) ? 'nav-item-active' : 'nav-item'}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        {item.label}
-                      </Link>
-                    ))}
-                </div>
-              </details>
-            )}
             {isAdmin && renderNavLink('/admin', t('admin.nav.title'), ShieldIcon, true)}
           </nav>
 
@@ -233,6 +200,22 @@ export function AppShell({ children }: AppShellProps) {
                   <UserIcon className="h-5 w-5" />
                   {t('nav.profile')}
                 </Link>
+                {desktopNav
+                  .filter((item) => DESKTOP_MORE.includes(item.path))
+                  .map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={(e) => {
+                        handleNavClick();
+                        e.currentTarget.closest('details')?.removeAttribute('open');
+                      }}
+                      className={isActive(item.path) ? 'nav-item-active' : 'nav-item'}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  ))}
                 {canToggleTheme && (
                   <button
                     type="button"

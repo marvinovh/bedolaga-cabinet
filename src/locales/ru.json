@@ -10322,7 +10322,19 @@
       "copyCabinet": "Скопировать ссылку на кабинет",
       "canTake": "Можно забрать",
       "toVpn": "На VPN",
-      "withdraw": "Вывести"
+      "withdraw": "Вывести",
+      "titleD1": "вместе",
+      "titleD2": "с нами",
+      "yourLinks": "Твои ссылки",
+      "linksNote": "Неважно, какую ссылку отправишь: друг попадёт к тебе в приглашённые.",
+      "forBloggers": "Для блогеров и каналов",
+      "becomeA": "Стань",
+      "becomeB": "партнёром",
+      "withdrawTitle": "Вывод средств",
+      "minSum": "мин. сумма — {{amount}}",
+      "available": "Доступно",
+      "spendOnVpn": "Потратить на VPN",
+      "requestWithdraw": "Запросить вывод"
     },
     "pay": {
       "title": "Оплата",
@@ -10353,7 +10365,16 @@
       "notFound": "Не нашёл ответ?",
       "notFoundText": "Напиши — отвечают живые люди, не бот. Можно приложить скриншот.",
       "write": "Написать в поддержку",
-      "orTelegram": "или в Telegram {{user}}"
+      "orTelegram": "или в Telegram {{user}}",
+      "tgTitle1": "Поддержка",
+      "tgTitle2": "в Telegram",
+      "supportTitle": "Служба",
+      "supportTitle2": "поддержки",
+      "tgText": "Пиши нам в Telegram — отвечают живые люди, не бот.",
+      "faster": "Чтобы помогли быстрее",
+      "fasterText": "Пришли в чат свой ID и скриншот, если что-то не работает.",
+      "yourId": "Твой ID",
+      "copy": "Копировать"
     },
     "profile": {
       "since": "с нами с {{date}}",

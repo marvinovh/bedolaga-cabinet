@@ -10197,7 +10197,19 @@
       "copyCabinet": "Copy cabinet link",
       "canTake": "Available",
       "toVpn": "Spend on VPN",
-      "withdraw": "Withdraw"
+      "withdraw": "Withdraw",
+      "titleD1": "together",
+      "titleD2": "with us",
+      "yourLinks": "Your links",
+      "linksNote": "Either link works: your friend joins as your referral.",
+      "forBloggers": "For bloggers and channels",
+      "becomeA": "Become a",
+      "becomeB": "partner",
+      "withdrawTitle": "Withdrawal",
+      "minSum": "min. amount — {{amount}}",
+      "available": "Available",
+      "spendOnVpn": "Spend on VPN",
+      "requestWithdraw": "Request withdrawal"
     },
     "pay": {
       "title": "Payment",
@@ -10228,7 +10240,16 @@
       "notFound": "No answer found?",
       "notFoundText": "Write to us — real people answer, not a bot. You can attach a screenshot.",
       "write": "Write to support",
-      "orTelegram": "or on Telegram {{user}}"
+      "orTelegram": "or on Telegram {{user}}",
+      "tgTitle1": "Support",
+      "tgTitle2": "on Telegram",
+      "supportTitle": "Support",
+      "supportTitle2": "team",
+      "tgText": "Message us on Telegram — real people answer, not a bot.",
+      "faster": "To get help faster",
+      "fasterText": "Send your ID and a screenshot in the chat if something is not working.",
+      "yourId": "Your ID",
+      "copy": "Copy"
     },
     "profile": {
       "since": "with us since {{date}}",
