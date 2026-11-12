@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { referralApi, type ReferralEarning } from '../api/referral';
 import type { ReferralDaysTargetOption, ReferralTerms } from '../types';
@@ -28,6 +29,7 @@ import {
   TelegramIcon,
   UserPlusIcon,
   UsersIcon,
+  LockIcon,
 } from '@/components/icons';
 
 function getWithdrawalStatusBadge(status: string): string {
@@ -264,87 +266,128 @@ export function ProgrammeTerms({ terms }: { terms: ReferralTerms }) {
   const fallbackLines = terms.level_descriptions ?? [];
   const progress = tierProgressText(terms, t);
 
+  const nextIdx = levels.findIndex((l) => l.is_current) + 1;
+  const condition = (lvl: (typeof levels)[number]) =>
+    lvl.required_referrals > 0
+      ? lvl.required_referrals_active_only
+        ? t('referral.terms.fromActive', { count: lvl.required_referrals })
+        : t('referral.terms.fromAny', { count: lvl.required_referrals })
+      : t('referral.terms.startingLevel');
+  const bigReward = (lvl: (typeof levels)[number]) => {
+    const first = lvl.rewards[0] ?? '';
+    const m = first.match(/^(\S+)\s*(.*)$/);
+    return { big: m ? m[1] : first, rest: m ? m[2] : '' };
+  };
+  const any = terms.tier_referrals_any ?? 0;
+  const nextLvl = levels[nextIdx];
+
   return (
-    <div className="bento-card">
-      <div className="mb-4">
-        <h2 className="rv-d text-[30px] text-dark-100">{t('referral.terms.title')}</h2>
-        {/* Правило режима — одной фразой над лестницей. Без неё список
-              уровней в режиме «за приглашённых» читается как складывающиеся
-              награды, а в цепочке — наоборот, как выбор одной из них. */}
-        <p className="mt-1 text-sm text-dark-400">
-          {isTiers ? t('referral.terms.modeTiers') : t('referral.terms.modeChain')}
-        </p>
+    <section className="lg:pt-5">
+      {/* Лестница уровней (макет «18 · Друзья на компьютере») */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0 max-w-[720px]">
+          <h2 className="rv-d text-[40px] text-dark-100 lg:text-[52px]">
+            {levels.length > 0 ? `${t('rv.ref.levelsN', { count: levels.length })} ` : ''}
+            {t('rv.ref.moreFriends')}{' '}
+            <span className="rv-pill inline-block">{t('rv.ref.higherPercent')}</span>
+          </h2>
+          {/* Правило режима — одной фразой над лестницей. */}
+          <p className="mt-2 text-[15px] leading-snug text-dark-300">
+            {isTiers ? t('referral.terms.modeTiers') : t('referral.terms.modeChain')}
+          </p>
+        </div>
+        {isTiers && progress && (
+          <div className="bento-card w-full !p-4 sm:w-[360px]">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm font-bold text-dark-100">{progress}</p>
+              {nextLvl && nextLvl.required_referrals > 0 && (
+                <span className="shrink-0 text-xs text-dark-400">
+                  {Math.min(any, nextLvl.required_referrals)} {t('rv.of')}{' '}
+                  {nextLvl.required_referrals}
+                </span>
+              )}
+            </div>
+            {nextLvl && nextLvl.required_referrals > 0 && (
+              <div className="rv-meter mt-2 !h-2">
+                <i
+                  style={{ width: `${Math.min(100, (any / nextLvl.required_referrals) * 100)}%` }}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {levels.length > 0 ? (
-        <ol className="space-y-2">
-          {levels.map((lvl) => (
-            <li
-              key={lvl.level}
-              className={`rounded-xl border p-3 transition-colors ${
-                lvl.is_current
-                  ? 'border-accent-500/40 bg-accent-500/10'
-                  : 'border-dark-700/40 bg-dark-800/30'
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-sm font-semibold ${
-                    lvl.is_current ? 'bg-accent-500 text-dark-900' : 'bg-dark-700 text-dark-200'
-                  }`}
-                >
-                  {lvl.level}
-                </span>
-                <span className="text-sm font-medium text-dark-100">
-                  {t('referral.terms.levelLabel', { level: lvl.level })}
-                </span>
-                {lvl.is_current && (
-                  <span className="rounded-full bg-accent-500/20 px-2 py-0.5 text-xs text-accent-300">
-                    {t('referral.terms.currentBadge')}
-                  </span>
+        <ol
+          className={cn(
+            'mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:items-end lg:gap-4',
+            levels.length >= 4 ? 'lg:grid-cols-4' : levels.length === 3 ? 'lg:grid-cols-3' : '',
+          )}
+        >
+          {levels.map((lvl, i) => {
+            const isNext = i === nextIdx && !lvl.is_current;
+            const locked = !lvl.is_current && !isNext;
+            const { big, rest } = bigReward(lvl);
+            return (
+              <li
+                key={lvl.level}
+                className={cn(
+                  'relative flex flex-col rounded-[22px] border-2 p-5',
+                  lvl.is_current
+                    ? 'rv-card-acc border-accent-500'
+                    : isNext
+                      ? 'border-dashed border-accent-500 bg-dark-900'
+                      : 'border-dark-700 bg-dark-900',
                 )}
-              </div>
-
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                style={{ minHeight: 220 + i * 40 }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-dark-400">
+                    {t('referral.terms.levelLabel', { level: lvl.level })}
+                  </span>
+                  {lvl.is_current ? (
+                    <span className="rv-badge">{t('referral.terms.currentBadge')}</span>
+                  ) : isNext ? (
+                    <span className="badge-success">{t('rv.ref.next')}</span>
+                  ) : locked ? (
+                    <LockIcon className="h-4 w-4 text-dark-400" />
+                  ) : null}
+                </div>
                 {lvl.pays_referrer ? (
-                  lvl.rewards.map((reward) => (
-                    <span
-                      key={reward}
-                      className="rounded-lg bg-success-500/15 px-2 py-1 text-sm text-success-300"
-                    >
-                      {reward}
-                    </span>
-                  ))
+                  <p
+                    className={cn(
+                      'rv-num mt-4 text-[72px]',
+                      locked ? 'text-dark-300' : 'text-dark-100',
+                    )}
+                  >
+                    {big}
+                  </p>
                 ) : (
-                  <span className="rounded-lg bg-dark-700/60 px-2 py-1 text-sm text-dark-400">
-                    {t('referral.terms.paysNothing')}
-                  </span>
+                  <p className="mt-4 text-sm text-dark-400">{t('referral.terms.paysNothing')}</p>
                 )}
-                {lvl.pays_referrer && lvl.trigger_label && (
-                  <span className="text-xs text-dark-400">{lvl.trigger_label}</span>
+                {lvl.pays_referrer && (rest || lvl.rewards.length > 1) && (
+                  <p className="mt-1 text-sm text-dark-300">
+                    {[rest, ...lvl.rewards.slice(1)].filter(Boolean).join(' · ')}
+                    {lvl.trigger_label ? ` · ${lvl.trigger_label}` : ''}
+                  </p>
                 )}
-              </div>
-
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-dark-400">
-                {/* Условие показывается только там, где оно есть смысл: в
-                      цепочке уровень открывается порогом, а в режиме за
-                      приглашённых порог и определяет, какой уровень ваш. */}
-                <span>
-                  {lvl.required_referrals > 0
-                    ? lvl.required_referrals_active_only
-                      ? t('referral.terms.fromActive', { count: lvl.required_referrals })
-                      : t('referral.terms.fromAny', { count: lvl.required_referrals })
-                    : t('referral.terms.startingLevel')}
-                </span>
-                {lvl.referee_reward && (
-                  <span>{t('referral.terms.refereeGets', { reward: lvl.referee_reward })}</span>
-                )}
-              </div>
-            </li>
-          ))}
+                <div className="mt-auto pt-6">
+                  <p className="text-[15px] font-bold leading-snug text-dark-100">
+                    {condition(lvl)}
+                  </p>
+                  {lvl.referee_reward && (
+                    <p className="mt-1 text-sm text-dark-400">
+                      {t('referral.terms.refereeGets', { reward: lvl.referee_reward })}
+                    </p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ol>
       ) : fallbackLines.length > 0 ? (
-        <ul className="space-y-2">
+        <ul className="bento-card mt-5 space-y-2 !p-5">
           {fallbackLines.map((line) => (
             <li key={line} className="flex items-start gap-2 text-sm text-dark-200">
               <span aria-hidden="true" className="mt-1 text-accent-400">
@@ -355,17 +398,17 @@ export function ProgrammeTerms({ terms }: { terms: ReferralTerms }) {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-dark-400">{t('referral.terms.noLevels')}</p>
+        <p className="mt-4 text-sm text-dark-400">{t('referral.terms.noLevels')}</p>
       )}
 
       {terms.personal_percent != null && (
-        <p className="mt-4 rounded-xl border border-warning-500/25 bg-warning-500/10 p-3 text-sm text-warning-300">
+        <p className="mt-4 rounded-xl bg-[var(--rv-warn-bg)] p-3 text-sm font-medium text-[var(--rv-warn)]">
           {t('referral.terms.personalRate', { percent: terms.personal_percent })}
         </p>
       )}
 
-      {progress && <p className="mt-4 text-sm text-dark-300">{progress}</p>}
-    </div>
+      {!isTiers && progress && <p className="mt-4 text-sm text-dark-300">{progress}</p>}
+    </section>
   );
 }
 
@@ -665,7 +708,7 @@ export default function Referral() {
     <div className="space-y-3 lg:space-y-5">
       <div className="space-y-3 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-stretch lg:gap-5 lg:space-y-0">
         {/* Лаймовая шапка партнёрки (макет «09 · Друзья») */}
-        <section className="rv-card-acc rv-topo -mx-4 -mt-4 px-4 pb-0 pt-5 lg:mx-0 lg:mt-0 lg:h-full lg:rounded-[26px] lg:px-8 lg:pt-8">
+        <section className="rv-card-acc rv-topo -mx-4 -mt-4 px-4 pb-0 pt-5 lg:mx-0 lg:mt-0 lg:h-full lg:rounded-[26px] lg:px-9 lg:pb-8 lg:pt-9">
           <div className="flex justify-end lg:hidden">
             <span className="rv-badge">{t('rv.ref.badge')}</span>
           </div>
@@ -682,38 +725,57 @@ export default function Referral() {
             <span className="rv-pill rv-pill-ink inline-block">{t('rv.ref.titleD1')}</span>{' '}
             {t('rv.ref.titleD2')}
           </h1>
-          <p className="mt-3 max-w-xl text-base leading-snug">
-            {isLevelsScheme
-              ? t('referral.shareHintLevels')
-              : t('referral.shareHint', { percent: info?.commission_percent || 0 })}
+          <p className="mt-3 max-w-xl text-base leading-snug lg:mt-6 lg:text-[18px]">
+            {isLevelsScheme ? t('rv.ref.heroLevels') : t('rv.ref.heroText')}
+            {terms && terms.first_topup_bonus_kopeks > 0
+              ? ` ${t('rv.ref.heroBonus', { amount: `${formatAmount(terms.first_topup_bonus_rubles, 0)}\u00A0${currencySymbol}` })}`
+              : ''}
           </p>
-          <div className="mt-5 grid grid-cols-3 border-t-2 border-[#111]">
-            <div className="border-r-2 border-[#111] py-3 pr-3">
-              <div className="rv-num text-[34px]">
+          {/* Цифры: телефон — процент · друзья · заработано (09); компьютер —
+              приглашено · заработано всего · уровень (18). */}
+          <div className="mt-5 grid grid-cols-3 border-t-2 border-[#111] lg:mt-7">
+            <div className="border-r-2 border-[#111] py-3 pr-3 lg:order-3 lg:border-r-0 lg:py-4 lg:pl-5">
+              <div className="rv-num text-[34px] lg:text-[48px]">
                 {isTiersScheme
-                  ? (terms?.tier_current_level ?? '—')
+                  ? `${terms?.levels?.find((l) => l.is_current)?.rewards[0]?.split(' ')[0] ?? terms?.tier_current_level ?? '—'}`
                   : isLevelsScheme
                     ? terms?.max_level_depth || 1
                     : `${info?.commission_percent || 0}%`}
               </div>
-              <div className="mt-1 text-xs">
-                {isTiersScheme
-                  ? t('referral.stats.yourLevel')
-                  : isLevelsScheme
-                    ? t('referral.stats.chainDepth')
-                    : t('rv.ref.yourPercent')}
+              <div className="mt-1 text-xs lg:text-[13px]">
+                <span className="lg:hidden">
+                  {isTiersScheme ? t('referral.stats.yourLevel') : t('rv.ref.yourPercent')}
+                </span>
+                <span className="hidden lg:inline">
+                  {isTiersScheme
+                    ? t('rv.ref.yourLevelN', { level: terms?.tier_current_level ?? '—' })
+                    : isLevelsScheme
+                      ? t('referral.stats.chainDepth')
+                      : t('rv.ref.yourPercent')}
+                </span>
               </div>
             </div>
-            <div className="border-r-2 border-[#111] px-3 py-3">
-              <div className="rv-num text-[34px]">{info?.total_referrals || 0}</div>
-              <div className="mt-1 text-xs">{t('rv.ref.friends')}</div>
+            <div className="border-r-2 border-[#111] px-3 py-3 lg:order-1 lg:py-4 lg:pl-0 lg:pr-5">
+              <div className="rv-num text-[34px] lg:text-[48px]">{info?.total_referrals || 0}</div>
+              <div className="mt-1 text-xs lg:text-[13px]">
+                <span className="lg:hidden">{t('rv.ref.friends')}</span>
+                <span className="hidden lg:inline">
+                  {t('rv.ref.invitedPaid', {
+                    invited: info?.total_referrals || 0,
+                    paid: info?.active_referrals || 0,
+                  })}
+                </span>
+              </div>
             </div>
-            <div className="py-3 pl-3">
-              <div className="rv-num text-[34px]">
+            <div className="py-3 pl-3 lg:order-2 lg:border-r-2 lg:border-[#111] lg:px-5 lg:py-4">
+              <div className="rv-num text-[34px] lg:text-[48px]">
                 {formatAmount(info?.total_earnings_rubles || 0, 0)}
                 <span className="rv-rub">{currencySymbol}</span>
               </div>
-              <div className="mt-1 text-xs">{t('rv.ref.earned')}</div>
+              <div className="mt-1 text-xs lg:text-[13px]">
+                <span className="lg:hidden">{t('rv.ref.earned')}</span>
+                <span className="hidden lg:inline">{t('rv.ref.earnedTotal')}</span>
+              </div>
             </div>
           </div>
         </section>
@@ -897,7 +959,7 @@ export default function Referral() {
             <div id="withdrawal-section" className="space-y-6">
               {/* Withdrawal Balance Card */}
               {withdrawalEnabled && withdrawalBalance && (
-                <section className="bento-card rv-card-ink !p-5">
+                <section className="bento-card rv-card-ink !p-5 lg:!border-dark-700 lg:!bg-dark-900 lg:!p-6">
                   <p className="rv-kicker lg:hidden">{t('rv.ref.canTake')}</p>
                   <div className="hidden items-center justify-between gap-3 lg:flex">
                     <h2 className="rv-d text-[36px] text-[#F2F0E8]">{t('rv.ref.withdrawTitle')}</h2>
@@ -912,28 +974,32 @@ export default function Referral() {
                   <p className="mt-3 hidden text-sm font-bold text-[#C9C8C0] lg:block">
                     {t('rv.ref.available')}
                   </p>
-                  <div className="rv-num mt-3 text-[72px] text-[#F2F0E8]">
-                    {formatAmount(withdrawalBalance.available_total / 100, 0)}
-                    <span className="rv-rub">{currencySymbol}</span>
+                  <div className="lg:flex lg:items-end lg:justify-between lg:gap-4">
+                    <div className="rv-num mt-3 text-[72px] text-[#F2F0E8] lg:text-[80px]">
+                      {formatAmount(withdrawalBalance.available_total / 100, 0)}
+                      <span className="rv-rub">{currencySymbol}</span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2.5 lg:mt-0 lg:flex lg:pb-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/subscriptions')}
+                        className="btn btn-primary !shadow-none lg:!border-[#4A4A46] lg:!bg-transparent lg:!text-[#F2F0E8]"
+                      >
+                        <span className="lg:hidden">{t('rv.ref.toVpn')}</span>
+                        <span className="hidden lg:inline">{t('rv.ref.spendOnVpn')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/referral/withdrawal/request')}
+                        disabled={!withdrawalBalance.can_request}
+                        className="btn btn-secondary !border-[#4A4A46] !text-[#F2F0E8] lg:!border-accent-500 lg:!bg-accent-500 lg:!text-[#111]"
+                      >
+                        <span className="lg:hidden">{t('rv.ref.withdraw')}</span>
+                        <span className="hidden lg:inline">{t('rv.ref.requestWithdraw')}</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => navigate('/subscriptions')}
-                      className="btn btn-primary !shadow-none"
-                    >
-                      {t('rv.ref.toVpn')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/referral/withdrawal/request')}
-                      disabled={!withdrawalBalance.can_request}
-                      className="btn btn-secondary !border-[#4A4A46] !text-[#F2F0E8]"
-                    >
-                      {t('rv.ref.withdraw')}
-                    </button>
-                  </div>
-                  <p className="mt-3 text-xs text-[#B9B8B0]">
+                  <p className="mt-3 text-xs text-[#B9B8B0] lg:hidden">
                     {!withdrawalBalance.can_request && withdrawalBalance.cannot_request_reason
                       ? withdrawalBalance.cannot_request_reason
                       : withdrawalBalance.min_amount_kopeks > 0
@@ -942,19 +1008,29 @@ export default function Referral() {
                           })
                         : null}
                   </p>
-                  <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-[#3D3D3A] pt-3 text-[13px]">
+                  <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-[#3D3D3A] pt-3 text-[13px] lg:gap-3 lg:border-0 lg:pt-0">
                     {[
                       [t('referral.withdrawal.totalEarned'), withdrawalBalance.total_earned],
-                      [t('referral.withdrawal.withdrawn'), withdrawalBalance.withdrawn],
                       [t('referral.withdrawal.spent'), withdrawalBalance.referral_spent],
+                      [t('referral.withdrawal.withdrawn'), withdrawalBalance.withdrawn],
                       [t('referral.withdrawal.pending'), withdrawalBalance.pending],
                     ].map(([label, kopeks]) => (
-                      <div key={String(label)} className="flex justify-between gap-2">
-                        <span className="text-[#9C9B93]">{label}</span>
-                        <b className="text-[#F2F0E8]">{formatWithCurrency(Number(kopeks) / 100)}</b>
+                      <div
+                        key={String(label)}
+                        className="flex justify-between gap-2 lg:block lg:rounded-xl lg:bg-dark-800 lg:px-4 lg:py-3"
+                      >
+                        <span className="text-[#9C9B93] lg:block lg:text-xs">{label}</span>
+                        <b className="text-[#F2F0E8] lg:mt-1 lg:block lg:text-lg">
+                          {formatWithCurrency(Number(kopeks) / 100)}
+                        </b>
                       </div>
                     ))}
                   </div>
+                  {!withdrawalBalance.can_request && withdrawalBalance.cannot_request_reason && (
+                    <p className="mt-3 hidden text-sm text-dark-400 lg:block">
+                      {withdrawalBalance.cannot_request_reason}
+                    </p>
+                  )}
                 </section>
               )}
 
@@ -1047,7 +1123,59 @@ export default function Referral() {
         {/* Referrals List */}
         <div>
           <h2 className="rv-d mb-3 text-[36px] text-dark-100">{t('referral.yourReferrals')}</h2>
-          <div className="bento-card !px-4 !py-1">
+          {referralList?.items && referralList.items.length > 0 && (
+            <div className="rv-tbox hidden lg:block">
+              <table className="rv-tbl">
+                <thead>
+                  <tr>
+                    <th>{t('rv.ref.friend')}</th>
+                    <th>{t('rv.ref.since')}</th>
+                    <th>{t('rv.ref.status')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {referralList.items.map((ref) => {
+                    const name =
+                      ref.first_name || ref.username || t('referral.anonymousUser', { id: ref.id });
+                    return (
+                      <tr key={ref.id}>
+                        <td>
+                          <span className="flex items-center gap-2.5 font-bold text-dark-100">
+                            <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-dark-700 text-[13px]">
+                              {name.charAt(0).toUpperCase()}
+                            </span>
+                            <span className="truncate">{name}</span>
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap text-dark-300">
+                          {new Date(ref.created_at).toLocaleDateString(i18n.language, {
+                            day: 'numeric',
+                            month: 'long',
+                          })}
+                        </td>
+                        <td>
+                          {ref.has_paid ? (
+                            <span className="badge-success">
+                              <i className="rv-tag-dot" />
+                              {t('referral.status.paid')}
+                            </span>
+                          ) : (
+                            <span className="badge-neutral">
+                              <i className="rv-tag-dot" />
+                              {t('referral.status.pending')}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div
+            className={`bento-card !px-4 !py-1 ${referralList?.items?.length ? 'lg:hidden' : ''}`}
+          >
             {referralList?.items && referralList.items.length > 0 ? (
               <div>
                 {referralList.items.map((ref) => (
@@ -1089,7 +1217,39 @@ export default function Referral() {
         {earnings?.items && earnings.items.length > 0 && (
           <div>
             <h2 className="rv-d mb-3 text-[36px] text-dark-100">{t('referral.earningsHistory')}</h2>
-            <div className="bento-card !px-4 !py-1">
+            <div className="rv-tbox hidden lg:block">
+              <table className="rv-tbl">
+                <thead>
+                  <tr>
+                    <th>{t('rv.ref.whenCol')}</th>
+                    <th>{t('rv.ref.forWhat')}</th>
+                    <th className="!text-right">{t('rv.ref.toYou')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {earnings.items.map((earning) => (
+                    <tr key={earning.id}>
+                      <td className="whitespace-nowrap text-dark-300">
+                        {new Date(earning.created_at).toLocaleDateString(i18n.language, {
+                          day: 'numeric',
+                          month: 'long',
+                        })}
+                      </td>
+                      <td className="text-dark-100">
+                        {t(`referral.reasons.${earning.reason}`, earning.reason)} ·{' '}
+                        {earning.referral_first_name ||
+                          earning.referral_username ||
+                          t('referral.anonymousReferral')}
+                      </td>
+                      <td className="whitespace-nowrap text-right font-bold text-accent-400">
+                        {formatEarning(earning)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="bento-card !px-4 !py-1 lg:hidden">
               {earnings.items.map((earning) => (
                 <div
                   key={earning.id}
