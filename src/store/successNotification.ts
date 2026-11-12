@@ -76,3 +76,9 @@ export function useCloseOnSuccessNotification(onClose: () => void) {
     }
   }, [closeOthersSignal]);
 }
+
+// Отладка вёрстки экрана «Оплата прошла»: только в сборке с VITE_RV_DEBUG.
+if (import.meta.env.VITE_RV_DEBUG && typeof window !== 'undefined') {
+  (window as unknown as { __rvSuccess: typeof useSuccessNotification }).__rvSuccess =
+    useSuccessNotification;
+}

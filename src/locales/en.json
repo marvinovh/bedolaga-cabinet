@@ -10195,6 +10195,27 @@
       "tapToCopy": "Tap to copy",
       "more": "More",
       "copyCabinet": "Copy cabinet link"
+    },
+    "pay": {
+      "title": "Payment",
+      "toPay": "To pay",
+      "fromBalance": "Pay from balance {{amount}}",
+      "topUpNeeded": "{{total}} − {{balance}} from balance = {{rest}} to add",
+      "enough": "Enough — we will charge the balance in full",
+      "payBtn": "Pay {{amount}}"
+    },
+    "done": {
+      "subA": "Paid.",
+      "subB": "online",
+      "balA": "Balance",
+      "balB": "topped up",
+      "devA": "Devices",
+      "devB": "added",
+      "trA": "Traffic",
+      "trB": "added",
+      "home": "Home",
+      "connectMore": "Connect another device",
+      "subPre": "You are"
     }
   }
 }

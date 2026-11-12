@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { subscriptionApi } from '../api/subscription';
 import { WebBackButton } from '../components/WebBackButton';
+import { BackIcon } from '../components/icons';
 import { getGlassColors } from '../utils/glassTheme';
 import { useTheme } from '../hooks/useTheme';
 import type { Tariff, ClassicPurchaseOptions } from '../types';
@@ -225,30 +226,46 @@ export default function SubscriptionPurchase() {
 
   return (
     <div className="space-y-4 lg:space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <WebBackButton
-          to={subscriptionId ? `/subscriptions/${subscriptionId}` : '/subscriptions'}
-        />
-        <div className="min-w-0">
-          <p className="text-[13px] font-medium text-dark-400">
-            {needsTariff(subscription)
-              ? t('subscription.cta.moveToTariff')
-              : isTariffsMode && subscriptionId && canOpenTariffSwitch(subscription)
-                ? t('subscription.switchTariff.title')
-                : isMultiTariff && !subscriptionId
-                  ? t('subscription.newTariff', 'Новый тариф')
-                  : !isMultiTariff && subscription?.is_daily && !subscription?.is_trial
-                    ? t('subscription.switchTariff.title')
-                    : subscription && !subscription.is_trial
-                      ? t('subscription.extend')
-                      : t('subscription.getSubscription')}
-          </p>
+      {/* Header: шаг оплаты — «Оплата» (макет 06), витрина — «Выбери свой тариф» (05) */}
+      {showTariffPurchase && selectedTariff ? (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowTariffPurchase(false)}
+            className="rv-ibtn transition-colors hover:border-dark-600"
+            aria-label={t('common.back')}
+          >
+            <BackIcon />
+          </button>
+          <h1 className="rv-title !text-[30px] lg:!text-[44px]">{t('rv.pay.title')}</h1>
         </div>
-      </div>
-      <h1 className="rv-title !text-[48px] lg:!text-[64px]">
-        {t('rv.pick.a')} <span className="rv-pill">{t('rv.pick.b')}</span> {t('rv.pick.c')}
-      </h1>
+      ) : (
+        <>
+          <div className="flex items-center gap-3">
+            <WebBackButton
+              to={subscriptionId ? `/subscriptions/${subscriptionId}` : '/subscriptions'}
+            />
+            <div className="min-w-0">
+              <p className="text-[13px] font-medium text-dark-400">
+                {needsTariff(subscription)
+                  ? t('subscription.cta.moveToTariff')
+                  : isTariffsMode && subscriptionId && canOpenTariffSwitch(subscription)
+                    ? t('subscription.switchTariff.title')
+                    : isMultiTariff && !subscriptionId
+                      ? t('subscription.newTariff', 'Новый тариф')
+                      : !isMultiTariff && subscription?.is_daily && !subscription?.is_trial
+                        ? t('subscription.switchTariff.title')
+                        : subscription && !subscription.is_trial
+                          ? t('subscription.extend')
+                          : t('subscription.getSubscription')}
+              </p>
+            </div>
+          </div>
+          <h1 className="rv-title !text-[48px] lg:!text-[64px]">
+            {t('rv.pick.a')} <span className="rv-pill">{t('rv.pick.b')}</span> {t('rv.pick.c')}
+          </h1>
+        </>
+      )}
 
       {/* Tariffs Section */}
       {isTariffsMode && tariffs.length > 0 && (

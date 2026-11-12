@@ -19,7 +19,7 @@ import { getMonthlyPriceKopeks } from '../../../utils/pricing';
 import { pickBestValue } from '../../../utils/bestValue';
 import InsufficientBalancePrompt from '../../InsufficientBalancePrompt';
 import type { Tariff, TariffPeriod } from '../../../types';
-import { BestValueBadge, bestValueFrame } from '../BestValueBadge';
+import { BestValueBadge } from '../BestValueBadge';
 
 // ──────────────────────────────────────────────────────────────────
 // TariffPurchaseForm
@@ -102,7 +102,7 @@ export function TariffPurchaseForm({
   const formatPrice = (kopeks: number) =>
     kopeks === 0
       ? t('subscription.free', 'Бесплатно')
-      : `${formatAmount(kopeks / 100)}\u00A0${currencySymbol}`;
+      : `${formatAmount(kopeks / 100, kopeks % 100 === 0 ? 0 : 2)}\u00A0${currencySymbol}`;
 
   // Form-internal state — seeded from the tariff prop. Resets via
   // `key={tariff.id}` on the parent's render.
@@ -536,53 +536,90 @@ export function TariffPurchaseForm({
       </>
     );
 
+  // Итог к оплате — тот же расчёт, что в блоке «Итого» ниже; нужен и для
+  // лаймовой карточки «К оплате» сверху (макет «06 · Оплата»).
+  const rvTotals = (() => {
+    if (!selectedTariffPeriod && !useCustomDays) return null;
+    const customQuote = customDaysPrice(tariff, customDays);
+    const basePeriodPrice = useCustomDays
+      ? customQuote.price
+      : selectedTariffPeriod?.price_kopeks || 0;
+    const existingOriginal = useCustomDays
+      ? customQuote.original
+      : selectedTariffPeriod?.original_price_kopeks &&
+          selectedTariffPeriod.original_price_kopeks > selectedTariffPeriod.price_kopeks
+        ? selectedTariffPeriod.original_price_kopeks
+        : undefined;
+    const promo = applyPromoDiscount(basePeriodPrice, existingOriginal);
+    const trafficPrice =
+      useCustomTraffic && tariff.custom_traffic_enabled
+        ? customTrafficGb * (tariff.traffic_price_per_gb_kopeks ?? 0)
+        : 0;
+    const total = deviceQuote?.total_kopeks ?? promo.price + trafficPrice;
+    const days = useCustomDays ? customDays : (selectedTariffPeriod?.days ?? 0);
+    return { total, days };
+  })();
+  const rvMoney = (k: number) =>
+    `${formatAmount(k / 100, k % 100 === 0 ? 0 : 2)}\u00A0${currencySymbol}`;
+  const rvFromBalance =
+    rvTotals && balanceKopeks !== undefined ? Math.min(balanceKopeks, rvTotals.total) : 0;
+  const rvToPay = rvTotals ? Math.max(0, rvTotals.total - rvFromBalance) : 0;
+
   // Smooth scroll the form into view when first mounted.
   useEffect(() => {
     if (ref.current) {
       const timer = setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);
       return () => clearTimeout(timer);
     }
   }, []);
 
   return (
-    <div ref={ref} className="space-y-6">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="min-w-0 truncate text-lg font-medium text-dark-100">{tariff.name}</h3>
-        <button onClick={onBack} className="shrink-0 text-dark-400 hover:text-dark-200">
-          ← {t('common.back')}
-        </button>
-      </div>
-
-      {/* Tariff Info */}
-      <div className="rounded-xl bg-dark-800/50 p-4">
-        <div className="flex flex-wrap gap-4 text-sm">
-          <div>
-            <span className="text-dark-500">{t('subscription.traffic')}:</span>
-            <span className="ml-2 text-dark-200">
-              {tariffTrafficLabel(tariff.traffic_limit_gb, t)}
-            </span>
-          </div>
-          <div>
-            <span className="text-dark-500">{t('subscription.devices')}:</span>
-            <span className="ml-2 text-dark-200">
-              {(selectedDevices ??
-                deviceQuote?.device_selection.effective_limit ??
-                tariff.device_limit) === 0
-                ? '∞'
-                : (selectedDevices ??
-                  deviceQuote?.device_selection.effective_limit ??
-                  tariff.device_limit)}
-              {!deviceQuote && tariff.extra_devices_count > 0 && (
-                <span className="ml-1 text-xs text-accent-400">
-                  (+{tariff.extra_devices_count})
-                </span>
-              )}
-            </span>
-          </div>
+    <div ref={ref} className="space-y-3 lg:space-y-5">
+      {/* «К оплате» — лаймовая карточка (макет «06 · Оплата») */}
+      <section className="bento-card rv-card-acc rv-topo !p-5 sm:!p-7">
+        <p className="rv-kicker">{t('rv.pay.toPay')}</p>
+        <div className="rv-num mt-3 text-[88px]">
+          {rvTotals ? formatAmount(rvTotals.total / 100, rvTotals.total % 100 === 0 ? 0 : 2) : '—'}
+          <span className="rv-rub">{currencySymbol}</span>
         </div>
-      </div>
+        <p className="mt-3 text-base font-medium">
+          {tariff.name}
+          {rvTotals?.days ? ` · ${t('rv.pick.days', { count: rvTotals.days })}` : ''}
+          {' · '}
+          {tariffTrafficLabel(tariff.traffic_limit_gb, t)}
+          {' · '}
+          {(selectedDevices ??
+            deviceQuote?.device_selection.effective_limit ??
+            tariff.device_limit) === 0
+            ? '∞'
+            : t('subscription.devices', {
+                count:
+                  selectedDevices ??
+                  deviceQuote?.device_selection.effective_limit ??
+                  tariff.device_limit,
+              })}
+        </p>
+      </section>
+
+      {/* Баланс: сколько спишем и сколько доплатить */}
+      {balanceKopeks !== undefined && rvTotals && !tariff.is_daily && (
+        <section className="bento-card !p-5">
+          <p className="text-lg font-bold leading-tight text-dark-100">
+            {t('rv.pay.fromBalance', { amount: rvMoney(balanceKopeks) })}
+          </p>
+          <p className="mt-1 text-[15px] leading-snug text-dark-300">
+            {rvToPay > 0
+              ? t('rv.pay.topUpNeeded', {
+                  total: rvMoney(rvTotals.total),
+                  balance: rvMoney(rvFromBalance),
+                  rest: rvMoney(rvToPay),
+                })
+              : t('rv.pay.enough')}
+          </p>
+        </section>
+      )}
 
       {/* Daily Tariff Purchase */}
       {devicePreviewEnabled && !deviceQuote && !deviceQuoteQuery.isError && (
@@ -808,12 +845,10 @@ export function TariffPurchaseForm({
                         setSelectedTariffPeriod(period);
                         setUseCustomDays(false);
                       }}
-                      className={`relative rounded-xl p-4 text-left transition-all ${
-                        period.is_highlighted
-                          ? `${bestValueFrame(isSelectedPeriod)} ${isSelectedPeriod ? 'bg-accent-500/10' : 'bg-dark-800/50'}`
-                          : isSelectedPeriod
-                            ? 'border border-accent-500 bg-accent-500/10'
-                            : 'border border-dark-700/50 bg-dark-800/50 hover:border-dark-600'
+                      className={`relative rounded-2xl border-2 p-4 text-left transition-colors ${
+                        isSelectedPeriod
+                          ? 'border-accent-500 bg-[var(--rv-acc-bg)]'
+                          : 'border-dark-700 bg-dark-900 hover:border-dark-600'
                       }`}
                     >
                       {/* Плашка первой строкой, как в продлении; скидка — в правом
@@ -828,12 +863,12 @@ export function TariffPurchaseForm({
                           -{displayDiscount}%
                         </div>
                       )}
-                      <div className="text-lg font-semibold text-dark-100">{period.label}</div>
+                      <div className="rv-d text-[24px] text-dark-100">{period.label}</div>
                       {/* Цена не рвётся между числом и знаком валюты: две цены в
                           карточку шириной в полэкрана не влезают, и без переноса
                           целиком «₽» уезжал на свою строку. */}
                       <div className="flex flex-wrap items-center gap-x-2">
-                        <span className="whitespace-nowrap font-medium text-accent-400">
+                        <span className="whitespace-nowrap font-bold text-dark-100">
                           {formatPrice(displayPrice)}
                         </span>
                         {displayOriginal && displayOriginal > displayPrice && (
@@ -1065,7 +1100,7 @@ export function TariffPurchaseForm({
 
           {/* Summary & Purchase */}
           {(selectedTariffPeriod || useCustomDays) && (
-            <div className="rounded-xl bg-dark-800/50 p-5">
+            <div className="bento-card !p-5">
               {(() => {
                 const customQuote = customDaysPrice(tariff, customDays);
                 const basePeriodPrice = useCustomDays
@@ -1222,13 +1257,13 @@ export function TariffPurchaseForm({
                       </div>
                     )}
 
-                    <div className="mb-4 border-t border-dark-700/50 pt-3">
+                    <div className="mb-4 border-t-2 border-dark-700 pt-3">
                       <div className="flex items-center justify-between gap-3">
                         <span className="font-medium text-dark-100">{t('subscription.total')}</span>
                         <span
                           data-testid="tariff-purchase-total"
                           aria-busy={quoteBlocked}
-                          className="inline-block whitespace-nowrap text-2xl font-bold tabular-nums text-accent-400"
+                          className="rv-num inline-block whitespace-nowrap text-[40px] tabular-nums text-dark-100"
                         >
                           <PurchasePrice loading={quoteBlocked}>
                             {formatPrice(totalPrice)}
@@ -1256,15 +1291,15 @@ export function TariffPurchaseForm({
                         (quoteBlocked && !retryUncertainCheckout) ||
                         !deviceInputValid
                       }
-                      className="btn-primary w-full py-3"
+                      className="btn btn-primary rv-btn-lg w-full"
                     >
                       {purchaseMutation.isPending ? (
                         <span className="flex items-center justify-center gap-2">
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" />
                           {t('common.loading')}
                         </span>
                       ) : (
-                        t('subscription.purchase')
+                        t('rv.pay.payBtn', { amount: formatPrice(totalPrice) })
                       )}
                     </button>
 

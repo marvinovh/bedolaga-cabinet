@@ -7,6 +7,7 @@ import { uiLocale } from '@/utils/uiLocale';
 import { formatDateOrRaw } from '@/utils/format';
 import { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { Brand, RvCheckIcon } from '@/components/rv';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useSuccessNotification } from '../store/successNotification';
@@ -14,14 +15,7 @@ import { useCurrency } from '../hooks/useCurrency';
 import { useTelegramSDK } from '../hooks/useTelegramSDK';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useHaptic } from '@/platform';
-import {
-  CheckCircleIcon,
-  CloseIcon,
-  DevicesIcon,
-  RocketIcon,
-  TrafficIcon,
-  WalletIcon,
-} from '@/components/icons';
+import { CloseIcon } from '@/components/icons';
 
 export default function SuccessNotificationModal() {
   const { t } = useTranslation();
@@ -87,7 +81,7 @@ export default function SuccessNotificationModal() {
 
   // Format amount
   const formattedAmount = data.amountKopeks
-    ? `${formatAmount(data.amountKopeks / 100)}\u00A0${currencySymbol}`
+    ? `${formatAmount(data.amountKopeks / 100, data.amountKopeks % 100 === 0 ? 0 : 2)}\u00A0${currencySymbol}`
     : null;
 
   // Format new balance
@@ -106,34 +100,20 @@ export default function SuccessNotificationModal() {
   // Determine title and message
   let title = data.title;
   const message = data.message;
-  let icon = <CheckCircleIcon className="h-16 w-16" />;
-  let gradientClass = 'from-success-500 to-success-600';
 
   if (!title) {
     if (isBalanceTopup) {
       title = t('successNotification.balanceTopup.title', 'Balance topped up!');
-      icon = <WalletIcon className="h-8 w-8" />;
-      gradientClass = 'from-success-500 to-success-600';
     } else if (data.type === 'subscription_activated') {
       title = t('successNotification.subscriptionActivated.title', 'Subscription activated!');
-      icon = <RocketIcon className="h-8 w-8" />;
-      gradientClass = 'from-accent-500 to-purple-600';
     } else if (data.type === 'subscription_renewed') {
       title = t('successNotification.subscriptionRenewed.title', 'Subscription renewed!');
-      icon = <RocketIcon className="h-8 w-8" />;
-      gradientClass = 'from-accent-500 to-purple-600';
     } else if (data.type === 'subscription_purchased') {
       title = t('successNotification.subscriptionPurchased.title', 'Subscription purchased!');
-      icon = <RocketIcon className="h-8 w-8" />;
-      gradientClass = 'from-accent-500 to-purple-600';
     } else if (data.type === 'devices_purchased') {
       title = t('successNotification.devicesPurchased.title', 'Devices added!');
-      icon = <DevicesIcon className="h-8 w-8" />;
-      gradientClass = 'from-blue-500 to-cyan-600';
     } else if (data.type === 'traffic_purchased') {
       title = t('successNotification.trafficPurchased.title', 'Traffic added!');
-      icon = <TrafficIcon className="h-8 w-8" />;
-      gradientClass = 'from-success-500 to-success-600';
     }
   }
 
@@ -147,188 +127,136 @@ export default function SuccessNotificationModal() {
     navigate('/balance');
   };
 
+  // RichVPN: полноэкранный лаймовый экран (макет «07 · Оплата прошла»).
+  const head = isSubscription
+    ? { a: t('rv.done.subA'), pre: t('rv.done.subPre'), b: t('rv.done.subB') }
+    : isBalanceTopup
+      ? { a: t('rv.done.balA'), b: t('rv.done.balB') }
+      : isDevicesPurchased
+        ? { a: t('rv.done.devA'), b: t('rv.done.devB') }
+        : isTrafficPurchased
+          ? { a: t('rv.done.trA'), b: t('rv.done.trB') }
+          : { a: '', b: title };
+  const headPre = 'pre' in head ? head.pre : '';
+  const rows: Array<[string, string]> = [];
+  if (data.tariffName) rows.push([t('successNotification.tariff', 'Tariff'), data.tariffName]);
+  if (formattedExpiry)
+    rows.push([t('successNotification.validUntil', 'Valid until'), formattedExpiry]);
+  if (isDevicesPurchased && data.devicesAdded)
+    rows.push([t('successNotification.devicesAdded', 'Devices added'), `+${data.devicesAdded}`]);
+  if (isDevicesPurchased && data.newDeviceLimit)
+    rows.push([
+      t('successNotification.totalDevices', 'Total devices'),
+      String(data.newDeviceLimit),
+    ]);
+  if (isTrafficPurchased && data.trafficGbAdded)
+    rows.push([
+      t('successNotification.trafficAdded', 'Traffic added'),
+      `+${data.trafficGbAdded} ${t('common.units.gb', 'GB')}`,
+    ]);
+  if (isTrafficPurchased && data.newTrafficLimitGb)
+    rows.push([
+      t('successNotification.totalTraffic', 'Total traffic'),
+      `${data.newTrafficLimitGb} ${t('common.units.gb', 'GB')}`,
+    ]);
+  if (isBalanceTopup && formattedBalance)
+    rows.push([t('successNotification.newBalance', 'New balance'), formattedBalance]);
+
   const modalContent = (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" onClick={handleClose} />
-
-      {/* Modal */}
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="success-modal-title"
-        tabIndex={-1}
-        className="relative mx-4 w-full max-w-sm overflow-hidden rounded-3xl border border-dark-700/50 bg-dark-900 shadow-2xl"
-        style={{
-          marginBottom: safeBottom ? `${safeBottom}px` : undefined,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Close button */}
-        <button
-          onClick={handleClose}
-          aria-label={t('common.close')}
-          className="absolute right-3 top-3 z-10 rounded-xl p-2 text-dark-400 transition-colors hover:bg-dark-800 hover:text-dark-200"
-        >
-          <CloseIcon />
-        </button>
-
-        {/* Success header with animation */}
-        <div
-          className={`flex flex-col items-center bg-gradient-to-br ${gradientClass} px-6 pb-8 pt-10`}
-        >
-          {/* Use animate-pulse for celebration; bounce easing reads dated and
-              the lift is the moment, not the bounce. */}
-          <div className="mb-4 animate-pulse text-white">{icon}</div>
-          <h2 id="success-modal-title" className="text-center text-2xl font-bold text-white">
-            {title}
-          </h2>
-          {message && <p className="mt-2 text-center text-white/80">{message}</p>}
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="success-modal-title"
+      tabIndex={-1}
+      className="rv-card-acc rv-topo fixed inset-0 z-[100] flex flex-col overflow-y-auto"
+      style={{
+        paddingTop: 'max(14px, env(safe-area-inset-top, 0px))',
+        paddingBottom: safeBottom
+          ? `${safeBottom + 16}px`
+          : 'max(20px, env(safe-area-inset-bottom, 0px))',
+      }}
+    >
+      <div className="mx-auto flex w-full max-w-[480px] flex-1 flex-col px-5">
+        <div className="flex items-center justify-between">
+          <Brand size={36} onAccent onClick={() => hide()} />
+          <button
+            onClick={handleClose}
+            aria-label={t('common.close')}
+            className="grid h-11 w-11 place-items-center rounded-xl border-2 border-[#111] text-[#111]"
+          >
+            <CloseIcon />
+          </button>
         </div>
 
-        {/* Details */}
-        <div className="space-y-4 p-6">
-          {/* Amount */}
-          {formattedAmount && (
-            <div className="flex items-center justify-between rounded-xl bg-dark-800/50 px-4 py-3">
-              <span className="text-dark-400">
-                {isBalanceTopup
-                  ? t('successNotification.amount', 'Amount')
-                  : t('successNotification.price', 'Price')}
-              </span>
-              <span
-                className={`text-lg font-bold ${isDevicesPurchased || isTrafficPurchased ? 'text-dark-100' : 'text-success-400'}`}
-              >
-                {isDevicesPurchased || isTrafficPurchased ? '' : '+'}
-                {formattedAmount}
-              </span>
-            </div>
-          )}
+        <span className="mt-8 grid h-[76px] w-[76px] -rotate-3 place-items-center rounded-[20px] bg-[#111] text-[rgb(var(--color-accent-500))]">
+          <RvCheckIcon className="h-9 w-9" />
+        </span>
 
-          {/* Devices info (for devices purchase) */}
-          {isDevicesPurchased && data.devicesAdded && (
-            <div className="flex items-center justify-between rounded-xl bg-dark-800/50 px-4 py-3">
-              <span className="text-dark-400">
-                {t('successNotification.devicesAdded', 'Devices added')}
-              </span>
-              <span className="text-lg font-bold text-blue-400">+{data.devicesAdded}</span>
-            </div>
+        <h2 id="success-modal-title" className="rv-d mt-7 text-[72px] text-[#111]">
+          {head.a && (
+            <>
+              {head.a}
+              <br />
+            </>
           )}
+          {headPre ? `${headPre} ` : ''}
+          <span className="rv-pill rv-pill-ink inline-block">{head.b}</span>
+        </h2>
+        {message && <p className="mt-5 text-[17px] leading-snug">{message}</p>}
 
-          {isDevicesPurchased && data.newDeviceLimit && (
-            <div className="flex items-center justify-between rounded-xl bg-dark-800/50 px-4 py-3">
-              <span className="text-dark-400">
-                {t('successNotification.totalDevices', 'Total devices')}
-              </span>
-              <span className="font-semibold text-dark-100">{data.newDeviceLimit}</span>
-            </div>
-          )}
-
-          {/* Traffic info (for traffic purchase) */}
-          {isTrafficPurchased && data.trafficGbAdded && (
-            <div className="flex items-center justify-between rounded-xl bg-dark-800/50 px-4 py-3">
-              <span className="text-dark-400">
-                {t('successNotification.trafficAdded', 'Traffic added')}
-              </span>
-              <span className="text-lg font-bold text-success-400">
-                +{data.trafficGbAdded} {t('common.units.gb', 'GB')}
-              </span>
-            </div>
-          )}
-
-          {isTrafficPurchased && data.newTrafficLimitGb && (
-            <div className="flex items-center justify-between rounded-xl bg-dark-800/50 px-4 py-3">
-              <span className="text-dark-400">
-                {t('successNotification.totalTraffic', 'Total traffic')}
-              </span>
-              <span className="font-semibold text-dark-100">
-                {data.newTrafficLimitGb} {t('common.units.gb', 'GB')}
-              </span>
-            </div>
-          )}
-
-          {/* New balance (for top-up) */}
-          {isBalanceTopup && formattedBalance && (
-            <div className="flex items-center justify-between rounded-xl bg-dark-800/50 px-4 py-3">
-              <span className="text-dark-400">
-                {t('successNotification.newBalance', 'New balance')}
-              </span>
-              <span className="text-lg font-bold text-dark-100">{formattedBalance}</span>
-            </div>
-          )}
-
-          {/* Tariff name */}
-          {data.tariffName && (
-            <div className="flex items-center justify-between gap-3 rounded-xl bg-dark-800/50 px-4 py-3">
-              <span className="shrink-0 text-dark-400">
-                {t('successNotification.tariff', 'Tariff')}
-              </span>
-              <span className="min-w-0 truncate font-semibold text-dark-100">
-                {data.tariffName}
-              </span>
-            </div>
-          )}
-
-          {/* Expiry date */}
-          {formattedExpiry && (
-            <div className="flex items-center justify-between rounded-xl bg-dark-800/50 px-4 py-3">
-              <span className="text-dark-400">
-                {t('successNotification.validUntil', 'Valid until')}
-              </span>
-              <span className="font-semibold text-dark-100">{formattedExpiry}</span>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="space-y-2 pt-2">
-            {isSubscription && (
-              <button
-                onClick={handleGoToSubscription}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-500 py-3.5 font-bold text-on-accent shadow-lg shadow-accent-500/25 transition-colors hover:bg-accent-400 active:bg-accent-600"
-              >
-                <RocketIcon className="h-8 w-8" />
-                <span>{t('successNotification.goToSubscription', 'Go to Subscription')}</span>
-              </button>
+        {(rows.length > 0 || formattedAmount) && (
+          <div className="mt-6 rounded-[20px] bg-[#111] p-5 text-[#F2F0E8]">
+            {rows.map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-3 py-1.5 text-[15px]">
+                <span className="text-[#9C9B93]">{k}</span>
+                <b className="min-w-0 truncate text-right">{v}</b>
+              </div>
+            ))}
+            {formattedAmount && (
+              <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-[#3D3D3A] pt-3">
+                <b className="text-[15px]">
+                  {isBalanceTopup
+                    ? t('successNotification.amount', 'Amount')
+                    : t('successNotification.price', 'Price')}
+                </b>
+                <span className="rv-num text-[32px] text-[rgb(var(--color-accent-500))]">
+                  {formattedAmount}
+                </span>
+              </div>
             )}
-
-            {isBalanceTopup && (
-              <button
-                onClick={handleGoToBalance}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-success-500 py-3.5 font-bold text-white shadow-lg shadow-success-500/25 transition-colors hover:bg-success-400 active:bg-success-600"
-              >
-                <WalletIcon className="h-8 w-8" />
-                <span>{t('successNotification.goToBalance', 'Go to Balance')}</span>
-              </button>
-            )}
-
-            {isDevicesPurchased && (
-              <button
-                onClick={handleGoToSubscription}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-500 py-3.5 font-bold text-on-accent shadow-lg shadow-accent-500/25 transition-colors hover:bg-accent-400 active:bg-accent-600"
-              >
-                <DevicesIcon className="h-8 w-8" />
-                <span>{t('successNotification.goToSubscription', 'Go to Subscription')}</span>
-              </button>
-            )}
-
-            {isTrafficPurchased && (
-              <button
-                onClick={handleGoToSubscription}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-success-500 py-3.5 font-bold text-white shadow-lg shadow-success-500/25 transition-colors hover:bg-success-400 active:bg-success-600"
-              >
-                <TrafficIcon className="h-8 w-8" />
-                <span>{t('successNotification.goToSubscription', 'Go to Subscription')}</span>
-              </button>
-            )}
-
-            <button
-              onClick={handleClose}
-              className="w-full rounded-xl bg-dark-800 py-3 font-semibold text-dark-300 transition-colors hover:bg-dark-700 hover:text-dark-100"
-            >
-              {t('common.close', 'Close')}
-            </button>
           </div>
+        )}
+
+        <div className="mt-auto space-y-3 pt-8">
+          <button
+            onClick={() => {
+              hide();
+              navigate('/');
+            }}
+            className="btn rv-btn-lg rv-btn-ink w-full"
+          >
+            {t('rv.done.home')}
+          </button>
+          {isSubscription ? (
+            <button
+              onClick={() => {
+                hide();
+                navigate('/connection');
+              }}
+              className="btn rv-btn-ghost-ink w-full"
+            >
+              {t('rv.done.connectMore')}
+            </button>
+          ) : isBalanceTopup ? (
+            <button onClick={handleGoToBalance} className="btn rv-btn-ghost-ink w-full">
+              {t('successNotification.goToBalance', 'Go to Balance')}
+            </button>
+          ) : (
+            <button onClick={handleGoToSubscription} className="btn rv-btn-ghost-ink w-full">
+              {t('successNotification.goToSubscription', 'Go to Subscription')}
+            </button>
+          )}
         </div>
       </div>
     </div>
