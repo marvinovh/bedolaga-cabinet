@@ -10265,6 +10265,10 @@
       "spins_few": "{{count}} spins",
       "spins_many": "{{count}} spins",
       "spins_other": "{{count}} spins"
+    },
+    "admin": {
+      "badge": "Admin",
+      "toCabinet": "Back to cabinet"
     }
   }
 }

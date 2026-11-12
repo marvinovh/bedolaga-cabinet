@@ -43,6 +43,7 @@ import { AppHeader } from './AppHeader';
 import { LogoutButton } from './LogoutButton';
 import { useBackgroundConsumer } from '@/components/backgrounds/BackgroundHost';
 import { Avatar, BalanceChip, Brand } from '@/components/rv';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 // Второстепенные разделы — в «Ещё», в шапке макета пять пунктов.
 const DESKTOP_MORE = ['/gift', '/info'];
@@ -109,6 +110,8 @@ export function AppShell({ children }: AppShellProps) {
     { path: '/info', label: t('nav.info'), icon: InfoIcon },
   ];
 
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
@@ -159,7 +162,13 @@ export function AppShell({ children }: AppShellProps) {
           скроллбара, и капсула по центру прыгала бы на полширины скроллбара при
           переходах между страницами со скроллом и без. 100vw даёт ту же ось
           центрирования, что и у body (тоже 100vw). */}
-      <header className="fixed left-0 top-0 z-50 hidden w-screen bg-accent-500 text-[#111] lg:block">
+      {isAdminRoute && <AdminSidebar />}
+      <header
+        className={cn(
+          'fixed left-0 top-0 z-50 hidden w-screen bg-accent-500 text-[#111]',
+          !isAdminRoute && 'lg:block',
+        )}
+      >
         <div className="mx-auto flex h-[68px] max-w-[1184px] items-center gap-4 px-6">
           <Brand size={36} onAccent onClick={handleNavClick} />
 
@@ -272,7 +281,7 @@ export function AppShell({ children }: AppShellProps) {
       />
 
       {/* Desktop spacer */}
-      <div className="hidden h-[68px] lg:block" />
+      {!isAdminRoute && <div className="hidden h-[68px] lg:block" />}
 
       {/* Mobile spacer */}
       <div className="lg:hidden" style={{ height: headerHeight }} />
@@ -281,7 +290,13 @@ export function AppShell({ children }: AppShellProps) {
       {/* Боковые отступы не меньше вырезов (альбомная ориентация iPhone); снизу —
           просвет под панелью: фиксированные 112px в standalone iOS не хватало,
           и низ контента уходил под неё. */}
-      <main className="mx-auto max-w-[1184px] py-4 lg:py-8 pb-[calc(var(--mobile-nav-clearance)+0.5rem)] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] lg:px-6 lg:pb-8">
+      <main
+        data-admin={isAdminRoute ? '' : undefined}
+        className={cn(
+          'mx-auto py-4 pb-[calc(var(--mobile-nav-clearance)+0.5rem)] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] lg:px-6 lg:pb-8 lg:py-8',
+          isAdminRoute ? 'lg:ml-[264px] lg:max-w-[1600px] lg:!px-8 lg:!py-6' : 'max-w-[1184px]',
+        )}
+      >
         {children}
       </main>
 

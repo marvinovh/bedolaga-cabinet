@@ -10390,6 +10390,10 @@
       "spins_few": "{{count}} спина",
       "spins_many": "{{count}} спинов",
       "spins_other": "{{count}} спинов"
+    },
+    "admin": {
+      "badge": "Админ",
+      "toCabinet": "В кабинет клиента"
     }
   }
 }

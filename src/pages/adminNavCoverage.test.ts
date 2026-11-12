@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const SRC = join(import.meta.dirname, '..');
 
 const appSource = readFileSync(join(SRC, 'App.tsx'), 'utf-8');
-const panelSource = readFileSync(join(SRC, 'pages/AdminPanel.tsx'), 'utf-8');
+const panelSource = readFileSync(join(SRC, 'components/admin/adminNav.tsx'), 'utf-8');
 
 /**
  * A route is a sub-screen when its shape says so, not because someone listed it:
