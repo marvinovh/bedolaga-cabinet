@@ -2961,3 +2961,10 @@ main h1.text-3xl {
   border-radius: 6px;
   line-height: 1.1;
 }
+/* Экраны без нижней панели (чат поддержки) */
+html[data-rv-hide-nav] nav.fixed.lg\:hidden {
+  display: none;
+}
+html[data-rv-hide-nav] [data-mobile-nav] {
+  --mobile-nav-clearance: var(--mobile-nav-offset);
+}

@@ -10216,6 +10216,16 @@
       "home": "Home",
       "connectMore": "Connect another device",
       "subPre": "You are"
+    },
+    "help": {
+      "title1": "How can we",
+      "title2": "help?",
+      "myTickets": "My requests",
+      "ticketNo": "Request #{{id}}",
+      "notFound": "No answer found?",
+      "notFoundText": "Write to us — real people answer, not a bot. You can attach a screenshot.",
+      "write": "Write to support",
+      "orTelegram": "or on Telegram {{user}}"
     }
   }
 }
