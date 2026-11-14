@@ -10587,6 +10587,79 @@
       "nodes": "Nodes",
       "details": "Detailed node metrics",
       "hideDetails": "Hide detailed metrics"
+    },
+    "pc": {
+      "crumb": "Marketing",
+      "search": "Code or description",
+      "create": "Create promo code",
+      "createShort": "Create",
+      "col": {
+        "code": "Code",
+        "gives": "Gives",
+        "used": "Used",
+        "until": "Until",
+        "status": "Status"
+      },
+      "st": {
+        "active": "Active",
+        "exhausted": "Used up",
+        "expired": "Expired",
+        "off": "Off"
+      },
+      "usedOf": "{{used}} of {{max}}",
+      "stats": "Stats",
+      "copy": "Copy code",
+      "newOnly": "new users only",
+      "give": {
+        "discount": "−{{percent}}% off · {{hours}} h",
+        "trial_one": "{{count}}-day trial",
+        "trial_few": "{{count}}-day trial",
+        "trial_many": "{{count}}-day trial",
+        "trial_other": "{{count}}-day trial",
+        "group": "Moves to a promo group",
+        "balance": "+{{amount}} to balance",
+        "days_one": "+{{count}} day to subscription",
+        "days_few": "+{{count}} days to subscription",
+        "days_many": "+{{count}} days to subscription",
+        "days_other": "+{{count}} days to subscription",
+        "traffic": "+{{count}} GB"
+      },
+      "notFound": "Nothing found",
+      "emptyA": "No promo codes",
+      "emptyB": "yet",
+      "emptyText": "A promo code gives a discount, days or balance for a secret word. Make your first one in a minute.",
+      "confirm": "Confirm",
+      "deleteTitle": "Delete promo code {{code}}?",
+      "deleteText_one": "It can no longer be entered. Stats for {{count}} activation are kept.",
+      "deleteText_few": "It can no longer be entered. Stats for {{count}} activations are kept.",
+      "deleteText_many": "It can no longer be entered. Stats for {{count}} activations are kept.",
+      "deleteText_other": "It can no longer be entered. Stats for {{count}} activations are kept.",
+      "delete": "Delete",
+      "newTitle": "New promo code",
+      "code": "Code",
+      "random": "Random",
+      "gives": "Gives",
+      "kind": {
+        "discount": "Purchase discount",
+        "days": "Subscription days",
+        "balance": "Balance credit"
+      },
+      "f": {
+        "discount": "Discount, %",
+        "days": "Days",
+        "amount": "Amount, {{cur}}",
+        "limit": "Limit",
+        "hours": "Discount lasts after entry, hours",
+        "until": "Valid until"
+      },
+      "newOnlyToggle": "New users only",
+      "pv": {
+        "discount": "Customer sees: “Promo code {{code}} — −{{percent}}% on any plan”",
+        "days": "Customer sees: “Promo code {{code}} — +{{count}} days”",
+        "balance": "Customer sees: “Promo code {{code}} — +{{amount}} to balance”"
+      },
+      "created": "Promo code {{code}} created",
+      "more": "More options — plan, promo group, traffic"
     }
   }
 }
