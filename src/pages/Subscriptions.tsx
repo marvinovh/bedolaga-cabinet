@@ -17,7 +17,7 @@ import {
   type RvSubState,
 } from '../components/subscription/RvSubscriptionCard';
 import { useCurrency } from '../hooks/useCurrency';
-import TrialOfferCard from '../components/dashboard/TrialOfferCard';
+import { NewUserHome } from '../components/dashboard/NewUserHome';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
 
 function EmptyState({ onBuy }: { onBuy: () => void }) {
@@ -225,26 +225,16 @@ export default function Subscriptions() {
 
       {/* Empty state: показываем триал, если доступен; иначе — обычный empty */}
       {hasNoSubscriptions && !trialLoading && trialInfo?.is_available && (
-        <div className="space-y-4">
-          <TrialOfferCard
-            trialInfo={trialInfo}
-            balanceKopeks={balanceData?.balance_kopeks ?? 0}
-            balanceRubles={balanceData?.balance_rubles ?? 0}
-            activateTrialMutation={activateTrialMutation}
-            trialError={trialError}
-          />
-          {/* Новый пользователь не обязан активировать триал, чтобы попасть
-              в витрину — даём явный путь к покупке подписки. Раньше при
-              доступном триале это был единственный экран без кнопки «Купить»
-              (Telegram-баг #605056/#605063). */}
-          <button
-            onClick={() => navigate('/subscription/purchase')}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-500 px-6 py-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-600"
-          >
-            <PlusIcon className="h-5 w-5" />
-            {t('subscriptions.browsePlans', 'Посмотреть тарифы и купить подписку')}
-          </button>
-        </div>
+        <NewUserHome
+          heroOnly
+          orPickTo="/subscription/purchase"
+          userName=""
+          trialInfo={trialInfo}
+          activateTrialMutation={activateTrialMutation}
+          trialError={trialError}
+          balanceKopeks={balanceData?.balance_kopeks ?? 0}
+          referralEnabled={false}
+        />
       )}
       {hasNoSubscriptions && !trialLoading && !trialInfo?.is_available && (
         <EmptyState onBuy={() => navigate('/subscription/purchase')} />

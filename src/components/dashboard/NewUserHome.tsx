@@ -41,6 +41,8 @@ export function NewUserHome({
   tariffs,
   referralPercent,
   referralEnabled,
+  heroOnly = false,
+  orPickTo,
 }: {
   userName: string;
   groupName?: string | null;
@@ -53,6 +55,10 @@ export function NewUserHome({
   tariffs?: Tariff[];
   referralPercent?: number;
   referralEnabled: boolean;
+  /** Только лаймовый герой (для «Моих подписок» без подписок). */
+  heroOnly?: boolean;
+  /** Куда ведёт «или сразу выбрать тариф»; без него — к тарифам ниже на главной. */
+  orPickTo?: string;
 }) {
   const { t } = useTranslation();
   const { formatAmount, currencySymbol } = useCurrency();
@@ -256,12 +262,21 @@ export function NewUserHome({
                 <InkArrowBtn>{t('rv.topUp')}</InkArrowBtn>
               </Link>
             )}
-            <a
-              href="#tariffs"
-              className="link hidden !text-base !text-[#111] !decoration-[#111] lg:inline"
-            >
-              {t('rv.nu.orPick')}
-            </a>
+            {orPickTo ? (
+              <Link
+                to={orPickTo}
+                className="link self-center !text-base !text-[#111] !decoration-[#111]"
+              >
+                {t('rv.nu.orPick')}
+              </Link>
+            ) : (
+              <a
+                href="#tariffs"
+                className="link hidden !text-base !text-[#111] !decoration-[#111] lg:inline"
+              >
+                {t('rv.nu.orPick')}
+              </a>
+            )}
           </div>
         </>
       ) : (
@@ -286,6 +301,8 @@ export function NewUserHome({
       )}
     </section>
   );
+
+  if (heroOnly) return hero;
 
   /* ───────── Как подключиться ───────── */
   const steps = [
