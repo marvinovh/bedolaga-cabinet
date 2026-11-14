@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingDefinition } from '../../api/adminSettings';
+import type { SettingDefinition } from '../../api/adminSettings';
 import { SearchIcon, CloseIcon } from './icons';
 import { formatSettingKey } from './utils';
 
@@ -208,7 +208,7 @@ export function SettingsSearchMobile({
   };
 
   return (
-    <div ref={containerRef} className="relative mt-3 lg:hidden">
+    <div ref={containerRef} className="relative">
       <input
         type="text"
         value={searchQuery}
@@ -218,7 +218,7 @@ export function SettingsSearchMobile({
         }}
         onFocus={() => setIsOpen(true)}
         placeholder={t('admin.settings.searchPlaceholder')}
-        className="w-full rounded-xl border border-dark-700 bg-dark-800 py-2 pl-10 pr-10 text-sm text-dark-100 placeholder-dark-500 focus:border-accent-500 focus:outline-none"
+        className="h-12 w-full rounded-[14px] border-2 border-dark-600 bg-dark-900 pl-10 pr-10 text-[15px] text-dark-100 placeholder-dark-400 focus:border-accent-500 focus:outline-none"
       />
       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500">
         <SearchIcon />
@@ -237,7 +237,7 @@ export function SettingsSearchMobile({
 
       {/* Autocomplete dropdown */}
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-dark-700 bg-dark-800 py-1 shadow-xl">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-2xl border-2 border-dark-700 bg-dark-900 py-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
           {suggestions.map((setting, index) => (
             <button
               key={setting.key}

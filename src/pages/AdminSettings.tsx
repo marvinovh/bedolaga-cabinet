@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { adminSettingsApi, type SettingDefinition } from '../api/adminSettings';
@@ -13,9 +13,9 @@ import {
   findSettingsSection,
   getMappedCategoryKeys,
 } from '../components/admin';
-import { usePlatform } from '../platform/hooks/usePlatform';
 import { AnalyticsTab } from '../components/admin/AnalyticsTab';
 import { BrandingTab } from '../components/admin/BrandingTab';
+import { RvAppearance } from '../components/admin/RvAppearance';
 import { MenuEditorTab } from '../components/admin/MenuEditorTab';
 import { ThemeTab } from '../components/admin/ThemeTab';
 import { FavoritesTab } from '../components/admin/FavoritesTab';
@@ -23,16 +23,14 @@ import { SettingsTab } from '../components/admin/SettingsTab';
 import { SettingsTreeSidebar } from '../components/admin/SettingsTreeSidebar';
 import { SettingsMobileTabs } from '../components/admin/SettingsMobileTabs';
 import { SettingsSearchMobile, SettingsSearchResults } from '../components/admin/SettingsSearch';
-import { BackIcon, ChevronRightIcon } from '@/components/icons';
+import { ChevronRightIcon } from '@/components/icons';
 
 // Settings that require SALES_MODE=tariffs to be visible
 const TARIFF_MODE_SETTINGS = ['MULTI_TARIFF_ENABLED', 'MAX_ACTIVE_SUBSCRIPTIONS'];
 
 export default function AdminSettings() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { capabilities } = usePlatform();
 
   // State: `?section=<id>` открывает нужный раздел сразу (ссылки из других разделов админки).
   const [activeSection, setActiveSection] = useState(
@@ -150,12 +148,6 @@ export default function AdminSettings() {
     return allSettings.filter((s: SettingDefinition) => s.has_override).length;
   }, [allSettings]);
 
-  // Total settings count
-  const totalCount = useMemo(() => {
-    if (!allSettings || !Array.isArray(allSettings)) return 0;
-    return allSettings.length;
-  }, [allSettings]);
-
   // Handle setting selection from autocomplete
   const handleSelectSetting = useCallback(
     (setting: SettingDefinition) => {
@@ -200,7 +192,12 @@ export default function AdminSettings() {
       case 'analytics':
         return <AnalyticsTab />;
       case 'branding':
-        return <BrandingTab accentColor={themeColors?.accent} />;
+        return (
+          <div className="space-y-5">
+            <RvAppearance />
+            <BrandingTab accentColor={themeColors?.accent} hideIdentity />
+          </div>
+        );
       case 'theme':
         return <ThemeTab />;
       case 'buttons':
@@ -232,93 +229,69 @@ export default function AdminSettings() {
   };
 
   return (
-    <>
-      {/* Mobile Layout */}
-      <div className="space-y-4 pb-4 lg:hidden">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-[13px] font-medium text-dark-400">{t('rv.st.crumb')}</p>
+          <h1 className="rv-d mt-1 text-[44px] text-dark-100 lg:text-[56px]">{t('rv.st.title')}</h1>
+        </div>
+        <div className="w-full lg:w-[300px]">
+          <SettingsSearchMobile
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            allSettings={allSettings}
+            onSelectSetting={handleSelectSetting}
+          />
+        </div>
+      </div>
+
+      {/* Телефон: разделы лентой */}
+      <div className="lg:hidden">
         <SettingsMobileTabs
           activeSection={activeSection}
           setActiveSection={setActiveSection}
           favoritesCount={favorites.length}
         />
-        <SettingsSearchMobile
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          allSettings={allSettings}
-          onSelectSetting={handleSelectSetting}
-        />
-        <SettingsSearchResults searchQuery={searchQuery} resultsCount={filteredSettings.length} />
-        {renderContent()}
       </div>
 
-      {/* Desktop Layout - fixed sidebar, scrollable content */}
-      <div className="hidden h-[calc(100dvh-120px)] lg:flex">
-        {/* Fixed Sidebar */}
-        <div className="w-[264px] shrink-0 overflow-y-auto border-r border-dark-700/50">
-          <div className="border-b border-dark-700/50 p-4">
-            <div className="flex items-center gap-3">
-              {/* Show back button only on web, not in Telegram Mini App */}
-              {!capabilities.hasBackButton && (
-                <button
-                  onClick={() => navigate('/admin')}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 transition-colors hover:border-dark-600"
-                  aria-label={t('admin.settings.backToAdmin')}
-                >
-                  <BackIcon />
-                </button>
-              )}
-              <h1 className="text-xl font-bold text-dark-100">{t('admin.settings.title')}</h1>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
+        <aside className="bento-card hidden !p-2.5 lg:sticky lg:top-6 lg:block">
           <SettingsTreeSidebar
             activeSection={activeSection}
-            onSectionChange={setActiveSection}
+            onSectionChange={(id) => {
+              setSearchQuery('');
+              setActiveSection(id);
+            }}
             favoritesCount={favorites.length}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             allSettings={allSettings}
             onSelectSetting={handleSelectSetting}
+            hideSearch
           />
-        </div>
+        </aside>
 
-        {/* Scrollable Content */}
-        <div className="min-w-0 flex-1 overflow-y-auto p-6">
-          {/* Breadcrumb for tree sub-items */}
-          {activeTreeInfo && !searchQuery.trim() && (
-            <div className="mb-2 flex items-center gap-1.5 text-xs">
-              <button
-                onClick={() => setActiveSection(activeTreeInfo.group.children[0].id)}
-                className="text-dark-500 transition-colors hover:text-dark-300"
-              >
-                {t(`admin.settings.groups.${activeTreeInfo.group.id}`)}
-              </button>
-              <ChevronRightIcon className="h-3.5 w-3.5" />
-              <span className="text-dark-300">
-                {t(`admin.settings.tree.${activeTreeInfo.child.id}`)}
-              </span>
-            </div>
-          )}
-
-          {/* Title + count badges */}
-          <div className="mb-4 flex items-center gap-3">
-            <h2 className="truncate text-xl font-semibold text-dark-100">{sectionTitle}</h2>
-            {totalCount > 0 && !searchQuery.trim() && activeTreeInfo && (
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-dark-700/50 px-2 py-0.5 text-xs text-dark-400">
-                  {t('admin.settings.totalCount', { count: totalCount })}
+        <div className="min-w-0">
+          {activeSection !== 'branding' || searchQuery.trim() ? (
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              {activeTreeInfo && !searchQuery.trim() && (
+                <span className="text-xs text-dark-400">
+                  {t(`admin.settings.groups.${activeTreeInfo.group.id}`)}
+                  <ChevronRightIcon className="mx-1 inline h-3 w-3" />
                 </span>
-                {modifiedCount > 0 && (
-                  <span className="rounded-full bg-warning-500/20 px-2 py-0.5 text-xs text-warning-400">
-                    {t('admin.settings.modifiedCount', { count: modifiedCount })}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
+              )}
+              <h2 className="rv-d text-[32px] text-dark-100">{sectionTitle}</h2>
+              {modifiedCount > 0 && !searchQuery.trim() && activeTreeInfo && (
+                <span className="badge-warning">
+                  {t('admin.settings.modifiedCount', { count: modifiedCount })}
+                </span>
+              )}
+            </div>
+          ) : null}
           <SettingsSearchResults searchQuery={searchQuery} resultsCount={filteredSettings.length} />
           {renderContent()}
         </div>
       </div>
-    </>
+    </div>
   );
 }

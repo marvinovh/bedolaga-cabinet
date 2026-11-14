@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SETTINGS_TREE } from './constants';
 import { StarIcon, SearchIcon, CloseIcon, ChevronDownIcon } from './icons';
-import { SettingDefinition } from '../../api/adminSettings';
+import type { SettingDefinition } from '../../api/adminSettings';
 import { formatSettingKey } from './utils';
 import { cn } from '../../lib/utils';
 
@@ -15,6 +15,8 @@ interface SettingsTreeSidebarProps {
   allSettings?: SettingDefinition[];
   onSelectSetting?: (setting: SettingDefinition) => void;
   className?: string;
+  /** Поиск вынесен в шапку страницы (макет A7). */
+  hideSearch?: boolean;
 }
 
 export function SettingsTreeSidebar({
@@ -26,6 +28,7 @@ export function SettingsTreeSidebar({
   allSettings,
   onSelectSetting,
   className,
+  hideSearch = false,
 }: SettingsTreeSidebarProps) {
   const { t } = useTranslation();
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
@@ -133,13 +136,23 @@ export function SettingsTreeSidebar({
     return group?.children.some((child) => child.id === activeSection) ?? false;
   };
 
+  const groupCount = (groupId: string) => {
+    const group = SETTINGS_TREE.groups.find((g) => g.id === groupId);
+    if (!group || !allSettings) return 0;
+    const cats = new Set(group.children.flatMap((child) => child.categories));
+    return allSettings.filter((setting) => cats.has(setting.category.key)).length;
+  };
+
   // Special items excluding favorites (favorites is rendered separately)
   const customizationItems = SETTINGS_TREE.specialItems.filter((item) => item.id !== 'favorites');
 
   return (
     <nav className={cn('flex flex-col', className)}>
       {/* Search bar */}
-      <div ref={searchContainerRef} className="relative px-3 pb-2 pt-3">
+      <div
+        ref={searchContainerRef}
+        className={cn('relative px-3 pb-2 pt-3', hideSearch && 'hidden')}
+      >
         <input
           ref={inputRef}
           type="text"
@@ -198,10 +211,10 @@ export function SettingsTreeSidebar({
         <button
           onClick={() => onSectionChange('favorites')}
           className={cn(
-            'flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-all',
+            'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
             activeSection === 'favorites'
-              ? 'bg-accent-500/10 text-accent-400'
-              : 'text-dark-400 hover:bg-dark-800/50 hover:text-dark-200',
+              ? 'bg-dark-800 font-bold text-dark-100'
+              : 'text-dark-200 hover:bg-dark-800',
           )}
         >
           <StarIcon className="h-4 w-4" filled={activeSection === 'favorites'} />
@@ -240,14 +253,17 @@ export function SettingsTreeSidebar({
               key={item.id}
               onClick={() => onSectionChange(item.id)}
               className={cn(
-                'flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-all',
+                'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
                 isActive
-                  ? 'bg-accent-500/10 text-accent-400'
-                  : 'text-dark-400 hover:bg-dark-800/50 hover:text-dark-200',
+                  ? 'bg-dark-800 font-bold text-dark-100'
+                  : 'text-dark-200 hover:bg-dark-800',
               )}
             >
-              {item.icon && <span className="text-sm">{item.icon}</span>}
-              <span className="text-sm font-medium">{t(`admin.settings.${item.id}`, item.id)}</span>
+              <span className="text-sm">
+                {item.id === 'branding'
+                  ? t('rv.st.appearance')
+                  : t(`admin.settings.${item.id}`, item.id)}
+              </span>
             </button>
           );
         })}
@@ -275,16 +291,14 @@ export function SettingsTreeSidebar({
               <button
                 onClick={() => handleGroupToggle(group.id)}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-all',
-                  hasActiveChild
-                    ? 'text-accent-300'
-                    : 'text-dark-400 hover:bg-dark-800/50 hover:text-dark-200',
+                  'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
+                  hasActiveChild ? 'font-bold text-dark-100' : 'text-dark-200 hover:bg-dark-800',
                 )}
               >
-                <span className="text-sm">{group.icon}</span>
-                <span className="flex-1 text-left text-sm font-medium">
+                <span className="flex-1 text-left text-sm">
                   {t(`admin.settings.groups.${group.id}`, group.id)}
                 </span>
+                <span className="text-xs text-dark-400">{groupCount(group.id) || ''}</span>
                 <ChevronDownIcon
                   className={cn(
                     'h-4 w-4 transition-transform duration-200',
@@ -305,8 +319,8 @@ export function SettingsTreeSidebar({
                         className={cn(
                           'flex w-full items-center rounded-lg px-3 py-1.5 text-left text-sm transition-all',
                           isActive
-                            ? 'bg-accent-500/10 text-accent-400'
-                            : 'text-dark-400 hover:bg-dark-800/50 hover:text-dark-200',
+                            ? 'bg-dark-800 font-bold text-dark-100'
+                            : 'text-dark-300 hover:bg-dark-800 hover:text-dark-100',
                         )}
                       >
                         {t(`admin.settings.tree.${child.id}`, child.id)}

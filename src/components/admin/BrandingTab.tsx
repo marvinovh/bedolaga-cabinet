@@ -9,10 +9,12 @@ import { Toggle } from './Toggle';
 import { BackgroundEditor } from './BackgroundEditor';
 
 interface BrandingTabProps {
+  /** Лого и название уже есть в «Оформлении» (макет A7) — не дублируем. */
+  hideIdentity?: boolean;
   accentColor?: string;
 }
 
-export function BrandingTab({ accentColor = '#3b82f6' }: BrandingTabProps) {
+export function BrandingTab({ accentColor = '#3b82f6', hideIdentity = false }: BrandingTabProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -155,108 +157,112 @@ export function BrandingTab({ accentColor = '#3b82f6' }: BrandingTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Logo & Name */}
-      <div className="rounded-2xl border border-dark-700/50 bg-dark-800/50 p-6">
-        <h3 className="mb-4 text-lg font-semibold text-dark-100">
-          {t('admin.settings.logoAndName')}
-        </h3>
+      {!hideIdentity && (
+        <>
+          {/* Logo & Name */}
+          <div className="rounded-2xl border border-dark-700/50 bg-dark-800/50 p-6">
+            <h3 className="mb-4 text-lg font-semibold text-dark-100">
+              {t('admin.settings.logoAndName')}
+            </h3>
 
-        <div className="flex items-start gap-6">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <div
-              className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl text-3xl font-bold text-white"
-              style={{
-                background: `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
-              }}
-            >
-              {branding?.has_custom_logo ? (
-                <img
-                  src={brandingApi.getLogoUrl(branding) ?? undefined}
-                  alt={t('admin.settings.logoAlt')}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                branding?.logo_letter || 'V'
-              )}
-            </div>
-
-            <div className="mt-3 flex gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleLogoUpload}
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadLogoMutation.isPending}
-                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-dark-700 px-3 py-2 text-sm text-dark-200 transition-colors hover:bg-dark-600 disabled:opacity-50"
-              >
-                <UploadIcon />
-              </button>
-              {branding?.has_custom_logo && (
-                <button
-                  onClick={() => deleteLogoMutation.mutate()}
-                  disabled={deleteLogoMutation.isPending}
-                  className="rounded-xl bg-dark-700 px-3 py-2 text-dark-400 transition-colors hover:bg-error-500/20 hover:text-error-400 disabled:opacity-50"
-                >
-                  <TrashIcon />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Name. min-w-0: без него колонка росла по полю ввода, и кнопки ✓/✕
-              уезжали за экран. */}
-          <div className="min-w-0 flex-1">
-            <label className="mb-2 block text-sm font-medium text-dark-300">
-              {t('admin.settings.projectName')}
-            </label>
-            {editingName ? (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="min-w-0 flex-1 rounded-xl border border-dark-600 bg-dark-700 px-4 py-2 text-dark-100 focus:border-accent-500 focus:outline-none"
-                  maxLength={50}
-                />
-                <button
-                  onClick={() => updateBrandingMutation.mutate(newName)}
-                  disabled={updateBrandingMutation.isPending}
-                  className="shrink-0 rounded-xl bg-accent-500 px-4 py-2 text-on-accent transition-colors hover:bg-accent-600 disabled:opacity-50"
-                >
-                  <CheckIcon />
-                </button>
-                <button
-                  onClick={() => setEditingName(false)}
-                  className="shrink-0 rounded-xl bg-dark-700 px-4 py-2 text-dark-300 transition-colors hover:bg-dark-600"
-                >
-                  <CloseIcon />
-                </button>
-              </div>
-            ) : (
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="min-w-0 truncate text-lg text-dark-100">
-                  {branding?.name || t('admin.settings.notSpecified')}
-                </span>
-                <button
-                  onClick={() => {
-                    setNewName(branding?.name ?? '');
-                    setEditingName(true);
+            <div className="flex items-start gap-6">
+              {/* Logo */}
+              <div className="flex-shrink-0">
+                <div
+                  className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl text-3xl font-bold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
                   }}
-                  className="shrink-0 rounded-lg p-1.5 text-dark-400 transition-colors hover:bg-dark-700 hover:text-dark-200"
                 >
-                  <PencilIcon />
-                </button>
+                  {branding?.has_custom_logo ? (
+                    <img
+                      src={brandingApi.getLogoUrl(branding) ?? undefined}
+                      alt={t('admin.settings.logoAlt')}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    branding?.logo_letter || 'V'
+                  )}
+                </div>
+
+                <div className="mt-3 flex gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadLogoMutation.isPending}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-dark-700 px-3 py-2 text-sm text-dark-200 transition-colors hover:bg-dark-600 disabled:opacity-50"
+                  >
+                    <UploadIcon />
+                  </button>
+                  {branding?.has_custom_logo && (
+                    <button
+                      onClick={() => deleteLogoMutation.mutate()}
+                      disabled={deleteLogoMutation.isPending}
+                      className="rounded-xl bg-dark-700 px-3 py-2 text-dark-400 transition-colors hover:bg-error-500/20 hover:text-error-400 disabled:opacity-50"
+                    >
+                      <TrashIcon />
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Name. min-w-0: без него колонка росла по полю ввода, и кнопки ✓/✕
+              уезжали за экран. */}
+              <div className="min-w-0 flex-1">
+                <label className="mb-2 block text-sm font-medium text-dark-300">
+                  {t('admin.settings.projectName')}
+                </label>
+                {editingName ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="min-w-0 flex-1 rounded-xl border border-dark-600 bg-dark-700 px-4 py-2 text-dark-100 focus:border-accent-500 focus:outline-none"
+                      maxLength={50}
+                    />
+                    <button
+                      onClick={() => updateBrandingMutation.mutate(newName)}
+                      disabled={updateBrandingMutation.isPending}
+                      className="shrink-0 rounded-xl bg-accent-500 px-4 py-2 text-on-accent transition-colors hover:bg-accent-600 disabled:opacity-50"
+                    >
+                      <CheckIcon />
+                    </button>
+                    <button
+                      onClick={() => setEditingName(false)}
+                      className="shrink-0 rounded-xl bg-dark-700 px-4 py-2 text-dark-300 transition-colors hover:bg-dark-600"
+                    >
+                      <CloseIcon />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="min-w-0 truncate text-lg text-dark-100">
+                      {branding?.name || t('admin.settings.notSpecified')}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setNewName(branding?.name ?? '');
+                        setEditingName(true);
+                      }}
+                      className="shrink-0 rounded-lg p-1.5 text-dark-400 transition-colors hover:bg-dark-700 hover:text-dark-200"
+                    >
+                      <PencilIcon />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Видео стартового меню бота */}
       <div className="rounded-2xl border border-dark-700/50 bg-dark-800/50 p-6">
@@ -310,9 +316,11 @@ export function BrandingTab({ accentColor = '#3b82f6' }: BrandingTabProps) {
       </div>
 
       {/* Animated Background Editor */}
-      <div className="rounded-2xl border border-dark-700/50 bg-dark-800/50 p-6">
-        <BackgroundEditor />
-      </div>
+      {!hideIdentity && (
+        <div className="rounded-2xl border border-dark-700/50 bg-dark-800/50 p-6">
+          <BackgroundEditor />
+        </div>
+      )}
 
       {/* Fullscreen & Email toggles */}
       <div className="rounded-2xl border border-dark-700/50 bg-dark-800/50 p-6">

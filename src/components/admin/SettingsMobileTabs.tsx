@@ -86,8 +86,8 @@ export function SettingsMobileTabs({
           }}
           className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
             isFavoritesActive
-              ? 'bg-accent-500/15 text-accent-400 ring-1 ring-accent-500/30'
-              : 'bg-dark-800/50 text-dark-400 active:bg-dark-700'
+              ? 'bg-accent-500 font-bold text-[#111]'
+              : 'border-2 border-dark-700 text-dark-200 active:bg-dark-800'
           }`}
         >
           <StarIcon filled={isFavoritesActive} />
@@ -118,12 +118,13 @@ export function SettingsMobileTabs({
               }}
               className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-accent-500/15 text-accent-400 ring-1 ring-accent-500/30'
-                  : 'bg-dark-800/50 text-dark-400 active:bg-dark-700'
+                  ? 'bg-accent-500 font-bold text-[#111]'
+                  : 'border-2 border-dark-700 text-dark-200 active:bg-dark-800'
               }`}
             >
-              {item.icon && <span className="text-sm">{item.icon}</span>}
-              <span className="whitespace-nowrap">{t(`admin.settings.${item.id}`)}</span>
+              <span className="whitespace-nowrap">
+                {item.id === 'branding' ? t('rv.st.appearance') : t(`admin.settings.${item.id}`)}
+              </span>
             </button>
           );
         })}
@@ -139,8 +140,8 @@ export function SettingsMobileTabs({
               onClick={() => handleGroupTap(group.id)}
               className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                 hasActiveChild || isExpanded
-                  ? 'bg-accent-500/15 text-accent-400 ring-1 ring-accent-500/30'
-                  : 'bg-dark-800/50 text-dark-400 active:bg-dark-700'
+                  ? 'bg-accent-500 font-bold text-[#111]'
+                  : 'border-2 border-dark-700 text-dark-200 active:bg-dark-800'
               }`}
             >
               <span className="text-sm">{group.icon}</span>

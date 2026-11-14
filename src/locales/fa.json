@@ -10601,6 +10601,28 @@
       "send": "Send",
       "test": "Send a test to me",
       "testSent": "Test sent"
+    },
+    "st": {
+      "crumb": "System",
+      "appearance": "Appearance",
+      "accent": "Accent colour",
+      "accentHint": "Buttons, active tabs, the “working” status. Text on the accent is always dark — check the contrast in the preview.",
+      "theme": "Cabinet theme",
+      "themes": {
+        "dark": "Dark",
+        "light": "Light",
+        "both": "Both"
+      },
+      "name": "Service name",
+      "logo": "Logo",
+      "logoHint": "PNG or SVG, square",
+      "replace": "Replace",
+      "preview": "Cabinet preview",
+      "pvKicker": "Subscription · Standard",
+      "pvWorks": "works",
+      "pvLeft": "23 days left",
+      "pvConnect": "Connect",
+      "title": "Settings"
     }
   }
 }
