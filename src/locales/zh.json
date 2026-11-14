@@ -10422,6 +10422,48 @@
       "resetDone": "Devices reset",
       "qr": "Send QR code",
       "title": "Tickets"
+    },
+    "bc": {
+      "crumb": "Broadcasts",
+      "new": "New",
+      "title": "New broadcast",
+      "who": "Who",
+      "preset": {
+        "all": "Everyone",
+        "active": "With subscription",
+        "expired": "Expired",
+        "trial": "Trial",
+        "expiring": "Ends in 3 days"
+      },
+      "custom": "+ Custom filter: plan, traffic, sign-up, activity",
+      "hideCustom": "Hide custom filter",
+      "channels": "Channels",
+      "emailAudience": "Email recipients",
+      "message": "Message",
+      "link": "Link",
+      "linkText": "link text",
+      "media": "Image",
+      "changeMedia": "Replace",
+      "buttons": "Buttons under the message",
+      "email": "Email",
+      "kind": "Type",
+      "cat": {
+        "system": "System",
+        "news": "News",
+        "promo": "Promo"
+      },
+      "catHint": "Customers can turn off news and promo in their profile. System broadcasts reach everyone.",
+      "previewTg": "Telegram preview",
+      "total": "Total",
+      "recipients_one": "recipient",
+      "recipients_few": "recipients",
+      "recipients_many": "recipients",
+      "recipients_other": "recipients",
+      "sendNow": "sent right away",
+      "plusEmail": "plus email",
+      "send": "Send",
+      "test": "Send a test to me",
+      "testSent": "Test sent"
     }
   }
 }

@@ -178,6 +178,59 @@ function tokensToReact(tokens: Token[]): ReactNode {
   return root.children;
 }
 
+/** Сообщение как в Telegram — для модалки и для живого превью рядом с формой. */
+export function TelegramBubble({
+  text,
+  mediaUrl,
+  mediaType,
+  buttons,
+  className,
+}: Omit<TelegramPreviewProps, 'open' | 'onClose'> & { className?: string }) {
+  const { t } = useTranslation();
+  const rendered = useMemo(() => tokensToReact(tokenize(text)), [text]);
+  return (
+    <div className={className ?? 'rounded-xl bg-[#0e1621] p-3'}>
+      <div className="ml-auto max-w-[90%] rounded-2xl rounded-tr-md bg-[#2b5278] p-3 text-white shadow">
+        {mediaUrl && mediaType === 'photo' && (
+          <img
+            src={mediaUrl}
+            alt=""
+            loading="lazy"
+            className="mb-2 max-h-72 w-full rounded-lg object-cover"
+          />
+        )}
+        {mediaUrl && mediaType === 'video' && (
+          <video src={mediaUrl} controls className="mb-2 max-h-72 w-full rounded-lg" />
+        )}
+        {text ? (
+          <div className="whitespace-pre-wrap break-words text-[15px] leading-snug">{rendered}</div>
+        ) : (
+          <div className="text-sm italic text-white/60">
+            {t('admin.broadcasts.previewEmpty', '— пусто —')}
+          </div>
+        )}
+      </div>
+      {buttons && buttons.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {buttons.map((row, ri) => (
+            <div key={ri} className="flex gap-1">
+              {row.map((b, ci) => (
+                <button
+                  key={ci}
+                  type="button"
+                  className="flex-1 rounded-md bg-[#1f2c3a] px-3 py-2 text-sm text-blue-300 hover:bg-[#26384a]"
+                >
+                  {b.text}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TelegramPreview({
   open,
   onClose,
@@ -187,7 +240,6 @@ export function TelegramPreview({
   buttons,
 }: TelegramPreviewProps) {
   const { t } = useTranslation();
-  const rendered = useMemo(() => tokensToReact(tokenize(text)), [text]);
   const dialogRef = useFocusTrap<HTMLDivElement>(open, { onEscape: onClose });
   if (!open) return null;
   return createPortal(
@@ -216,47 +268,7 @@ export function TelegramPreview({
             ✕
           </button>
         </div>
-        <div className="rounded-xl bg-[#0e1621] p-3">
-          <div className="ml-auto max-w-[90%] rounded-2xl rounded-tr-md bg-[#2b5278] p-3 text-white shadow">
-            {mediaUrl && mediaType === 'photo' && (
-              <img
-                src={mediaUrl}
-                alt=""
-                loading="lazy"
-                className="mb-2 max-h-72 w-full rounded-lg object-cover"
-              />
-            )}
-            {mediaUrl && mediaType === 'video' && (
-              <video src={mediaUrl} controls className="mb-2 max-h-72 w-full rounded-lg" />
-            )}
-            {text ? (
-              <div className="whitespace-pre-wrap break-words text-[15px] leading-snug">
-                {rendered}
-              </div>
-            ) : (
-              <div className="text-sm italic text-white/60">
-                {t('admin.broadcasts.previewEmpty', '— пусто —')}
-              </div>
-            )}
-          </div>
-          {buttons && buttons.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {buttons.map((row, ri) => (
-                <div key={ri} className="flex gap-1">
-                  {row.map((b, ci) => (
-                    <button
-                      key={ci}
-                      type="button"
-                      className="flex-1 rounded-md bg-[#1f2c3a] px-3 py-2 text-sm text-blue-300 hover:bg-[#26384a]"
-                    >
-                      {b.text}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <TelegramBubble text={text} mediaUrl={mediaUrl} mediaType={mediaType} buttons={buttons} />
       </div>
     </div>,
     document.body,

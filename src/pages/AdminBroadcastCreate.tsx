@@ -1,23 +1,28 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   adminBroadcastsApi,
+  type BroadcastAudience,
   type CombinedBroadcastCreateRequest,
   type CustomBroadcastButton,
 } from '../api/adminBroadcasts';
 import { getErrorMessage } from '../utils/subscriptionHelpers';
 import { telegramCaptionLength } from '../utils/telegramCaptionLength';
-import { AdminBackButton } from '../components/admin';
 import {
   BroadcastAudienceEditor,
   emptyAudience,
   isAudienceComplete,
 } from '../components/broadcasts/BroadcastAudienceEditor';
-import { TelegramPreview, EmailPreview } from '../components/broadcasts/BroadcastPreview';
 import {
-  BroadcastIcon,
+  TelegramBubble,
+  TelegramPreview,
+  EmailPreview,
+} from '../components/broadcasts/BroadcastPreview';
+import { useAuthStore } from '../store/auth';
+import { cn } from '@/lib/utils';
+import {
   DocumentIcon,
   EmailIcon,
   PhotoIcon,
@@ -51,7 +56,7 @@ export default function AdminBroadcastCreate() {
   const [emailEnabled, setEmailEnabled] = useState(presetEmailUserId !== null);
 
   // Separate audiences per channel, as in the existing form.
-  const [telegramAudience, setTelegramAudience] = useState(emptyAudience);
+  const [telegramAudience, setTelegramAudience] = useState(() => presetAudience('all', 'telegram'));
   const [emailAudience, setEmailAudience] = useState(() =>
     presetEmailUserId === null
       ? emptyAudience()
@@ -111,6 +116,13 @@ export default function AdminBroadcastCreate() {
   const previewMediaTypeForModal: 'photo' | 'video' | null =
     mediaType === 'photo' || mediaType === 'video' ? mediaType : null;
 
+  // Fetch buttons
+  const { data: buttonsData } = useQuery({
+    queryKey: ['admin', 'broadcasts', 'buttons'],
+    queryFn: adminBroadcastsApi.getButtons,
+    enabled: telegramEnabled,
+  });
+
   const previewButtonRows = useMemo(() => {
     const rows: { text: string; url?: string; callback_data?: string }[][] = [];
     if (selectedButtons.length > 0) {
@@ -127,7 +139,12 @@ export default function AdminBroadcastCreate() {
         home: t('admin.broadcasts.btnHome', 'На главную'),
       };
       for (const id of selectedButtons) {
-        rows.push([{ text: presetLabels[id] || id, callback_data: id }]);
+        rows.push([
+          {
+            text: buttonsData?.buttons.find((b) => b.key === id)?.label || presetLabels[id] || id,
+            callback_data: id,
+          },
+        ]);
       }
     }
     for (const cb of customButtons) {
@@ -141,7 +158,7 @@ export default function AdminBroadcastCreate() {
       ]);
     }
     return rows;
-  }, [selectedButtons, customButtons, t]);
+  }, [selectedButtons, customButtons, t, buttonsData]);
 
   // Fetch Telegram filters
   const { data: filtersData, isLoading: filtersLoading } = useQuery({
@@ -162,13 +179,6 @@ export default function AdminBroadcastCreate() {
     enabled: emailEnabled,
   });
 
-  // Fetch buttons
-  const { data: buttonsData } = useQuery({
-    queryKey: ['admin', 'broadcasts', 'buttons'],
-    queryFn: adminBroadcastsApi.getButtons,
-    enabled: telegramEnabled,
-  });
-
   // Create mutation (used for single-channel sends)
   const createMutation = useMutation({
     mutationFn: adminBroadcastsApi.createCombined,
@@ -183,7 +193,7 @@ export default function AdminBroadcastCreate() {
   // Handle toggling channels
   const handleToggleTelegram = () => {
     setTelegramEnabled((prev) => !prev);
-    setTelegramAudience(emptyAudience());
+    setTelegramAudience(presetAudience('all', 'telegram'));
   };
 
   const handleToggleEmail = () => {
@@ -396,200 +406,273 @@ export default function AdminBroadcastCreate() {
 
   const isPending = createMutation.isPending || isSubmitting;
 
+  // ── Макет A6: быстрые аудитории, живое превью, итог и тест себе ──
+  const primaryChannel: 'telegram' | 'email' = telegramEnabled ? 'telegram' : 'email';
+  const primaryAudience = telegramEnabled ? telegramAudience : emailAudience;
+  const setPrimaryAudience = telegramEnabled ? setTelegramAudience : setEmailAudience;
+  const presetKey = activePresetKey(primaryAudience);
+  const [customAudience, setCustomAudience] = useState(false);
+  const showEditor =
+    customAudience || (!presetKey && presetEmailUserId === null) || presetEmailUserId !== null;
+
+  const filterCount = (key: string) =>
+    (telegramEnabled ? filtersData?.filters : emailFiltersData?.filters)?.find((f) => f.key === key)
+      ?.count ?? null;
+
+  const audienceReady = isAudienceComplete(primaryAudience);
+  const { data: recipients } = useQuery({
+    queryKey: ['admin', 'broadcasts', 'audience', primaryChannel, category, primaryAudience, 0],
+    queryFn: () =>
+      adminBroadcastsApi.previewAudience({
+        channel: primaryChannel,
+        category,
+        audience: primaryAudience,
+        offset: 0,
+        limit: 50,
+      }),
+    enabled: audienceReady,
+  });
+
+  const me = useAuthStore((state) => state.user);
+  const [testSent, setTestSent] = useState(false);
+  const testMutation = useMutation({
+    mutationFn: () => {
+      const data: CombinedBroadcastCreateRequest = {
+        channel: 'telegram',
+        audience: {
+          conditions: [
+            {
+              field: 'telegram_id',
+              operator: 'eq',
+              value: String(me?.telegram_id ?? ''),
+              label: null,
+              join: null,
+            },
+          ],
+        },
+        message_text: messageText,
+        selected_buttons: selectedButtons,
+        custom_buttons: customButtons.length > 0 ? customButtons : undefined,
+        category: 'system',
+      };
+      if (uploadedFileId) data.media = { type: mediaType, file_id: uploadedFileId };
+      return adminBroadcastsApi.createCombined(data);
+    },
+    onMutate: () => setSubmitError(null),
+    onSuccess: () => setTestSent(true),
+    onError: (error) => setSubmitError(getErrorMessage(error)),
+  });
+
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const wrapSelection = (open: string, close: string, fallback = '') => {
+    const el = textRef.current;
+    const start = el?.selectionStart ?? messageText.length;
+    const end = el?.selectionEnd ?? messageText.length;
+    const picked = messageText.slice(start, end) || fallback;
+    const next = messageText.slice(0, start) + open + picked + close + messageText.slice(end);
+    setMessageText(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(start + open.length, start + open.length + picked.length);
+    });
+  };
+
+  let sectionNo = 0;
+  const num = () => String(++sectionNo).padStart(2, '0');
+
+  const toolBtn =
+    'grid h-10 min-w-10 place-items-center rounded-[10px] border-2 border-dark-600 px-3 font-display text-[15px] uppercase text-dark-100 hover:border-dark-400';
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <AdminBackButton />
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-accent-500/20 p-2 text-accent-400">
-            <BroadcastIcon className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-dark-100">{t('admin.broadcasts.create')}</h1>
-            <p className="text-sm text-dark-400">{t('admin.broadcasts.subtitle')}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Channel toggles */}
-      <div className="card">
-        <label className="mb-3 block text-sm font-medium text-dark-300">
-          {t('admin.broadcasts.selectChannel')}
-        </label>
-        <div className="flex gap-3">
-          <button
-            onClick={handleToggleTelegram}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg border p-4 transition-all ${
-              telegramEnabled
-                ? 'border-accent-500 bg-accent-500/10 text-accent-400'
-                : 'border-dark-700 bg-dark-800 text-dark-300 hover:border-dark-600'
-            }`}
-          >
-            <TelegramIcon />
-            <span className="font-medium">{t('admin.broadcasts.enableTelegram')}</span>
-          </button>
-          <button
-            onClick={handleToggleEmail}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg border p-4 transition-all ${
-              emailEnabled
-                ? 'border-accent-500 bg-accent-500/10 text-accent-400'
-                : 'border-dark-700 bg-dark-800 text-dark-300 hover:border-dark-600'
-            }`}
-          >
-            <EmailIcon />
-            <span className="font-medium">{t('admin.broadcasts.enableEmail')}</span>
-          </button>
-        </div>
-        {!telegramEnabled && !emailEnabled && (
-          <p className="mt-2 text-sm text-error-400">{t('admin.broadcasts.atLeastOneChannel')}</p>
-        )}
-        {bothChannels && (
-          <p className="mt-2 text-sm text-accent-400">{t('admin.broadcasts.sendingBoth')}</p>
-        )}
-      </div>
-
-      {/* Broadcast category */}
-      <div className="card">
-        <label className="mb-3 block text-sm font-medium text-dark-300">
-          {t('admin.broadcasts.category', 'Категория рассылки')}
-        </label>
-        <p className="mb-3 text-xs text-dark-500">
-          {t(
-            'admin.broadcasts.categoryDesc',
-            'Пользователи могут отключить получение новостей и промо в настройках профиля. Системные рассылки доставляются всем.',
-          )}
+    <div className="flex flex-col gap-5">
+      <div>
+        <p className="text-[13px] text-dark-400">
+          <Link to="/admin/broadcasts" className="underline underline-offset-2 hover:text-dark-200">
+            {t('rv.bc.crumb')}
+          </Link>{' '}
+          / {t('rv.bc.new')}
         </p>
-        <div className="flex gap-3">
-          {(['system', 'news', 'promo'] as const).map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`flex-1 rounded-lg border p-3 text-sm font-medium transition-all ${
-                category === cat
-                  ? 'border-accent-500 bg-accent-500/10 text-accent-400'
-                  : 'border-dark-700 bg-dark-800 text-dark-300 hover:border-dark-600'
-              }`}
-            >
-              {cat === 'system' && t('admin.broadcasts.categorySystem', '⚙️ Системное')}
-              {cat === 'news' && t('admin.broadcasts.categoryNews', '📰 Новости')}
-              {cat === 'promo' && t('admin.broadcasts.categoryPromo', '🎁 Промо')}
-            </button>
-          ))}
-        </div>
+        <h1 className="rv-d mt-1 text-[44px] text-dark-100 lg:text-[56px]">{t('rv.bc.title')}</h1>
       </div>
 
-      {/* Telegram section */}
-      {telegramEnabled && (
-        <div className="card space-y-6">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-dark-100">
-              {t('admin.broadcasts.telegramSection')}
-            </h2>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-4">
+          {/* 01 · Кому */}
+          <RvSection n={num()} title={t('rv.bc.who')}>
+            <div className="flex flex-wrap gap-2.5">
+              {AUDIENCE_PRESETS.map((preset) => {
+                const count = filterCount(preset.key);
+                const on = presetKey === preset.key && !customAudience;
+                return (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    onClick={() => {
+                      setCustomAudience(false);
+                      setPrimaryAudience(presetAudience(preset.key, primaryChannel));
+                    }}
+                    className={cn(
+                      'inline-flex min-h-11 items-center gap-2 rounded-[14px] border-2 px-3.5 text-sm font-bold transition-colors',
+                      on
+                        ? 'border-accent-500 bg-accent-500 text-[#111]'
+                        : 'border-dark-600 text-dark-100 hover:border-dark-400',
+                    )}
+                  >
+                    {t(`rv.bc.preset.${preset.key}`)}
+                    {count !== null && (
+                      <span className={cn('font-medium', on ? 'text-[#111]/60' : 'text-dark-400')}>
+                        {count.toLocaleString('ru-RU')}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
             <button
               type="button"
-              onClick={() => setShowTelegramPreview(true)}
-              disabled={messageText.trim().length === 0}
-              className="rounded-lg border border-dark-700 bg-dark-800 px-3 py-1.5 text-sm text-dark-300 transition-colors hover:border-dark-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCustomAudience((v) => !v)}
+              className="link mt-4 self-start text-sm"
             >
-              {t('admin.broadcasts.preview', 'Предпросмотр')}
+              {customAudience ? t('rv.bc.hideCustom') : t('rv.bc.custom')}
             </button>
-          </div>
-
-          {/* Telegram filter selection */}
-          <BroadcastAudienceEditor
-            channel="telegram"
-            category={category}
-            audience={telegramAudience}
-            onChange={setTelegramAudience}
-            filters={
-              filtersData
-                ? [
-                    ...filtersData.filters,
-                    ...filtersData.tariff_filters,
-                    ...filtersData.custom_filters,
-                  ]
-                : []
-            }
-            isLoading={filtersLoading}
-          />
-
-          {/* Message text */}
-          <div>
-            <label className="mb-2 block text-sm font-medium text-dark-300">
-              {t('admin.broadcasts.messageText')}
-            </label>
-            <textarea
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              placeholder={t('admin.broadcasts.messageTextPlaceholder')}
-              aria-invalid={captionTooLong}
-              aria-describedby={mediaFile ? 'broadcast-caption-help' : undefined}
-              rows={6}
-              maxLength={4000}
-              className="input min-h-[150px] resize-y"
-            />
-            <div className="mt-1 text-right text-xs text-dark-400">
-              {mediaFile ? `${captionLength}/1024` : `${messageText.length}/4000`}
-            </div>
-            {mediaFile && (
-              <p
-                id="broadcast-caption-help"
-                role={captionTooLong ? 'alert' : undefined}
-                className={`mt-2 break-words text-sm ${captionTooLong ? 'text-error-400' : 'text-dark-400'}`}
-              >
-                {t(
-                  captionTooLong
-                    ? 'admin.broadcasts.captionTooLong'
-                    : 'admin.broadcasts.captionLimit',
-                )}
-              </p>
-            )}
-          </div>
-
-          {/* Media upload */}
-          <div>
-            <label className="mb-2 block text-sm font-medium text-dark-300">
-              {t('admin.broadcasts.media')}
-            </label>
-            {mediaFile ? (
-              <div className="rounded-lg border border-dark-700 bg-dark-800 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {mediaType === 'photo' && <PhotoIcon />}
-                    {mediaType === 'video' && <VideoIcon />}
-                    {mediaType === 'document' && <DocumentIcon />}
-                    <div>
-                      <p className="text-sm text-dark-100">{mediaFile.name}</p>
-                      <p className="text-xs text-dark-400">
-                        {(mediaFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleRemoveMedia}
-                    className="rounded-lg p-2 text-dark-400 hover:bg-dark-700 hover:text-error-400"
-                    disabled={isUploading}
-                  >
-                    <XIcon className="h-5 w-5" />
-                  </button>
-                </div>
-                {mediaPreview && (
-                  <img
-                    src={mediaPreview}
-                    alt={t('common.preview')}
-                    className="mt-3 max-h-48 rounded-lg object-cover"
-                  />
-                )}
-                {isUploading && (
-                  <div className="mt-2 flex items-center gap-2 text-sm text-accent-400">
-                    <RefreshIcon />
-                    {t('admin.broadcasts.uploading')}
-                  </div>
-                )}
+            {showEditor && (
+              <div className="mt-4 rounded-2xl border-2 border-dark-700 p-4">
+                <BroadcastAudienceEditor
+                  channel={primaryChannel}
+                  category={category}
+                  audience={primaryAudience}
+                  onChange={setPrimaryAudience}
+                  filters={
+                    telegramEnabled
+                      ? filtersData
+                        ? [
+                            ...filtersData.filters,
+                            ...filtersData.tariff_filters,
+                            ...filtersData.custom_filters,
+                          ]
+                        : []
+                      : [
+                          ...(emailFiltersData?.filters || []),
+                          ...(emailFiltersData?.promo_group_filters || []),
+                          ...(emailTariffsData?.tariffs.map((tariff) => ({
+                            key: tariff.filter_key,
+                            label: tariff.name,
+                            tariff_id: tariff.id,
+                            count: tariff.active_users_count,
+                          })) || []),
+                        ]
+                  }
+                  isLoading={
+                    telegramEnabled ? filtersLoading : emailFiltersLoading || emailTariffsLoading
+                  }
+                />
               </div>
-            ) : (
-              <div>
+            )}
+
+            <div className="mt-5 flex flex-wrap items-center gap-2.5 border-t-2 border-dark-700 pt-4">
+              <span className="mr-1 text-[13px] font-bold text-dark-300">
+                {t('rv.bc.channels')}
+              </span>
+              {(
+                [
+                  {
+                    on: telegramEnabled,
+                    toggle: handleToggleTelegram,
+                    icon: <TelegramIcon />,
+                    label: 'Telegram',
+                  },
+                  {
+                    on: emailEnabled,
+                    toggle: handleToggleEmail,
+                    icon: <EmailIcon />,
+                    label: 'Email',
+                  },
+                ] as const
+              ).map((ch) => (
+                <button
+                  key={ch.label}
+                  type="button"
+                  role="switch"
+                  aria-checked={ch.on}
+                  onClick={ch.toggle}
+                  className={cn(
+                    'inline-flex min-h-10 items-center gap-2 rounded-xl border-2 px-3 text-sm font-bold [&_svg]:h-4 [&_svg]:w-4',
+                    ch.on
+                      ? 'border-accent-500 bg-[var(--rv-acc-bg)] text-accent-400'
+                      : 'border-dark-600 text-dark-300',
+                  )}
+                >
+                  {ch.icon}
+                  {ch.label}
+                </button>
+              ))}
+              {!telegramEnabled && !emailEnabled && (
+                <span className="text-sm text-[var(--rv-bad)]">
+                  {t('admin.broadcasts.atLeastOneChannel')}
+                </span>
+              )}
+            </div>
+            {bothChannels && (
+              <div className="mt-4 rounded-2xl border-2 border-dark-700 p-4">
+                <p className="mb-3 text-[13px] font-bold text-dark-300">
+                  {t('rv.bc.emailAudience')}
+                </p>
+                <BroadcastAudienceEditor
+                  channel="email"
+                  category={category}
+                  audience={emailAudience}
+                  onChange={setEmailAudience}
+                  filters={[
+                    ...(emailFiltersData?.filters || []),
+                    ...(emailFiltersData?.promo_group_filters || []),
+                    ...(emailTariffsData?.tariffs.map((tariff) => ({
+                      key: tariff.filter_key,
+                      label: tariff.name,
+                      tariff_id: tariff.id,
+                      count: tariff.active_users_count,
+                    })) || []),
+                  ]}
+                  isLoading={emailFiltersLoading || emailTariffsLoading}
+                />
+              </div>
+            )}
+          </RvSection>
+
+          {/* 02 · Сообщение (Telegram) */}
+          {telegramEnabled && (
+            <RvSection n={num()} title={t('rv.bc.message')}>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={toolBtn}
+                  onClick={() => wrapSelection('<b>', '</b>')}
+                  aria-label="Bold"
+                >
+                  Ж
+                </button>
+                <button
+                  type="button"
+                  className={cn(toolBtn, 'italic')}
+                  onClick={() => wrapSelection('<i>', '</i>')}
+                  aria-label="Italic"
+                >
+                  К
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  onClick={() => wrapSelection('<a href="https://">', '</a>', t('rv.bc.linkText'))}
+                >
+                  {t('rv.bc.link')}
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {mediaFile ? t('rv.bc.changeMedia') : t('rv.bc.media')}
+                </button>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -597,274 +680,346 @@ export default function AdminBroadcastCreate() {
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-dark-600 bg-dark-800/50 p-6 text-dark-400 transition-colors hover:border-dark-500 hover:bg-dark-800 hover:text-dark-300"
-                >
-                  <PhotoIcon />
-                  <span>{t('admin.broadcasts.addMedia')}</span>
-                </button>
               </div>
-            )}
-          </div>
 
-          {/* Buttons selection */}
-          <div>
-            <label className="mb-2 block text-sm font-medium text-dark-300">
-              {t('admin.broadcasts.buttons')}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {buttonsData?.buttons.map((button) => (
-                <button
-                  key={button.key}
-                  onClick={() => toggleButton(button.key)}
-                  className={`rounded-lg px-3 py-2 text-sm transition-colors ${
-                    selectedButtons.includes(button.key)
-                      ? 'bg-accent-500 text-on-accent'
-                      : 'border border-dark-700 bg-dark-800 text-dark-300 hover:bg-dark-700'
-                  }`}
+              <textarea
+                ref={textRef}
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder={t('admin.broadcasts.messageTextPlaceholder')}
+                aria-invalid={captionTooLong}
+                aria-describedby={mediaFile ? 'broadcast-caption-help' : undefined}
+                rows={6}
+                maxLength={4000}
+                className="input mt-3 min-h-[150px] resize-y"
+              />
+              <div className="mt-1 flex justify-between gap-3 text-xs text-dark-400">
+                <span
+                  id="broadcast-caption-help"
+                  role={captionTooLong ? 'alert' : undefined}
+                  className={captionTooLong ? 'text-[var(--rv-bad)]' : undefined}
                 >
-                  {button.label}
-                </button>
-              ))}
-            </div>
-          </div>
+                  {mediaFile &&
+                    t(
+                      captionTooLong
+                        ? 'admin.broadcasts.captionTooLong'
+                        : 'admin.broadcasts.captionLimit',
+                    )}
+                </span>
+                <span className="shrink-0">
+                  {mediaFile ? `${captionLength}/1024` : `${messageText.length}/4000`}
+                </span>
+              </div>
 
-          {/* Custom buttons */}
-          <div>
-            <label className="mb-2 block text-sm font-medium text-dark-300">
-              {t('admin.broadcasts.customButtons')}
-            </label>
+              {mediaFile && (
+                <div className="mt-3 flex items-center gap-3 rounded-2xl border-2 border-dark-700 p-3">
+                  {mediaPreview ? (
+                    <img src={mediaPreview} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                  ) : (
+                    <span className="rv-ic">
+                      {mediaType === 'video' ? (
+                        <VideoIcon />
+                      ) : mediaType === 'photo' ? (
+                        <PhotoIcon />
+                      ) : (
+                        <DocumentIcon />
+                      )}
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold text-dark-100">
+                      {mediaFile.name}
+                    </span>
+                    <span className="block text-xs text-dark-400">
+                      {isUploading
+                        ? t('admin.broadcasts.uploading')
+                        : `${(mediaFile.size / 1024 / 1024).toFixed(2)} MB`}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleRemoveMedia}
+                    disabled={isUploading}
+                    className="rv-ibtn"
+                    aria-label={t('common.delete')}
+                  >
+                    <XIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
 
-            {/* Existing custom buttons */}
-            {customButtons.length > 0 && (
-              <div className="mb-3 space-y-2">
+              <p className="mb-2.5 mt-5 text-[13px] font-bold text-dark-300">
+                {t('rv.bc.buttons')}
+              </p>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                {buttonsData?.buttons.map((button) => {
+                  const on = selectedButtons.includes(button.key);
+                  return (
+                    <button
+                      key={button.key}
+                      type="button"
+                      role="checkbox"
+                      aria-checked={on}
+                      onClick={() => toggleButton(button.key)}
+                      className={cn(
+                        'flex min-h-[52px] items-center justify-between gap-2 rounded-[14px] border-2 px-4 text-left text-[15px] transition-colors',
+                        on
+                          ? 'border-accent-500 bg-[var(--rv-acc-bg)] font-bold text-dark-100'
+                          : 'border-dark-700 bg-dark-800 text-dark-300 hover:border-dark-600',
+                      )}
+                    >
+                      {button.label}
+                      {on && <span className="text-accent-400">✓</span>}
+                    </button>
+                  );
+                })}
                 {customButtons.map((btn, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between rounded-lg border border-dark-700 bg-dark-800 px-3 py-2"
+                    className="flex min-h-[52px] items-center gap-2 rounded-[14px] border-2 border-accent-500 bg-[var(--rv-acc-bg)] px-4"
                   >
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <span className="shrink-0 rounded bg-dark-700 px-1.5 py-0.5 text-xs text-dark-400">
-                        {btn.action_type === 'url'
-                          ? t('admin.broadcasts.customButtonTypeUrl')
-                          : t('admin.broadcasts.customButtonTypeCallback')}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-bold text-dark-100">
+                        {btn.label}
                       </span>
-                      <span className="truncate text-sm text-dark-100">{btn.label}</span>
-                      <span className="truncate text-xs text-dark-500">{btn.action_value}</span>
-                    </div>
+                      <span className="block truncate text-xs text-dark-400">
+                        {btn.action_value}
+                      </span>
+                    </span>
                     <button
+                      type="button"
                       onClick={() => removeCustomButton(index)}
-                      className="ml-2 shrink-0 rounded p-1 text-dark-400 hover:bg-dark-700 hover:text-error-400"
+                      className="shrink-0 text-dark-400 hover:text-[var(--rv-bad)]"
+                      aria-label={t('common.delete')}
                     >
-                      <XIcon className="h-5 w-5" />
+                      <XIcon className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
               </div>
-            )}
 
-            {/* Inline add form */}
-            {isAddingCustomButton ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  addCustomButton();
-                }}
-                className="space-y-3 rounded-lg border border-dark-600 bg-dark-800/50 p-3"
-              >
-                <input
-                  type="text"
-                  value={newButtonLabel}
-                  onChange={(e) => setNewButtonLabel(e.target.value)}
-                  placeholder={t('admin.broadcasts.customButtonLabelPlaceholder')}
-                  maxLength={64}
-                  className="input"
-                  autoFocus
-                />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setNewButtonActionType('callback')}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm transition-colors ${
-                      newButtonActionType === 'callback'
-                        ? 'bg-accent-500 text-on-accent'
-                        : 'border border-dark-700 bg-dark-800 text-dark-300 hover:bg-dark-700'
-                    }`}
-                  >
-                    {t('admin.broadcasts.customButtonTypeCallback')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewButtonActionType('url')}
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm transition-colors ${
-                      newButtonActionType === 'url'
-                        ? 'bg-accent-500 text-on-accent'
-                        : 'border border-dark-700 bg-dark-800 text-dark-300 hover:bg-dark-700'
-                    }`}
-                  >
-                    {t('admin.broadcasts.customButtonTypeUrl')}
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={newButtonActionValue}
-                  onChange={(e) => setNewButtonActionValue(e.target.value)}
-                  placeholder={
-                    newButtonActionType === 'url'
-                      ? t('admin.broadcasts.customButtonUrlPlaceholder')
-                      : t('admin.broadcasts.customButtonCallbackPlaceholder')
-                  }
-                  maxLength={newButtonActionType === 'callback' ? 64 : 256}
-                  className="input"
-                />
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={newButtonEmojiId}
-                  onChange={(e) => setNewButtonEmojiId(e.target.value)}
-                  placeholder={t('admin.broadcasts.customButtonEmojiIdPlaceholder')}
-                  maxLength={64}
-                  className="input"
-                />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingCustomButton(false);
-                      setNewButtonLabel('');
-                      setNewButtonActionValue('');
-                      setNewButtonEmojiId('');
-                    }}
-                    className="btn-secondary flex-1"
-                  >
-                    {t('common.cancel')}
-                  </button>
-                  <button type="submit" disabled={!isNewButtonValid} className="btn-primary flex-1">
-                    {t('common.add')}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <button
-                onClick={() => setIsAddingCustomButton(true)}
-                disabled={customButtons.length >= 10}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-dark-600 bg-dark-800/50 px-4 py-3 text-sm text-dark-400 transition-colors hover:border-dark-500 hover:bg-dark-800 hover:text-dark-300"
-              >
-                <span>+</span>
-                <span>{t('admin.broadcasts.addCustomButton')}</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Email section */}
-      {emailEnabled && (
-        <div className="card space-y-6">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-dark-100">
-              {t('admin.broadcasts.emailSection')}
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowEmailPreview(true)}
-              disabled={emailContent.trim().length === 0}
-              className="rounded-lg border border-dark-700 bg-dark-800 px-3 py-1.5 text-sm text-dark-300 transition-colors hover:border-dark-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {t('admin.broadcasts.preview', 'Предпросмотр')}
-            </button>
-          </div>
-
-          {/* Email filter selection */}
-          <BroadcastAudienceEditor
-            channel="email"
-            category={category}
-            audience={emailAudience}
-            onChange={setEmailAudience}
-            filters={[
-              ...(emailFiltersData?.filters || []),
-              ...(emailFiltersData?.promo_group_filters || []),
-              ...(emailTariffsData?.tariffs.map((tariff) => ({
-                key: tariff.filter_key,
-                label: tariff.name,
-                tariff_id: tariff.id,
-                count: tariff.active_users_count,
-              })) || []),
-            ]}
-            isLoading={emailFiltersLoading || emailTariffsLoading}
-          />
-
-          {/* Email subject */}
-          <div>
-            <label className="mb-2 block text-sm font-medium text-dark-300">
-              {t('admin.broadcasts.emailSubject')}
-            </label>
-            <input
-              type="text"
-              value={emailSubject}
-              onChange={(e) => setEmailSubject(e.target.value)}
-              placeholder={t('admin.broadcasts.emailSubjectPlaceholder')}
-              className="input"
-              maxLength={200}
-            />
-          </div>
-
-          {/* Email content */}
-          <div>
-            <label className="mb-2 block text-sm font-medium text-dark-300">
-              {t('admin.broadcasts.emailContent')}
-            </label>
-            <p className="mb-2 text-xs text-dark-400">{t('admin.broadcasts.emailContentHint')}</p>
-            <textarea
-              value={emailContent}
-              onChange={(e) => setEmailContent(e.target.value)}
-              placeholder={t('admin.broadcasts.emailContentPlaceholder')}
-              rows={10}
-              className="input min-h-[200px] resize-y font-mono text-sm"
-            />
-          </div>
-
-          {/* Email variables hint */}
-          <div className="rounded-lg border border-dark-700 bg-dark-800/50 p-4">
-            <p className="mb-2 text-sm font-medium text-dark-300">
-              {t('admin.broadcasts.emailVariables')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {['{{user_name}}', '{{email}}', '{{user_id}}'].map((variable) => (
-                <code
-                  key={variable}
-                  className="rounded bg-dark-700 px-2 py-1 text-xs text-accent-400"
+              {isAddingCustomButton ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    addCustomButton();
+                  }}
+                  className="mt-3 space-y-3 rounded-2xl border-2 border-dark-700 p-4"
                 >
-                  {variable}
-                </code>
+                  <input
+                    type="text"
+                    value={newButtonLabel}
+                    onChange={(e) => setNewButtonLabel(e.target.value)}
+                    placeholder={t('admin.broadcasts.customButtonLabelPlaceholder')}
+                    maxLength={64}
+                    className="input"
+                    autoFocus
+                  />
+                  <div className="rv-seg">
+                    {(['callback', 'url'] as const).map((kind) => (
+                      <button
+                        key={kind}
+                        type="button"
+                        className={newButtonActionType === kind ? 'on' : undefined}
+                        onClick={() => setNewButtonActionType(kind)}
+                      >
+                        {kind === 'url'
+                          ? t('admin.broadcasts.customButtonTypeUrl')
+                          : t('admin.broadcasts.customButtonTypeCallback')}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={newButtonActionValue}
+                    onChange={(e) => setNewButtonActionValue(e.target.value)}
+                    placeholder={
+                      newButtonActionType === 'url'
+                        ? t('admin.broadcasts.customButtonUrlPlaceholder')
+                        : t('admin.broadcasts.customButtonCallbackPlaceholder')
+                    }
+                    maxLength={newButtonActionType === 'callback' ? 64 : 256}
+                    className="input"
+                  />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={newButtonEmojiId}
+                    onChange={(e) => setNewButtonEmojiId(e.target.value)}
+                    placeholder={t('admin.broadcasts.customButtonEmojiIdPlaceholder')}
+                    maxLength={64}
+                    className="input"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingCustomButton(false);
+                        setNewButtonLabel('');
+                        setNewButtonActionValue('');
+                        setNewButtonEmojiId('');
+                      }}
+                      className="btn btn-secondary flex-1"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!isNewButtonValid}
+                      className="btn btn-primary flex-1 !shadow-none"
+                    >
+                      {t('common.add')}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingCustomButton(true)}
+                  disabled={customButtons.length >= 10}
+                  className="link mt-3 self-start text-sm"
+                >
+                  + {t('admin.broadcasts.addCustomButton')}
+                </button>
+              )}
+            </RvSection>
+          )}
+
+          {/* Письмо (Email) */}
+          {emailEnabled && (
+            <RvSection
+              n={num()}
+              title={t('rv.bc.email')}
+              action={
+                <button
+                  type="button"
+                  onClick={() => setShowEmailPreview(true)}
+                  disabled={emailContent.trim().length === 0}
+                  className="btn btn-secondary !min-h-9 !px-3 !text-sm"
+                >
+                  {t('admin.broadcasts.preview', 'Предпросмотр')}
+                </button>
+              }
+            >
+              <input
+                type="text"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder={t('admin.broadcasts.emailSubjectPlaceholder')}
+                className="input"
+                maxLength={200}
+                aria-label={t('admin.broadcasts.emailSubject')}
+              />
+              <p className="mb-2 mt-4 text-xs text-dark-400">
+                {t('admin.broadcasts.emailContentHint')}
+              </p>
+              <textarea
+                value={emailContent}
+                onChange={(e) => setEmailContent(e.target.value)}
+                placeholder={t('admin.broadcasts.emailContentPlaceholder')}
+                rows={10}
+                className="input min-h-[200px] resize-y font-mono text-sm"
+                aria-label={t('admin.broadcasts.emailContent')}
+              />
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-dark-400">
+                  {t('admin.broadcasts.emailVariables')}
+                </span>
+                {['{{user_name}}', '{{email}}', '{{user_id}}'].map((variable) => (
+                  <button
+                    key={variable}
+                    type="button"
+                    onClick={() => setEmailContent((v) => v + variable)}
+                    className="rounded-lg bg-dark-800 px-2 py-1 font-mono text-xs text-accent-400"
+                  >
+                    {variable}
+                  </button>
+                ))}
+              </div>
+            </RvSection>
+          )}
+
+          {/* Тип рассылки */}
+          <RvSection n={num()} title={t('rv.bc.kind')}>
+            <div className="rv-seg max-w-[520px]" role="tablist">
+              {(['system', 'news', 'promo'] as const).map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  role="tab"
+                  aria-selected={category === cat}
+                  className={category === cat ? 'on' : undefined}
+                  onClick={() => setCategory(cat)}
+                >
+                  {t(`rv.bc.cat.${cat}`)}
+                </button>
               ))}
             </div>
-          </div>
+            <p className="mt-3 text-[13px] leading-snug text-dark-400">{t('rv.bc.catHint')}</p>
+          </RvSection>
         </div>
-      )}
 
-      {submitError && (
-        <p role="alert" className="break-words text-sm text-error-400">
-          {submitError}
-        </p>
-      )}
+        {/* Превью + итог */}
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
+          {telegramEnabled && (
+            <div>
+              <p className="mb-2.5 text-[13px] font-bold text-dark-300">{t('rv.bc.previewTg')}</p>
+              <div className="rounded-[22px] bg-[#0e1621] p-3.5">
+                <TelegramBubble
+                  className="flex flex-col"
+                  text={messageText}
+                  mediaUrl={mediaPreview}
+                  mediaType={previewMediaTypeForModal}
+                  buttons={previewButtonRows}
+                />
+              </div>
+            </div>
+          )}
 
-      {/* Footer */}
-      <div className="card flex items-center justify-end">
-        <div className="flex gap-3">
-          <button onClick={() => navigate('/admin/broadcasts')} className="btn-secondary">
-            {t('common.cancel')}
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!isValid || isPending || isUploading || telegramSentId !== null}
-            className="btn-primary flex items-center gap-2"
-          >
-            {isPending ? <RefreshIcon /> : <BroadcastIcon className="h-6 w-6" />}
-            {t('admin.broadcasts.send')}
-          </button>
-        </div>
+          <section className="rounded-[22px] border-2 border-dark-600 bg-[#0B0B0B] p-5">
+            <p className="rv-kicker rv-kicker-acc">{t('rv.bc.total')}</p>
+            <p className="rv-num mt-3 text-[56px] text-[#F2F0E8]">
+              {audienceReady && recipients ? recipients.count.toLocaleString('ru-RU') : '—'}
+            </p>
+            <p className="mt-1 text-sm text-[#B9B8B0]">
+              {t('rv.bc.recipients', { count: recipients?.count ?? 0 })} · {t('rv.bc.sendNow')}
+              {bothChannels ? ` · ${t('rv.bc.plusEmail')}` : ''}
+            </p>
+            {submitError && (
+              <p role="alert" className="mt-3 break-words text-sm text-[var(--rv-bad)]">
+                {submitError}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!isValid || isPending || isUploading || telegramSentId !== null}
+              className="btn btn-primary mt-4 w-full !shadow-none"
+            >
+              {isPending ? <RefreshIcon /> : null}
+              {t('rv.bc.send')}
+            </button>
+            {telegramEnabled && me?.telegram_id ? (
+              <button
+                type="button"
+                onClick={() => testMutation.mutate()}
+                disabled={
+                  !messageText.trim() || testMutation.isPending || isUploading || captionTooLong
+                }
+                className="btn mt-2.5 w-full !min-h-10 border-2 border-[#F2F0E8]/80 bg-transparent !text-sm text-[#F2F0E8]"
+              >
+                {testSent ? `✓ ${t('rv.bc.testSent')}` : t('rv.bc.test')}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => navigate('/admin/broadcasts')}
+              className="mt-3 w-full text-center text-sm text-[#B9B8B0] underline-offset-2 hover:underline"
+            >
+              {t('common.cancel')}
+            </button>
+          </section>
+        </aside>
       </div>
 
       <TelegramPreview
@@ -883,4 +1038,62 @@ export default function AdminBroadcastCreate() {
       />
     </div>
   );
+}
+
+/** Пронумерованный блок формы: «01 Кому». */
+function RvSection({
+  n,
+  title,
+  action,
+  children,
+}: {
+  n: string;
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="bento-card flex flex-col !overflow-visible !p-5 lg:!p-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-3">
+          <span className="font-display text-[44px] leading-[0.8] text-transparent [-webkit-text-stroke:1.6px_rgb(var(--color-accent-500))]">
+            {n}
+          </span>
+          <span className="rv-d text-[30px] text-dark-100">{title}</span>
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+const AUDIENCE_PRESETS = [
+  { key: 'all', field: 'basic', value: 'all' },
+  { key: 'active', field: 'subscription_status', value: 'active' },
+  { key: 'expired', field: 'subscription_status', value: 'expired' },
+  { key: 'trial', field: 'subscription_type', value: 'trial' },
+  { key: 'expiring', field: 'subscription_end_preset', value: 'expiring' },
+] as const;
+
+function presetAudience(key: string, channel: 'telegram' | 'email'): BroadcastAudience {
+  const preset = AUDIENCE_PRESETS.find((p) => p.key === key) ?? AUDIENCE_PRESETS[0];
+  const value = preset.key === 'all' && channel === 'email' ? 'all_email' : preset.value;
+  return {
+    conditions: [
+      { client_id: `preset-${preset.key}`, field: preset.field, operator: 'eq', value, join: null },
+    ],
+  };
+}
+
+function activePresetKey(audience: BroadcastAudience): string | null {
+  if (audience.conditions.length !== 1) return null;
+  const [c] = audience.conditions;
+  const hit = AUDIENCE_PRESETS.find(
+    (p) =>
+      p.field === c.field &&
+      (p.value === c.value || (p.key === 'all' && c.value === 'all_email')) &&
+      c.operator === 'eq',
+  );
+  return hit?.key ?? null;
 }
