@@ -2,6 +2,8 @@ import { localizeOwnedResultMessage } from '../utils/owned-result-message';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { RvNodesView } from '../components/admin/remnawave/RvNodesView';
+import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import {
   adminRemnawaveApi,
@@ -16,7 +18,6 @@ import {
   type HealthResponse,
   type SubscriptionRequestStatsResponse,
 } from '../api/adminRemnawave';
-import { usePlatform } from '../platform/hooks/usePlatform';
 import { formatUptime } from '../utils/format';
 import { getFlagEmoji } from '../utils/subscriptionHelpers';
 import Twemoji from '@/lib/twemoji';
@@ -53,7 +54,6 @@ import {
   DownloadIcon,
   UploadIcon,
   SubscriptionIcon,
-  BackIcon,
   ChevronRightIcon,
   GeoCheckIcon,
   RadarIcon,
@@ -1434,10 +1434,10 @@ export default function AdminRemnawave() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { capabilities } = usePlatform();
 
   // State
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>('nodes');
+  const [showNodeDetails, setShowNodeDetails] = useState(false);
   const [syncResults, setSyncResults] = useState<
     Record<string, { success: boolean; message?: string } | null>
   >({});
@@ -1552,8 +1552,7 @@ export default function AdminRemnawave() {
   const { data: autoSyncStatus, isLoading: isLoadingAutoSync } = useQuery({
     queryKey: ['admin-remnawave-autosync'],
     queryFn: adminRemnawaveApi.getAutoSyncStatus,
-    enabled: activeTab === 'sync',
-    refetchInterval: 10000,
+    refetchInterval: activeTab === 'sync' ? 10000 : 60000,
   });
 
   // Mutations
@@ -1617,12 +1616,12 @@ export default function AdminRemnawave() {
   };
 
   const tabs = [
+    { id: 'nodes' as const, label: t('admin.remnawave.tabs.nodes', 'Nodes'), icon: <GlobeIcon /> },
     {
       id: 'overview' as const,
       label: t('admin.remnawave.tabs.overview', 'Overview'),
       icon: <ChartIcon />,
     },
-    { id: 'nodes' as const, label: t('admin.remnawave.tabs.nodes', 'Nodes'), icon: <GlobeIcon /> },
     {
       id: 'squads' as const,
       label: t('admin.remnawave.tabs.squads', 'Squads'),
@@ -1633,72 +1632,106 @@ export default function AdminRemnawave() {
 
   const isConfigured = status?.is_configured;
 
-  return (
-    <div className="animate-fade-in">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 basis-48 items-center gap-3">
-          {/* Show back button only on web, not in Telegram Mini App */}
-          {!capabilities.hasBackButton && (
-            <button
-              onClick={() => navigate('/admin')}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-dark-700 bg-dark-800 transition-colors hover:border-dark-600"
-            >
-              <BackIcon className="text-dark-400" />
-            </button>
-          )}
-          <div className="rounded-lg bg-accent-500/20 p-2">
-            <RemnawaveIcon className="h-6 w-6 text-accent-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-dark-100">
-              {t('admin.remnawave.title', 'Remnawave')}
-            </h1>
-            <p className="text-sm text-dark-400">
-              {t('admin.remnawave.subtitle', 'Panel management and statistics')}
-            </p>
-          </div>
-        </div>
+  const lastSync = autoSyncStatus?.last_run_finished_at;
+  const syncAgo = lastSync
+    ? Math.max(0, Math.round((Date.now() - new Date(lastSync).getTime()) / 60000))
+    : null;
 
-        {/* Connection Status Badge */}
-        <div
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${
-            isConfigured ? 'bg-success-500/20 text-success-400' : 'bg-error-500/20 text-error-400'
-          }`}
-        >
-          <span
-            className={`h-2 w-2 rounded-full ${isConfigured ? 'bg-success-400' : 'bg-error-400'}`}
-          />
-          {isConfigured
-            ? t('admin.remnawave.connected', 'Connected')
-            : t('admin.remnawave.disconnected', 'Not configured')}
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-[13px] font-medium text-dark-400">{t('rv.nd.crumb')}</p>
+          <h1 className="rv-d mt-1 text-[44px] text-dark-100 lg:text-[56px]">
+            {t('admin.remnawave.title', 'Remnawave')}
+          </h1>
+        </div>
+        <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
+          {syncAgo !== null && (
+            <span className="w-full text-sm text-dark-300 lg:w-auto">
+              {syncAgo < 1
+                ? t('rv.nd.syncedNow')
+                : syncAgo < 120
+                  ? t('rv.nd.synced', { time: t('rv.nd.minAgo', { count: syncAgo }) })
+                  : t('rv.nd.synced', {
+                      time: t('rv.nd.hAgo', { count: Math.round(syncAgo / 60) }),
+                    })}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => handleSyncAction('autoSync', adminRemnawaveApi.runAutoSync)}
+            disabled={loadingStates.autoSync || autoSyncStatus?.is_running}
+            className="btn btn-secondary flex-1 lg:flex-none"
+          >
+            {loadingStates.autoSync || autoSyncStatus?.is_running
+              ? t('rv.nd.syncing')
+              : t('rv.nd.sync')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab(activeTab === 'squads' ? 'nodes' : 'squads')}
+            className="btn btn-primary flex-1 !shadow-none lg:flex-none"
+          >
+            {activeTab === 'squads' ? t('rv.nd.nodes') : t('rv.nd.squads')}
+          </button>
         </div>
       </div>
 
-      {/* Configuration Error */}
-      {status?.configuration_error && (
-        <div className="mb-4 rounded-xl border border-error-500/30 bg-error-500/10 p-4">
-          <p className="text-sm text-error-400">{status.configuration_error}</p>
+      {(!isConfigured || status?.configuration_error) && status && (
+        <div className="rounded-2xl bg-[var(--rv-bad-bg)] p-4 text-sm text-[var(--rv-bad)]">
+          {status.configuration_error || t('admin.remnawave.disconnected', 'Not configured')}
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-dark-800/50 p-1">
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`flex min-w-[80px] flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={cn(
+              'font-bold underline-offset-4',
               activeTab === tab.id
-                ? 'bg-accent-500/20 text-accent-400'
-                : 'text-dark-400 hover:bg-dark-700/50 hover:text-dark-200'
-            }`}
+                ? 'text-dark-100 underline decoration-accent-500 decoration-2'
+                : 'text-dark-400 hover:text-dark-200',
+            )}
           >
-            {tab.icon}
-            <span className="hidden sm:inline">{tab.label}</span>
+            {tab.label}
           </button>
         ))}
       </div>
+
+      {activeTab === 'nodes' && (
+        <RvNodesView
+          nodes={nodesData?.items || []}
+          realtimeByUuid={realtimeByUuid}
+          isLoading={isLoadingNodes}
+          onAction={handleNodeAction}
+          isActionLoading={nodeActionMutation.isPending || restartAllMutation.isPending}
+        />
+      )}
+      {activeTab === 'nodes' && (
+        <button
+          type="button"
+          onClick={() => setShowNodeDetails((v) => !v)}
+          className="link self-start text-sm"
+        >
+          {showNodeDetails ? t('rv.nd.hideDetails') : t('rv.nd.details')}
+        </button>
+      )}
+      {activeTab === 'nodes' && showNodeDetails && (
+        <NodesTab
+          nodes={nodesData?.items || []}
+          providerByUuid={providerByUuid}
+          realtimeByUuid={realtimeByUuid}
+          isLoading={isLoadingNodes}
+          onRefresh={() => refetchNodes()}
+          onAction={handleNodeAction}
+          onRestartAll={handleRestartAll}
+          isActionLoading={nodeActionMutation.isPending || restartAllMutation.isPending}
+        />
+      )}
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
@@ -1711,19 +1744,6 @@ export default function AdminRemnawave() {
           subRequests={subRequests}
           isLoading={isLoadingStats}
           onRefresh={() => refetchStats()}
-        />
-      )}
-
-      {activeTab === 'nodes' && (
-        <NodesTab
-          nodes={nodesData?.items || []}
-          providerByUuid={providerByUuid}
-          realtimeByUuid={realtimeByUuid}
-          isLoading={isLoadingNodes}
-          onRefresh={() => refetchNodes()}
-          onAction={handleNodeAction}
-          onRestartAll={handleRestartAll}
-          isActionLoading={nodeActionMutation.isPending || restartAllMutation.isPending}
         />
       )}
 
