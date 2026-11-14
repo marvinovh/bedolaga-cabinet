@@ -10739,6 +10739,66 @@
       "pvLeft": "Ещё 23 дня",
       "pvConnect": "Подключить",
       "title": "Настройки"
+    },
+    "sl": {
+      "crumb": "Обзор",
+      "title": "Продажи",
+      "year": "Год",
+      "export": "Экспорт",
+      "revenue": "Выручка",
+      "vsPrev": "к прошлому периоду",
+      "payments": "Платежей",
+      "success": "{{percent}}% прошли успешно",
+      "avg": "Средний чек",
+      "renewedSelf": "Продлили сами",
+      "renewals_one": "{{count}} продление",
+      "renewals_few": "{{count}} продления",
+      "renewals_many": "{{count}} продлений",
+      "renewals_other": "{{count}} продлений",
+      "funnel": "Воронка новичков",
+      "f": {
+        "registered": "Регистрации",
+        "trial": "Взяли пробный",
+        "paid": "Оплатили",
+        "renewed": "Продлили"
+      },
+      "funnelNote": "Пробный берут {{trial}}% новичков, из пробного в оплату переходит {{paid}}%.",
+      "byTariff": "По тарифам",
+      "pcs_one": "{{count}} покупка",
+      "pcs_few": "{{count}} покупки",
+      "pcs_many": "{{count}} покупок",
+      "pcs_other": "{{count}} покупок",
+      "noSales": "За период продаж нет",
+      "paymentsTitle": "Платежи",
+      "all": "Все",
+      "failed_one": "Не оплачен · {{count}}",
+      "failed_few": "Не оплачены · {{count}}",
+      "failed_many": "Не оплачены · {{count}}",
+      "failed_other": "Не оплачены · {{count}}",
+      "col": {
+        "user": "Пользователь",
+        "what": "За что",
+        "method": "Способ",
+        "status": "Статус",
+        "when": "Когда",
+        "sum": "Сумма"
+      },
+      "paid": "Оплачен",
+      "waiting": "Ждём оплату",
+      "noPayments": "Платежей нет",
+      "details": "Подробная аналитика",
+      "hideDetails": "Скрыть подробную аналитику",
+      "m": {
+        "sbp": "СБП",
+        "yookassa": "Карта РФ",
+        "yookassa_sbp": "СБП",
+        "cryptobot": "Крипта",
+        "heleket": "Крипта",
+        "telegram_stars": "Stars",
+        "stars": "Stars",
+        "manual": "Вручную",
+        "balance": "С баланса"
+      }
     }
   }
 }

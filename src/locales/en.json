@@ -10614,6 +10614,66 @@
       "pvLeft": "23 days left",
       "pvConnect": "Connect",
       "title": "Settings"
+    },
+    "sl": {
+      "crumb": "Overview",
+      "title": "Sales",
+      "year": "Year",
+      "export": "Export",
+      "revenue": "Revenue",
+      "vsPrev": "vs previous period",
+      "payments": "Payments",
+      "success": "{{percent}}% succeeded",
+      "avg": "Average check",
+      "renewedSelf": "Renewed themselves",
+      "renewals_one": "{{count}} renewal",
+      "renewals_few": "{{count}} renewals",
+      "renewals_many": "{{count}} renewals",
+      "renewals_other": "{{count}} renewals",
+      "funnel": "Newcomer funnel",
+      "f": {
+        "registered": "Sign-ups",
+        "trial": "Took the trial",
+        "paid": "Paid",
+        "renewed": "Renewed"
+      },
+      "funnelNote": "{{trial}}% of newcomers take the trial; {{paid}}% of trials convert to paid.",
+      "byTariff": "By plan",
+      "pcs_one": "{{count}} sale",
+      "pcs_few": "{{count}} sales",
+      "pcs_many": "{{count}} sales",
+      "pcs_other": "{{count}} sales",
+      "noSales": "No sales in this period",
+      "paymentsTitle": "Payments",
+      "all": "All",
+      "failed_one": "Unpaid · {{count}}",
+      "failed_few": "Unpaid · {{count}}",
+      "failed_many": "Unpaid · {{count}}",
+      "failed_other": "Unpaid · {{count}}",
+      "col": {
+        "user": "User",
+        "what": "For",
+        "method": "Method",
+        "status": "Status",
+        "when": "When",
+        "sum": "Amount"
+      },
+      "paid": "Paid",
+      "waiting": "Awaiting payment",
+      "noPayments": "No payments",
+      "details": "Detailed analytics",
+      "hideDetails": "Hide detailed analytics",
+      "m": {
+        "sbp": "SBP",
+        "yookassa": "RU card",
+        "yookassa_sbp": "SBP",
+        "cryptobot": "Crypto",
+        "heleket": "Crypto",
+        "telegram_stars": "Stars",
+        "stars": "Stars",
+        "manual": "Manual",
+        "balance": "From balance"
+      }
     }
   }
 }
