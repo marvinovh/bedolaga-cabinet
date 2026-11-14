@@ -238,7 +238,6 @@ export function TariffPickerGrid({
         className={cn(
           'bento-card relative flex flex-col !overflow-visible !p-5 text-left transition-transform disabled:opacity-50',
           isSel ? 'rv-card-acc rv-shadow' : 'hover:border-dark-600',
-          (tariff.is_highlighted || isCurrent || owned) && 'mt-3',
         )}
       >
         {(tariff.is_highlighted || isCurrent || owned) && (
@@ -269,32 +268,37 @@ export function TariffPickerGrid({
             {tariff.description}
           </span>
         )}
-        {q ? (
-          <>
-            <span className="mt-4 flex flex-wrap items-baseline gap-2">
-              <span className="rv-num text-[52px] text-dark-100">
-                {num(q.promo.price)}
-                <span className="rv-rub">{currencySymbol}</span>
+        {/* Цена и характеристики прижаты к низу — карточки в ряду выровнены */}
+        <span className="mt-auto flex flex-col pt-4">
+          {q ? (
+            <>
+              <span className="flex flex-wrap items-baseline gap-2">
+                <span className="rv-num text-[52px] text-dark-100">
+                  {num(q.promo.price)}
+                  <span className="rv-rub">{currencySymbol}</span>
+                </span>
+                {q.promo.original && q.promo.original > q.promo.price && (
+                  <span className="text-sm text-dark-400 line-through">
+                    {money(q.promo.original)}
+                  </span>
+                )}
+                <span className="text-[15px] text-dark-300">/ {q.unit}</span>
               </span>
-              {q.promo.original && q.promo.original > q.promo.price && (
-                <span className="text-sm text-dark-400 line-through">
-                  {money(q.promo.original)}
+              {q.perMonth !== undefined && (
+                <span className="mt-1 text-[13px] text-dark-400">
+                  ≈ {money(q.perMonth)} {t('rv.pick.perMonth')}
+                  {q.saving && q.saving > 0
+                    ? ` · ${t('rv.pick.saving', { percent: q.saving })}`
+                    : ''}
                 </span>
               )}
-              <span className="text-[15px] text-dark-300">/ {q.unit}</span>
-            </span>
-            {q.perMonth !== undefined && (
-              <span className="mt-1 text-[13px] text-dark-400">
-                ≈ {money(q.perMonth)} {t('rv.pick.perMonth')}
-                {q.saving && q.saving > 0 ? ` · ${t('rv.pick.saving', { percent: q.saving })}` : ''}
-              </span>
-            )}
-          </>
-        ) : (
-          <span className="mt-4 text-sm text-dark-400">{t('rv.pick.noPeriod')}</span>
-        )}
-        <span className="mt-4 border-t-2 border-dark-700 pt-3 text-[15px] font-bold text-dark-100">
-          {specs(tariff)}
+            </>
+          ) : (
+            <span className="text-sm text-dark-400">{t('rv.pick.noPeriod')}</span>
+          )}
+          <span className="mt-4 border-t-2 border-dark-700 pt-3 text-[15px] font-bold text-dark-100">
+            {specs(tariff)}
+          </span>
         </span>
       </button>
     );
@@ -371,14 +375,20 @@ export function TariffPickerGrid({
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-5" role="radiogroup">
+      <div
+        className="mt-6 grid grid-cols-1 gap-x-3 gap-y-6 lg:grid-cols-3 lg:gap-x-5 lg:gap-y-8"
+        role="radiogroup"
+      >
         {ordered.map((tariff) => renderCard(tariff))}
       </div>
 
       {(lifetime.length > 0 || daily.length > 0) && (
         <>
           <p className="rv-kicker mt-6">{t('rv.pick.special')}</p>
-          <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-5" role="radiogroup">
+          <div
+            className="mt-6 grid grid-cols-1 gap-x-3 gap-y-6 lg:grid-cols-3 lg:gap-x-5 lg:gap-y-8"
+            role="radiogroup"
+          >
             {[...lifetime, ...daily].map((tariff) => renderCard(tariff))}
           </div>
         </>
