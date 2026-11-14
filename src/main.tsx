@@ -69,6 +69,10 @@ let telegramLanguageReady: Promise<void> = Promise.resolve();
 const HMR_KEY = '__tg_sdk_initialized';
 const alreadyInitialized = (window as unknown as Record<string, unknown>)[HMR_KEY] === true;
 
+// Нижний отступ таб-бара зависит от оболочки: в Telegram и в standalone-ярлыке
+// низ экрана — полоска «домой», в обычном Safari — его собственная панель.
+if (isTelegramEnv) document.documentElement.setAttribute('data-rv-tg', '');
+
 if (isTelegramEnv && !alreadyInitialized) {
   (window as unknown as Record<string, unknown>)[HMR_KEY] = true;
 

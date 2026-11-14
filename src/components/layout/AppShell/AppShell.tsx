@@ -122,7 +122,7 @@ export function AppShell({ children }: AppShellProps) {
     haptic.impact('light');
   };
 
-  // Пункт лаймовой шапки: активный — чёрная плашка с лаймовым текстом.
+  // Пункт лаймовой шапки: активный — наклонная чёрная плашка с лаймовым текстом.
   const renderNavLink = (
     path: string,
     label: string,
@@ -138,11 +138,15 @@ export function AppShell({ children }: AppShellProps) {
         aria-label={label}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'flex shrink-0 items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[15px] font-bold leading-none text-[#111] transition-colors duration-150',
-          active ? 'bg-[#111] text-[rgb(var(--color-accent-500))]' : 'hover:bg-[#111]/10',
+          // Вариант B: шрифт заголовков, активная — наклонная чёрная плашка
+          // с лёгкой тенью, как «пилюли» в заголовках макета.
+          'flex shrink-0 items-center gap-1.5 rounded-[8px] px-3 pb-[5px] pt-2 font-display text-[21px] uppercase leading-none tracking-[0.02em] text-[#111] transition-[transform,background-color] duration-150',
+          active
+            ? '-rotate-2 bg-[#111] text-[rgb(var(--color-accent-500))] shadow-[3px_3px_0_rgba(17,17,17,0.25)]'
+            : 'hover:-rotate-1 hover:bg-[#111]/10',
         )}
       >
-        {admin && <Icon className="h-4 w-4 shrink-0" />}
+        {admin && <Icon className="h-4 w-4 shrink-0 -translate-y-px" />}
         <span className="whitespace-nowrap">{label}</span>
       </Link>
     );

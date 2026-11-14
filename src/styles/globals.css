@@ -105,11 +105,21 @@
        низ контента), встаёт выше --mobile-nav-clearance — иначе панель это
        перекрывает. Высота панели — константа дизайна (иконка + подпись). */
     --mobile-nav-height: 72px;
-    /* На iPhone safe-area снизу ≈34px: целиком он поднимал панель высоко над
-       адресной строкой / полоской «домой». Берём inset минус 18px — панель стоит
-       в ~16px от края и не залезает на полоску; без inset — 10px. */
-    --mobile-nav-offset: max(10px, calc(env(safe-area-inset-bottom, 0px) - 18px));
+    /* В обычном браузере (Safari, Chrome) панель стоит прямо над его нижней
+       панелью/адресной строкой — safe-area там лишний и поднимал таб-бар. */
+    --mobile-nav-offset: 10px;
     --mobile-nav-clearance: calc(var(--mobile-nav-height) + var(--mobile-nav-offset) + 12px);
+  }
+
+  /* Telegram Mini App и ярлык «На экран Домой»: низ экрана — полоска «домой»,
+     её обходим, но без лишних ~18px сверху. */
+  html[data-rv-tg] {
+    --mobile-nav-offset: max(10px, calc(env(safe-area-inset-bottom, 0px) - 18px));
+  }
+  @media (display-mode: standalone) {
+    :root {
+      --mobile-nav-offset: max(10px, calc(env(safe-area-inset-bottom, 0px) - 18px));
+    }
   }
 
   /* Экраны без панели (вложенные страницы, админка): AppShell ставит

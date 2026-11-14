@@ -538,9 +538,8 @@ export default function Login() {
                       className="flex min-h-[58px] w-full items-center justify-center gap-3 rounded-[14px] border-2 border-dark-600 bg-dark-900 text-[17px] font-bold text-dark-100 transition-colors hover:border-dark-400 disabled:opacity-50"
                       title={provider.display_name}
                     >
-                      {/* Иконки всех провайдеров — в одну колонку: блок фиксированной
-                          ширины по центру, текст слева от него не «гуляет». */}
-                      <span className="flex w-[168px] min-w-0 items-center gap-3">
+                      {/* Иконка с названием — вместе ровно по центру кнопки */}
+                      <span className="flex min-w-0 items-center justify-center gap-3">
                         <span className="grid h-6 w-6 shrink-0 place-items-center">
                           {oauthLoading === provider.name ? (
                             <span className="h-5 w-5 animate-spin rounded-full border-2 border-dark-400 border-t-white" />
@@ -548,7 +547,7 @@ export default function Login() {
                             <OAuthProviderIcon provider={provider.name} className="h-6 w-6" />
                           )}
                         </span>
-                        <span className="truncate text-left">{provider.display_name}</span>
+                        <span className="truncate">{provider.display_name}</span>
                       </span>
                     </button>
                   ))}
