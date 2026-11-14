@@ -98,10 +98,14 @@ export function RvAdminOverview({
       acc: true,
     },
     {
-      k: t('rv.adm.activeSubs'),
-      n: stats.subscriptions.active.toLocaleString(uiLocale()),
-      d: `+${stats.subscriptions.purchased_week} ${t('rv.adm.perWeek')}`,
-      up: true,
+      // Только активные платные; пробные — отдельной строкой ниже.
+      k: t('rv.adm.paidSubs'),
+      n: Math.max(
+        0,
+        stats.subscriptions.paid ?? stats.subscriptions.active - stats.subscriptions.trial,
+      ).toLocaleString(uiLocale()),
+      d: t('rv.adm.plusTrials', { count: stats.subscriptions.trial }),
+      neutral: true,
     },
     {
       k: t('rv.adm.online'),

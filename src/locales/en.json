@@ -10358,7 +10358,12 @@
       "hAgo": "{{count}} h ago",
       "details": "Detailed statistics",
       "segmonth": "This month",
-      "pmonth": "this month"
+      "pmonth": "this month",
+      "paidSubs": "Paid subscriptions",
+      "plusTrials_one": "plus {{count}} trial",
+      "plusTrials_few": "plus {{count}} trials",
+      "plusTrials_many": "plus {{count}} trials",
+      "plusTrials_other": "plus {{count}} trials"
     },
     "subs": {
       "title1": "My",

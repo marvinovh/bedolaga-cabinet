@@ -10483,7 +10483,12 @@
       "hAgo": "{{count}} ч назад",
       "details": "Подробная статистика",
       "segmonth": "Этот месяц",
-      "pmonth": "этот месяц"
+      "pmonth": "этот месяц",
+      "paidSubs": "Платных подписок",
+      "plusTrials_one": "и ещё {{count}} пробная",
+      "plusTrials_few": "и ещё {{count}} пробные",
+      "plusTrials_many": "и ещё {{count}} пробных",
+      "plusTrials_other": "и ещё {{count}} пробных"
     },
     "subs": {
       "title1": "Мои",
