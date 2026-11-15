@@ -525,7 +525,7 @@ export default function Login() {
               )}
             </div>
 
-            {/* OAuth providers - compact icon row */}
+            {/* OAuth providers */}
             {oauthProviders.length > 0 && (
               <>
                 <div className="mt-6 flex flex-col gap-2.5">
@@ -538,8 +538,7 @@ export default function Login() {
                       className="flex min-h-[58px] w-full items-center justify-center gap-3 rounded-[14px] border-2 border-dark-600 bg-dark-900 text-[17px] font-bold text-dark-100 transition-colors hover:border-dark-400 disabled:opacity-50"
                       title={provider.display_name}
                     >
-                      {/* Иконка с названием — вместе ровно по центру кнопки */}
-                      <span className="flex min-w-0 items-center justify-center gap-3">
+                      <span className="flex w-36 max-w-full min-w-0 items-center gap-3 text-start">
                         <span className="grid h-6 w-6 shrink-0 place-items-center">
                           {oauthLoading === provider.name ? (
                             <span className="h-5 w-5 animate-spin rounded-full border-2 border-dark-400 border-t-white" />
