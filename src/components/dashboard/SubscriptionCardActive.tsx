@@ -150,7 +150,9 @@ export default function SubscriptionCardActive({
             {unknownTraffic ? (
               <span className="text-dark-400">—</span>
             ) : isUnlimited ? (
-              <span className="rv-num text-[28px] text-dark-100">∞</span>
+              <span className="rv-num !font-[family-name:system-ui,sans-serif] text-[28px] text-dark-100">
+                ∞
+              </span>
             ) : (
               <span className="whitespace-nowrap text-sm text-dark-400">
                 <span className="rv-num mr-1 text-[28px] text-dark-100">

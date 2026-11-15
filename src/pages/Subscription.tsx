@@ -411,13 +411,15 @@ export default function Subscription() {
                   </div>
                   <div className="mt-3 flex items-baseline gap-1.5">
                     <span className="rv-num text-[44px] text-dark-100">
-                      {unknownTraffic
-                        ? '—'
-                        : isUnlimited
-                          ? '∞'
-                          : leftGb >= 10
-                            ? Math.floor(leftGb)
-                            : formatTraffic(leftGb).split(/\s/)[0]}
+                      {unknownTraffic ? (
+                        '—'
+                      ) : isUnlimited ? (
+                        <span className="font-[family-name:system-ui,sans-serif]">∞</span>
+                      ) : leftGb >= 10 ? (
+                        Math.floor(leftGb)
+                      ) : (
+                        formatTraffic(leftGb).split(/\s/)[0]
+                      )}
                     </span>
                     {!unknownTraffic && !isUnlimited && (
                       <span className="text-sm text-dark-400">{t('rv.subp.gb')}</span>
