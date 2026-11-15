@@ -125,9 +125,8 @@ export function RvAdminOverview({
         style: 'currency',
         currency: 'RUB',
         minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 0,
       }).format(stats.financial.income_month_rubles),
-      compact: true,
       d: '',
       up: true,
     },
@@ -177,7 +176,7 @@ export function RvAdminOverview({
             className={cn('rv-kpi', x.acc && 'acc', i === 0 && 'col-span-2 md:col-span-1')}
           >
             <p className="k">{x.k}</p>
-            <p className={cn('n', x.compact && 'break-words !text-[30px]')}>{x.n}</p>
+            <p className="n">{x.n}</p>
             {x.d && (
               <p
                 className={cn(
