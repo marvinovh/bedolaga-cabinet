@@ -68,7 +68,7 @@ export function AppShell({ children }: AppShellProps) {
   useBranding();
   const { referralEnabled, wheelEnabled, hasContests, hasPolls, giftEnabled } = useFeatureFlags();
   const { lite } = useLiteMode();
-  useScrollRestoration();
+  useScrollRestoration(isMobile);
   // Анимированный фон рендерит BackgroundHost в App (не перемонтируется при
   // смене роута) — здесь только регистрируем, что на этом роуте он нужен.
   useBackgroundConsumer();

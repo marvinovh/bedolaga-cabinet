@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useLocation } from 'react-router';
 
 /**
- * Saves and restores scroll position for admin pages.
+ * Resets scroll on mobile navigation and restores it for desktop admin pages.
  * Disables browser's automatic scroll restoration.
  */
-export function useScrollRestoration() {
+export function useScrollRestoration(isMobileApp: boolean) {
   const location = useLocation();
   const scrollPositions = useRef<Record<string, number>>({});
 
@@ -16,9 +16,13 @@ export function useScrollRestoration() {
     }
   }, []);
 
-  // Save/restore scroll for admin pages
-  useEffect(() => {
+  useLayoutEffect(() => {
     const currentPath = location.pathname;
+
+    if (isMobileApp || window.innerWidth < 1024) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      return;
+    }
 
     if (!currentPath.startsWith('/admin')) return;
 
@@ -36,5 +40,5 @@ export function useScrollRestoration() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [location.pathname]);
+  }, [isMobileApp, location.pathname]);
 }
