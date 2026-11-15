@@ -11,6 +11,10 @@ interface BrandProps {
   /** Чёрный квадрат под лого (для лаймовой шапки) */
   onAccent?: boolean;
   onClick?: () => void;
+  /** Классы названия (кегль) — в шапке как на лендинге. */
+  nameClassName?: string;
+  /** Скругление квадрата лого, px */
+  radius?: number;
 }
 
 /** Куда ведёт логотип: сайт сервиса (можно переопределить VITE_BRAND_HOME_URL). */
@@ -18,7 +22,14 @@ const BRAND_HOME_URL =
   (import.meta.env.VITE_BRAND_HOME_URL as string | undefined) || 'https://richvpn.fun';
 
 /** Лого + название, как в шапке макета («richvpn»). Клик ведёт на сайт сервиса. */
-export function Brand({ className, size = 36, onAccent = false, onClick }: BrandProps) {
+export function Brand({
+  className,
+  size = 36,
+  onAccent = false,
+  onClick,
+  nameClassName,
+  radius,
+}: BrandProps) {
   const { appName, logoLetter, hasCustomLogo, logoUrl } = useBranding();
   const [loaded, setLoaded] = useState(() => isLogoPreloaded());
   const name = (appName || '').trim();
@@ -41,7 +52,7 @@ export function Brand({ className, size = 36, onAccent = false, onClick }: Brand
               ? 'bg-[#111] text-[rgb(var(--color-accent-500))]'
               : 'bg-accent-500 text-[#111]',
         )}
-        style={{ width: size, height: size, borderRadius: Math.round(size * 0.28) }}
+        style={{ width: size, height: size, borderRadius: radius ?? Math.round(size * 0.28) }}
       >
         <span
           className={cn(
@@ -68,6 +79,7 @@ export function Brand({ className, size = 36, onAccent = false, onClick }: Brand
           className={cn(
             'truncate text-[22px] font-bold lowercase leading-none tracking-[-0.01em]',
             onAccent ? 'text-[#111]' : 'text-dark-50',
+            nameClassName,
           )}
         >
           {name.replace(/\s+/g, '').toLowerCase()}

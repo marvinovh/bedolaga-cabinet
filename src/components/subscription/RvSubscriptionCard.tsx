@@ -127,8 +127,13 @@ export function RvSubscriptionCard({
 
   return (
     <article
+      // Вся карточка ведёт в подписку; кнопки и тумблер внутри — свои действия.
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('a,button,[role="switch"],input')) return;
+        navigate(`/subscriptions/${sub.id}`);
+      }}
       className={cn(
-        'flex flex-col gap-3.5 rounded-[22px] border-2 bg-dark-900 p-5',
+        'flex cursor-pointer flex-col gap-3.5 rounded-[22px] border-2 bg-dark-900 p-5',
         st === 'limited' && 'border-[var(--rv-bad)]',
         st === 'warn' && 'border-[var(--rv-warn)]',
         st === 'ok' && 'border-dark-700',

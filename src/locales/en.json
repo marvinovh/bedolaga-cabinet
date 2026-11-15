@@ -10793,6 +10793,7 @@
       },
       "created": "Promo code {{code}} created",
       "more": "More options — plan, promo group, traffic"
-    }
+    },
+    "menu": "Menu"
   }
 }

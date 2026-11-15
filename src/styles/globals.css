@@ -107,7 +107,7 @@
     --mobile-nav-height: 72px;
     /* В обычном браузере (Safari, Chrome) панель стоит прямо над его нижней
        панелью/адресной строкой — safe-area там лишний и поднимал таб-бар. */
-    --mobile-nav-offset: 10px;
+    --mobile-nav-offset: 4px;
     --mobile-nav-clearance: calc(var(--mobile-nav-height) + var(--mobile-nav-offset) + 12px);
   }
 
@@ -1911,6 +1911,9 @@ input[type="checkbox"]:hover:not(:checked) {
   src: url("/fonts/BebasNeue-Regular.woff2") format("woff2");
   font-weight: 400;
   font-display: swap;
+  /* В Bebas Neue на месте «∞» (U+221E) нарисован логотип Dharma Type —
+     этот символ берём из следующего шрифта в списке. */
+  unicode-range: U+0000-221D, U+221F-10FFFF;
 }
 @font-face {
   font-family: "Vela Sans";

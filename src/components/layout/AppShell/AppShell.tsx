@@ -138,16 +138,22 @@ export function AppShell({ children }: AppShellProps) {
         aria-label={label}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          // Вариант B: шрифт заголовков, активная — наклонная чёрная плашка
-          // с лёгкой тенью, как «пилюли» в заголовках макета.
-          'flex shrink-0 items-center gap-1.5 rounded-[8px] px-3 pb-[5px] pt-2 font-display text-[21px] uppercase leading-none tracking-[0.02em] text-[#111] transition-[transform,background-color] duration-150',
+          // Как на лендинге: обычный шрифт 15px, подчёркивание при наведении;
+          // выбранная вкладка — чёрная наклонная заливка с лаймовым текстом.
+          'group/nav relative flex shrink-0 items-center gap-1.5 text-[15px] font-medium leading-none text-[#111]',
           active
-            ? '-rotate-2 bg-[#111] text-[rgb(var(--color-accent-500))] shadow-[3px_3px_0_rgba(17,17,17,0.25)]'
-            : 'hover:-rotate-1 hover:bg-[#111]/10',
+            ? '-rotate-[1.6deg] rounded-[10px] bg-[#111] px-3 py-2 text-[rgb(var(--color-accent-500))]'
+            : 'py-1',
         )}
       >
-        {admin && <Icon className="h-4 w-4 shrink-0 -translate-y-px" />}
+        {admin && <Icon className="h-4 w-4 shrink-0" />}
         <span className="whitespace-nowrap">{label}</span>
+        {!active && (
+          <span
+            aria-hidden="true"
+            className="absolute bottom-0 left-0 right-full h-0.5 bg-[#111] transition-[right] duration-200 group-hover/nav:right-0"
+          />
+        )}
       </Link>
     );
   };
@@ -185,14 +191,21 @@ export function AppShell({ children }: AppShellProps) {
       )}
       <header
         className={cn(
-          'fixed left-0 top-0 z-50 hidden w-screen bg-accent-500 text-[#111]',
+          'fixed left-0 top-0 z-50 hidden w-screen border-b-2 border-[#111] bg-accent-500 text-[#111]',
           !isAdminRoute && 'lg:block',
         )}
       >
         <div className="mx-auto flex h-[68px] max-w-[1184px] items-center gap-4 px-6">
-          <Brand size={36} onAccent onClick={handleNavClick} />
+          <Brand
+            size={38}
+            radius={10}
+            onAccent
+            onClick={handleNavClick}
+            className="gap-[9px]"
+            nameClassName="text-[27px]"
+          />
 
-          <nav className="mx-auto flex min-w-0 items-center gap-1 overflow-x-auto scrollbar-hide">
+          <nav className="mx-auto flex min-w-0 items-center gap-7 overflow-x-auto px-2 py-2 scrollbar-hide">
             {desktopNav
               .filter((item) => !DESKTOP_MORE.includes(item.path))
               .map((item) => renderNavLink(item.path, item.label, item.icon))}

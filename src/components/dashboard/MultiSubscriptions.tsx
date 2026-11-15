@@ -165,8 +165,13 @@ export function MultiSubscriptions({
         return (
           <article
             key={sub.id}
+            // Вся карточка ведёт в подписку; кнопки внутри — свои действия.
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest('a,button,[role="switch"],input')) return;
+              navigate(`/subscriptions/${sub.id}`);
+            }}
             className={cn(
-              'flex flex-col gap-3.5 rounded-[22px] border-2 bg-dark-900 px-4 pb-3.5 pt-4',
+              'flex cursor-pointer flex-col gap-3.5 rounded-[22px] border-2 bg-dark-900 px-4 pb-3.5 pt-4',
               st === 'warn' && 'border-[var(--rv-warn)]',
               st === 'ok' && 'border-dark-700',
               st === 'off' && 'border-dashed border-dark-600 !bg-transparent',
