@@ -120,8 +120,14 @@ export function RvAdminOverview({
       up: true,
     },
     {
-      k: t('rv.adm.trialToPaid'),
-      n: `${Math.round(stats.subscriptions.trial_to_paid_conversion)}%`,
+      k: t('rv.adm.revenue', { period: t('rv.adm.pmonth') }),
+      n: new Intl.NumberFormat(uiLocale(), {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(stats.financial.income_month_rubles),
+      compact: true,
       d: '',
       up: true,
     },
@@ -171,7 +177,7 @@ export function RvAdminOverview({
             className={cn('rv-kpi', x.acc && 'acc', i === 0 && 'col-span-2 md:col-span-1')}
           >
             <p className="k">{x.k}</p>
-            <p className="n">{x.n}</p>
+            <p className={cn('n', x.compact && 'break-words !text-[30px]')}>{x.n}</p>
             {x.d && (
               <p
                 className={cn(
