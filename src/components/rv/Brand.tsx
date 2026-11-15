@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 
 import { cn } from '@/lib/utils';
 import { isLogoPreloaded } from '@/api/branding';
@@ -11,6 +12,7 @@ interface BrandProps {
   /** Чёрный квадрат под лого (для лаймовой шапки) */
   onAccent?: boolean;
   onClick?: () => void;
+  to?: string;
   /** Классы названия (кегль) — в шапке как на лендинге. */
   nameClassName?: string;
   /** Скругление квадрата лого, px */
@@ -21,12 +23,13 @@ interface BrandProps {
 const BRAND_HOME_URL =
   (import.meta.env.VITE_BRAND_HOME_URL as string | undefined) || 'https://richvpn.fun';
 
-/** Лого + название, как в шапке макета («richvpn»). Клик ведёт на сайт сервиса. */
+/** Лого + название, с внутренней ссылкой для мобильной навигации. */
 export function Brand({
   className,
   size = 36,
   onAccent = false,
   onClick,
+  to,
   nameClassName,
   radius,
 }: BrandProps) {
@@ -34,13 +37,14 @@ export function Brand({
   const [loaded, setLoaded] = useState(() => isLogoPreloaded());
   const name = (appName || '').trim();
 
-  return (
-    <a
-      href={BRAND_HOME_URL}
-      onClick={onClick}
-      aria-label={name || 'Home'}
-      className={cn('flex min-w-0 shrink-0 items-center gap-2.5', className)}
-    >
+  const linkProps = {
+    onClick,
+    'aria-label': name || 'Home',
+    className: cn('flex min-w-0 shrink-0 items-center gap-2.5', className),
+  };
+
+  const content = (
+    <>
       <span
         className={cn(
           'relative grid shrink-0 place-items-center overflow-hidden',
@@ -85,6 +89,16 @@ export function Brand({
           {name.replace(/\s+/g, '').toLowerCase()}
         </span>
       )}
+    </>
+  );
+
+  return to ? (
+    <Link to={to} {...linkProps}>
+      {content}
+    </Link>
+  ) : (
+    <a href={BRAND_HOME_URL} {...linkProps}>
+      {content}
     </a>
   );
 }

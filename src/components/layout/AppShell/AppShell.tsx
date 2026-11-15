@@ -291,7 +291,6 @@ export function AppShell({ children }: AppShellProps) {
         contentSafeAreaInset={contentSafeAreaInset}
         telegramPlatform={platform}
         wheelEnabled={wheelEnabled}
-        referralEnabled={referralEnabled}
         hasContests={hasContests}
         hasPolls={hasPolls}
         giftEnabled={giftEnabled}

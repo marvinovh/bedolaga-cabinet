@@ -61,7 +61,11 @@ export function AdminSidebar({
       }}
     >
       <div className="flex items-center justify-between gap-2 px-1.5">
-        <Brand size={34} className="[&>span:last-child]:!text-[#F2F0E8]" />
+        <Brand
+          to={drawer ? '/' : undefined}
+          size={34}
+          className="[&>span:last-child]:!text-[#F2F0E8]"
+        />
         <div className="flex items-center gap-2">
           <span className="rv-badge rv-badge-lime !rotate-0">{t('rv.admin.badge')}</span>
           {drawer && (

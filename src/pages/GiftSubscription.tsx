@@ -98,11 +98,11 @@ type TabId = 'buy' | 'activate' | 'myGifts';
 
 function LoadingSkeleton() {
   return (
-    <div className="flex min-h-dvh items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-dark-600 border-t-accent-500" />
-      </div>
-    </div>
+    <SkeletonGroup className="mx-auto w-full max-w-[1024px] space-y-4">
+      <Skeleton variant="card" className="h-36 sm:h-48" />
+      <Skeleton variant="card" className="h-12" />
+      <Skeleton variant="card" count={2} className="h-24" />
+    </SkeletonGroup>
   );
 }
 
@@ -162,12 +162,12 @@ function TariffCard({
       aria-checked={isSelected}
       onClick={onSelect}
       className={cn(
-        'block w-full rounded-2xl p-4 text-start transition-all duration-200',
+        'block h-full w-full rounded-[22px] border-2 p-4 text-start transition-colors',
         tariff.is_highlighted
-          ? cn(bestValueFrame(isSelected), isSelected ? 'bg-accent-500/5' : 'bg-dark-900/50')
+          ? cn(bestValueFrame(isSelected), isSelected ? 'bg-[var(--rv-acc-bg)]' : 'bg-dark-900')
           : isSelected
-            ? 'border border-accent-500/50 bg-accent-500/5'
-            : 'border border-dark-800/50 bg-dark-900/50 hover:border-dark-700/50',
+            ? 'border-accent-500 bg-[var(--rv-acc-bg)]'
+            : 'border-dark-700 bg-dark-900 hover:border-dark-600',
       )}
     >
       {/* Отметка оператора первой строкой, как в покупке и продлении: этот тариф
@@ -177,7 +177,7 @@ function TariffCard({
         {/* Gift circle icon */}
         <div
           className={cn(
-            'flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-colors',
+            'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors',
             isSelected ? 'bg-accent-500/20' : 'bg-dark-800/50',
           )}
         >
@@ -191,7 +191,7 @@ function TariffCard({
 
         {/* Info */}
         <div className="min-w-0 flex-1">
-          <p className="text-base font-bold text-dark-50">{tariff.name}</p>
+          <p className="rv-d break-words text-[28px] leading-none text-dark-50">{tariff.name}</p>
           <p
             className={cn(
               'text-xs font-medium uppercase tracking-wider transition-colors',
@@ -213,7 +213,7 @@ function TariffCard({
             isSelected ? 'border-accent-500 bg-accent-500' : 'border-dark-600',
           )}
         >
-          {isSelected && <CheckIcon className="h-3.5 w-3.5 text-white" />}
+          {isSelected && <CheckIcon className="h-3.5 w-3.5 text-on-accent" />}
         </div>
       </div>
     </button>
@@ -238,24 +238,22 @@ function PeriodCard({
       type="button"
       onClick={onSelect}
       aria-pressed={isSelected}
-      // Выбор — подсветкой и голубой рамкой, как в покупке и продлении. Сплошная
-      // голубая заливка выбранного съедала золотую плашку «Выгодно».
       className={cn(
-        'block w-full rounded-2xl p-4 text-start transition-all duration-200',
+        'block h-full w-full rounded-[22px] border-2 p-4 text-start transition-colors',
         period.is_highlighted
-          ? cn(bestValueFrame(isSelected), isSelected ? 'bg-accent-500/10' : 'bg-dark-800/50')
+          ? cn(bestValueFrame(isSelected), isSelected ? 'bg-[var(--rv-acc-bg)]' : 'bg-dark-900')
           : isSelected
-            ? 'border border-accent-500 bg-accent-500/10'
-            : 'border border-transparent bg-dark-800/50 hover:bg-dark-700/50',
+            ? 'border-accent-500 bg-[var(--rv-acc-bg)]'
+            : 'border-dark-700 bg-dark-900 hover:border-dark-600',
       )}
     >
       {/* Отметка оператора первой строкой: этот период выбран сразу — подпись
           объясняет почему. */}
       {period.is_highlighted && <BestValueBadge className="mb-2" />}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Left: period + discount */}
         <div className="flex min-w-0 flex-col items-start gap-1">
-          <span className="text-lg font-bold text-dark-50">
+          <span className="rv-d text-[25px] leading-none text-dark-50">
             {formatPeriodLabel(period.days, t)}
           </span>
           {hasDiscount && period.discount_percent != null && (
@@ -267,7 +265,7 @@ function PeriodCard({
 
         {/* Right: prices */}
         <div className="flex shrink-0 flex-col items-end gap-0.5">
-          <span className="whitespace-nowrap text-lg font-bold text-accent-400">
+          <span className="rv-num whitespace-nowrap text-[28px] text-dark-50">
             {formatPrice(period.price_kopeks)}
           </span>
           {hasDiscount && period.original_price_kopeks != null && (
@@ -293,21 +291,12 @@ function PaymentModeToggle({
   const { t } = useTranslation();
 
   return (
-    <div
-      role="group"
-      aria-label={t('gift.paymentMode')}
-      className="flex rounded-xl bg-dark-800/50 p-1"
-    >
+    <div role="group" aria-label={t('gift.paymentMode')} className="rv-seg">
       <button
         type="button"
         onClick={() => onToggle('balance')}
         aria-pressed={mode === 'balance'}
-        className={cn(
-          'flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200',
-          mode === 'balance'
-            ? 'bg-dark-700 text-dark-50 shadow-sm'
-            : 'text-dark-400 hover:text-dark-200',
-        )}
+        className={cn('min-w-0 [overflow-wrap:anywhere]', mode === 'balance' && 'on')}
       >
         {balanceLabel}
       </button>
@@ -315,12 +304,7 @@ function PaymentModeToggle({
         type="button"
         onClick={() => onToggle('gateway')}
         aria-pressed={mode === 'gateway'}
-        className={cn(
-          'flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200',
-          mode === 'gateway'
-            ? 'bg-dark-700 text-dark-50 shadow-sm'
-            : 'text-dark-400 hover:text-dark-200',
-        )}
+        className={cn('min-w-0 [overflow-wrap:anywhere]', mode === 'gateway' && 'on')}
       >
         {t('gift.viaGateway')}
       </button>
@@ -346,10 +330,10 @@ function PaymentMethodCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border transition-all duration-200',
+        'rounded-2xl border-2 transition-colors',
         isSelected
-          ? 'border-accent-500/50 bg-accent-500/5'
-          : 'border-dark-800/50 bg-dark-900/50 hover:border-dark-700/50',
+          ? 'border-accent-500 bg-[var(--rv-acc-bg)]'
+          : 'border-dark-700 bg-dark-900 hover:border-dark-600',
       )}
     >
       <button
@@ -571,10 +555,12 @@ function BuyTabContent({
       {/* Tariff selection */}
       {showTariffCards && (
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-400">
-            {t('gift.selectTariff')}
-          </h2>
-          <div role="radiogroup" aria-label={t('gift.chooseTariff')} className="space-y-2">
+          <h2 className="rv-kicker mb-3">{t('gift.selectTariff')}</h2>
+          <div
+            role="radiogroup"
+            aria-label={t('gift.chooseTariff')}
+            className="grid gap-2.5 sm:grid-cols-2"
+          >
             {config.tariffs.map((tariff) => (
               <TariffCard
                 key={tariff.id}
@@ -589,7 +575,7 @@ function BuyTabContent({
 
       {/* Selected tariff description */}
       {selectedTariff?.description && (
-        <div className="rounded-xl border border-dark-800/30 bg-dark-800/20 px-4 py-3">
+        <div className="bento-card rv-card-dash !px-4 !py-3">
           <p className="text-sm text-dark-300">{selectedTariff.description}</p>
         </div>
       )}
@@ -626,10 +612,8 @@ function BuyTabContent({
       {/* Period selection */}
       {periodsForDisplay.length > 0 && (
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-400">
-            {t('gift.selectPeriod')}
-          </h2>
-          <div className="space-y-2">
+          <h2 className="rv-kicker mb-3">{t('gift.selectPeriod')}</h2>
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {periodsForDisplay.map((period) => (
               <PeriodCard
                 key={period.days}
@@ -644,9 +628,7 @@ function BuyTabContent({
 
       {/* Payment mode toggle */}
       <div>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-400">
-          {t('gift.paymentMode')}
-        </h2>
+        <h2 className="rv-kicker mb-3">{t('gift.paymentMode')}</h2>
         <PaymentModeToggle
           mode={paymentMode}
           onToggle={setPaymentMode}
@@ -689,7 +671,7 @@ function BuyTabContent({
 
       {/* Summary / Balance info */}
       {paymentMode === 'balance' && (
-        <div className="rounded-2xl border border-dark-800/50 bg-dark-900/50 p-4">
+        <div className="bento-card !p-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-dark-400">{t('gift.yourBalance')}</span>
             <span className="text-sm font-semibold text-dark-200">
@@ -740,12 +722,8 @@ function BuyTabContent({
         type="button"
         onClick={handleSubmit}
         disabled={!canSubmit || purchaseMutation.isPending}
-        className={cn(
-          'flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold transition-all duration-200',
-          canSubmit && !purchaseMutation.isPending
-            ? 'bg-accent-500 text-on-accent shadow-lg shadow-accent-500/25 hover:bg-accent-400 hover:shadow-accent-500/40 active:scale-[0.98]'
-            : 'cursor-not-allowed bg-dark-800 text-dark-500',
-        )}
+        className="btn btn-primary rv-btn-lg w-full"
+        aria-busy={purchaseMutation.isPending}
       >
         {purchaseMutation.isPending ? (
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -873,11 +851,11 @@ function ActivateTabContent({ initialCode }: { initialCode?: string | null }) {
   if (activateMutation.isSuccess && activateMutation.data) {
     const result = activateMutation.data;
     return (
-      <div className="flex flex-col items-center gap-4 py-12 text-center">
+      <div className="bento-card rv-card-acc rv-topo flex flex-col items-center gap-4 !py-12 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-500/20">
           <CheckCircleIcon className="h-8 w-8 text-accent-400" />
         </div>
-        <h2 className="text-xl font-bold text-dark-50">{t('gift.activateSuccess')}</h2>
+        <h2 className="rv-d text-[40px] leading-none">{t('gift.activateSuccess')}</h2>
         <p className="text-sm text-dark-300">
           {t('gift.activateSuccessDesc', {
             tariff: result.tariff_name ?? '',
@@ -889,13 +867,13 @@ function ActivateTabContent({ initialCode }: { initialCode?: string | null }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 py-8">
+    <div className="bento-card mx-auto flex w-full max-w-xl flex-col items-center gap-6 !py-8">
       {/* Icon + title */}
       <div className="flex flex-col items-center gap-3 text-center [overflow-wrap:anywhere]">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-500/20">
           <KeyIcon className="h-8 w-8 text-accent-400" />
         </div>
-        <h2 className="text-xl font-bold text-dark-50">{t('gift.activateTitle')}</h2>
+        <h2 className="rv-d text-[40px] leading-none text-dark-50">{t('gift.activateTitle')}</h2>
         <p className="max-w-xs text-sm text-dark-400">{t('gift.activateDescription')}</p>
       </div>
 
@@ -909,7 +887,7 @@ function ActivateTabContent({ initialCode }: { initialCode?: string | null }) {
             setActivateError(null);
           }}
           placeholder={t('gift.activateCodePlaceholder')}
-          className="w-full rounded-2xl border border-dark-700/50 bg-dark-800/50 px-6 py-4 text-center font-mono text-sm text-dark-50 placeholder-dark-500 outline-none transition-colors focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/25"
+          className="input w-full text-center font-mono"
           aria-label={t('gift.activateTitle')}
         />
 
@@ -919,7 +897,7 @@ function ActivateTabContent({ initialCode }: { initialCode?: string | null }) {
           type="button"
           onClick={handleScan}
           disabled={scanning}
-          className="mt-3 w-full rounded-2xl border border-dark-700/50 px-6 py-3 text-sm font-medium text-dark-200 transition-colors hover:bg-dark-800/50 disabled:opacity-50"
+          className="btn btn-secondary mt-3 w-full"
         >
           {scanning ? t('gift.scanInProgress') : t('gift.scanButton')}
         </button>
@@ -959,12 +937,8 @@ function ActivateTabContent({ initialCode }: { initialCode?: string | null }) {
         type="button"
         onClick={handleActivate}
         disabled={!code.trim() || activateMutation.isPending}
-        className={cn(
-          'w-full max-w-sm rounded-2xl px-6 py-4 text-base font-semibold transition-all duration-200',
-          code.trim() && !activateMutation.isPending
-            ? 'bg-accent-500 text-on-accent shadow-lg shadow-accent-500/25 hover:bg-accent-400 active:scale-[0.98]'
-            : 'cursor-not-allowed bg-dark-800 text-dark-500',
-        )}
+        className="btn btn-primary rv-btn-lg w-full max-w-sm"
+        aria-busy={activateMutation.isPending}
       >
         {activateMutation.isPending ? (
           <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -1052,10 +1026,12 @@ function SentGiftCard({ gift }: { gift: SentGift }) {
   const handleDismissToast = useCallback(() => setShowToast(false), []);
 
   return (
-    <div className="rounded-2xl border border-dark-800/50 bg-dark-900/50 p-4">
+    <div className="bento-card !p-4">
       {/* Header: tariff name + status badge */}
       <div className="mb-3 flex items-start justify-between">
-        <h3 className="text-base font-bold text-dark-50">{gift.tariff_name ?? t('gift.tariff')}</h3>
+        <h3 className="rv-d break-words text-[26px] leading-none text-dark-50">
+          {gift.tariff_name ?? t('gift.tariff')}
+        </h3>
         <span
           className={cn(
             'rounded-lg px-2.5 py-1 text-xs font-bold',
@@ -1090,11 +1066,7 @@ function SentGiftCard({ gift }: { gift: SentGift }) {
           </div>
 
           {/* Share button — copies message and shows toast */}
-          <button
-            type="button"
-            onClick={handleShare}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-500 px-4 py-3 text-sm font-bold uppercase tracking-wider text-on-accent transition-colors hover:bg-accent-400 active:scale-[0.98]"
-          >
+          <button type="button" onClick={handleShare} className="btn btn-primary w-full">
             <ExportIcon className="h-4 w-4" />
             {t('gift.shareGift')}
           </button>
@@ -1133,10 +1105,12 @@ function ReceivedGiftCard({ gift }: { gift: ReceivedGift }) {
   const statusText = t(statusKey);
 
   return (
-    <div className="rounded-2xl border border-dark-800/50 bg-dark-900/50 p-4">
+    <div className="bento-card !p-4">
       {/* Header */}
       <div className="mb-3 flex items-start justify-between">
-        <h3 className="text-base font-bold text-dark-50">{gift.tariff_name ?? t('gift.tariff')}</h3>
+        <h3 className="rv-d break-words text-[26px] leading-none text-dark-50">
+          {gift.tariff_name ?? t('gift.tariff')}
+        </h3>
         <span className="rounded-lg bg-dark-700 px-2.5 py-1 text-xs font-bold text-dark-400">
           {statusText}
         </span>
@@ -1226,7 +1200,7 @@ function MyGiftsTabContent() {
 
   if (isEmpty) {
     return (
-      <div className="flex flex-col items-center gap-4 py-12 text-center">
+      <div className="bento-card rv-card-dash flex flex-col items-center gap-4 !py-12 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-dark-800/50">
           <InboxIcon className="h-8 w-8 text-dark-400" />
         </div>
@@ -1241,9 +1215,7 @@ function MyGiftsTabContent() {
       {/* Active gifts (awaiting activation) */}
       {hasActive && (
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-400">
-            {t('gift.activeGiftsTitle')}
-          </h2>
+          <h2 className="rv-kicker mb-3">{t('gift.activeGiftsTitle')}</h2>
           <div className="space-y-3">
             {activeGifts.map((gift) => (
               <SentGiftCard key={gift.token} gift={gift} />
@@ -1255,9 +1227,7 @@ function MyGiftsTabContent() {
       {/* Activated gifts */}
       {hasActivated && (
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-400">
-            {t('gift.activatedGiftsTitle')}
-          </h2>
+          <h2 className="rv-kicker mb-3">{t('gift.activatedGiftsTitle')}</h2>
           <div className="space-y-3">
             {activatedGifts.map((gift) => (
               <SentGiftCard key={gift.token} gift={gift} />
@@ -1269,9 +1239,7 @@ function MyGiftsTabContent() {
       {/* Received gifts */}
       {hasReceived && (
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-400">
-            {t('gift.receivedGiftsTitle')}
-          </h2>
+          <h2 className="rv-kicker mb-3">{t('gift.receivedGiftsTitle')}</h2>
           <div className="space-y-3">
             {receivedGifts!.map((gift) => (
               <ReceivedGiftCard key={gift.token} gift={gift} />
@@ -1339,74 +1307,59 @@ export default function GiftSubscription() {
   ];
 
   return (
-    <div className="min-h-dvh">
-      <div className="mx-auto max-w-2xl px-4 py-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-6 flex items-center gap-3"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-500/20">
-            <GiftIcon className="h-5 w-5 text-accent-400" />
-          </div>
-          <h1 className="text-2xl font-bold text-dark-50">{t('gift.pageTitle')}</h1>
-        </motion.div>
+    <div className="mx-auto w-full max-w-[1024px] space-y-4 pb-6 sm:space-y-6">
+      <header className="bento-card rv-card-acc rv-topo flex items-center justify-between gap-4 !p-5 sm:!p-8">
+        <div className="min-w-0">
+          <h1 className="rv-d break-words text-[clamp(42px,9vw,84px)] leading-none">
+            {t('gift.pageTitle')}
+          </h1>
+          <p className="mt-2 text-sm font-semibold sm:text-lg">{t('gift.subtitle')}</p>
+        </div>
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#111] text-[var(--rv-acc)] sm:size-20">
+          <GiftIcon className="size-7 sm:size-10" aria-hidden="true" />
+        </span>
+      </header>
 
-        {/* Tab bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.05 }}
-          className="mb-6 rounded-2xl bg-dark-800/50 p-1"
-        >
-          <div className="flex" role="tablist" aria-label={t('gift.pageTitle')}>
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                id={`tab-${tab.id}`}
-                aria-selected={activeTab === tab.id}
-                aria-controls={`tabpanel-${tab.id}`}
-                onClick={() => setActiveTab(tab.id)}
-                // Равные вкладки, узкие поля и шрифт на телефоне: «Мои подарки»
-                // переносилась в две строки, и пилюля была выше соседних.
-                className={cn(
-                  'min-w-0 flex-1 basis-0 whitespace-nowrap rounded-xl px-1.5 py-2.5 text-[13px] font-medium transition-all duration-200 sm:px-3 sm:text-sm',
-                  activeTab === tab.id
-                    ? 'bg-accent-500 text-on-accent shadow-sm'
-                    : 'text-dark-400 hover:text-dark-200',
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Tab content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            variants={tabContentVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.2 }}
-            role="tabpanel"
-            id={`tabpanel-${activeTab}`}
-            aria-labelledby={`tab-${activeTab}`}
-          >
-            {activeTab === 'buy' && (
-              <BuyTabContent config={config} onPurchaseComplete={() => setActiveTab('myGifts')} />
+      <div className="rv-seg" role="tablist" aria-label={t('gift.pageTitle')}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`tab-${tab.id}`}
+            aria-selected={activeTab === tab.id}
+            aria-controls={`tabpanel-${tab.id}`}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              'min-w-0 basis-0 [overflow-wrap:anywhere] !px-1 !text-[16px] sm:!text-[22px]',
+              activeTab === tab.id && 'on',
             )}
-            {activeTab === 'activate' && <ActivateTabContent initialCode={urlCode} />}
-            {activeTab === 'myGifts' && <MyGiftsTabContent />}
-          </motion.div>
-        </AnimatePresence>
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
+
+      {/* Tab content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          variants={tabContentVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={{ duration: 0.2 }}
+          role="tabpanel"
+          id={`tabpanel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+        >
+          {activeTab === 'buy' && (
+            <BuyTabContent config={config} onPurchaseComplete={() => setActiveTab('myGifts')} />
+          )}
+          {activeTab === 'activate' && <ActivateTabContent initialCode={urlCode} />}
+          {activeTab === 'myGifts' && <MyGiftsTabContent />}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

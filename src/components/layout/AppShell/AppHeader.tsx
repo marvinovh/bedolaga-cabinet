@@ -20,13 +20,9 @@ import { Avatar, BalanceChip, Brand } from '@/components/rv';
 import {
   HomeIcon,
   SubscriptionIcon,
-  WalletIcon,
-  UsersIcon,
   UserIcon,
-  ChatIcon,
   GamepadIcon,
   ClipboardIcon,
-  InfoIcon,
   CogIcon,
   WheelIcon,
   GiftIcon,
@@ -48,7 +44,6 @@ interface AppHeaderProps {
   contentSafeAreaInset: { top: number; bottom: number; left: number; right: number };
   telegramPlatform?: TelegramPlatform;
   wheelEnabled?: boolean;
-  referralEnabled?: boolean;
   hasContests?: boolean;
   hasPolls?: boolean;
   giftEnabled?: boolean;
@@ -63,7 +58,6 @@ export function AppHeader({
   contentSafeAreaInset,
   telegramPlatform,
   wheelEnabled,
-  referralEnabled,
   hasContests,
   hasPolls,
   giftEnabled,
@@ -114,14 +108,10 @@ export function AppHeader({
   const navItems = [
     { path: '/', label: t('nav.dashboard'), icon: HomeIcon },
     { path: '/subscriptions', label: t('nav.subscription'), icon: SubscriptionIcon },
-    { path: '/balance', label: t('nav.balance'), icon: WalletIcon },
-    ...(referralEnabled ? [{ path: '/referral', label: t('nav.referral'), icon: UsersIcon }] : []),
-    { path: '/support', label: t('nav.support'), icon: ChatIcon },
     ...(hasContests ? [{ path: '/contests', label: t('nav.contests'), icon: GamepadIcon }] : []),
     ...(hasPolls ? [{ path: '/polls', label: t('nav.polls'), icon: ClipboardIcon }] : []),
     ...(wheelEnabled ? [{ path: '/wheel', label: t('nav.wheel'), icon: WheelIcon }] : []),
     ...(giftEnabled ? [{ path: '/gift', label: t('nav.gift'), icon: GiftIcon }] : []),
-    { path: '/info', label: t('nav.info'), icon: InfoIcon },
   ];
 
   return (
@@ -148,6 +138,7 @@ export function AppHeader({
         >
           <div className="flex h-16 items-center justify-between gap-2.5">
             <Brand
+              to="/"
               size={36}
               radius={10}
               onAccent={mobileMenuOpen}
@@ -277,22 +268,6 @@ export function AppHeader({
                 );
               })}
 
-              <div className="mt-5 grid grid-cols-2 gap-2.5">
-                <Link
-                  to="/balance"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex min-h-[54px] items-center justify-center rounded-[14px] border-2 border-[#111] bg-[#111] px-2 text-center font-display text-[20px] uppercase leading-none text-[rgb(var(--color-accent-500))]"
-                >
-                  {t('rv.topUp')}
-                </Link>
-                <Link
-                  to="/support"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex min-h-[54px] items-center justify-center rounded-[14px] border-2 border-[#111] px-2 text-center font-display text-[20px] uppercase leading-none"
-                >
-                  {t('nav.support')}
-                </Link>
-              </div>
               <div className="mt-3 [&_button]:!text-[#111]">
                 <LogoutButton
                   variant="menu"
