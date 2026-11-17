@@ -25,7 +25,6 @@ import { Switch } from '@/components/primitives/Switch';
 import { staggerContainer, staggerItem } from '@/components/motion/transitions';
 import { CheckIcon, ArrowRightIcon, PencilIcon } from '@/components/icons';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
-import { WebBackButton } from '@/components/WebBackButton';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { Avatar } from '@/components/rv/Avatar';
 import { useTheme } from '@/hooks/useTheme';
@@ -256,10 +255,6 @@ export default function Profile() {
         <motion.aside variants={staggerItem} className="rv-profile-aside">
           <motion.header variants={staggerItem} className="rv-profile-heading">
             <div className="min-w-0">
-              <WebBackButton
-                to="/"
-                className="rv-ibtn mb-5 transition-colors hover:border-dark-600"
-              />
               <h1 className="rv-d rv-profile-title">
                 <span>{t('rv.profile.editorial.your')}</span>
                 <span className="rv-pill">{t('profile.title')}</span>
