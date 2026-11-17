@@ -46,6 +46,7 @@ vi.mock('@/api/auth', () => ({
     requestEmailChange: mocks.requestEmailChange,
     verifyEmailChange: mocks.verifyEmailChange,
     getMe: mocks.getMe,
+    getMyAvatar: () => Promise.resolve({ photo_url: null }),
   },
 }));
 vi.mock('@/api/notifications', () => ({

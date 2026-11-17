@@ -6,10 +6,6 @@
 }
 
 .rv-profile-heading {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: end;
-  gap: 32px;
   padding-bottom: 32px;
   border-bottom: 2px solid var(--rv-bd2);
 }
@@ -28,20 +24,12 @@
   display: grid;
   gap: 20px;
   min-width: 0;
-  padding-bottom: 4px;
+  padding: 20px;
 }
 
-.rv-profile-avatar {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--rv-acc);
-  color: var(--rv-ink);
-  font-size: 28px;
-  font-weight: 700;
+.rv-profile-account-id {
+  padding-top: 16px;
+  border-top: 2px solid var(--rv-bd);
 }
 
 .rv-profile-name {
@@ -144,8 +132,6 @@
   }
 
   .rv-profile-heading {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
     padding-bottom: 24px;
   }
 
@@ -159,11 +145,7 @@
 
   .rv-profile-body {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
-
-  .rv-profile-aside {
-    display: none;
+    gap: 24px;
   }
 
   .rv-profile-chapter {

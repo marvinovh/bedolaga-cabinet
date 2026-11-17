@@ -27,6 +27,7 @@ import { CheckIcon, ArrowRightIcon, PencilIcon } from '@/components/icons';
 import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
 import { WebBackButton } from '@/components/WebBackButton';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { Avatar } from '@/components/rv/Avatar';
 import { useTheme } from '@/hooks/useTheme';
 import { useIsTelegram } from '@/platform/hooks/usePlatform';
 import { themeColorsApi } from '@/api/themeColors';
@@ -260,36 +261,32 @@ export default function Profile() {
             <span className="rv-pill">{t('profile.title')}.</span>
           </h1>
         </div>
-        <div className="rv-profile-identity">
-          <div className="flex min-w-0 items-center gap-4">
-            <span className="rv-profile-avatar" aria-hidden="true">
-              {(displayName(user) || '?').trim().charAt(0).toUpperCase()}
-            </span>
-            <div className="min-w-0">
-              <p className="rv-d rv-profile-name">{displayName(user)}</p>
-              <p className="rv-profile-caption">
-                {user?.username ? `@${user.username}` : user?.email}
-              </p>
-            </div>
-          </div>
-          <div className="rv-profile-caption flex flex-wrap gap-x-4 gap-y-1">
-            {accountId != null && <span>ID {accountId}</span>}
-            {registeredAt && <span>{t('rv.profile.since', { date: registeredAt })}</span>}
-          </div>
-        </div>
       </motion.header>
 
       <div className="rv-profile-body">
         <motion.aside variants={staggerItem} className="rv-profile-aside">
-          <p className="rv-kicker">{t('rv.profile.editorial.you')}</p>
-          {accountId != null && (
-            <div>
-              <p className="rv-d rv-profile-id">{accountId}</p>
-              <p className="rv-profile-caption">
-                {t(user?.telegram_id ? 'profile.telegramId' : 'rv.profile.editorial.accountId')}
-              </p>
+          <section className="bento-card rv-profile-identity">
+            <div className="flex min-w-0 flex-wrap items-center gap-4">
+              <Avatar size={64} className="border-accent-500 bg-accent-500 text-[#111]" />
+              <div className="min-w-0">
+                <p className="rv-d rv-profile-name">{displayName(user)}</p>
+                <p className="rv-profile-caption">
+                  {user?.username ? `@${user.username}` : user?.email}
+                </p>
+              </div>
             </div>
-          )}
+            {accountId != null && (
+              <div className="rv-profile-account-id">
+                <p className="rv-d rv-profile-id">{accountId}</p>
+                <p className="rv-profile-caption">
+                  {t(user?.telegram_id ? 'profile.telegramId' : 'rv.profile.editorial.accountId')}
+                </p>
+              </div>
+            )}
+            {registeredAt && (
+              <p className="rv-profile-caption">{t('rv.profile.since', { date: registeredAt })}</p>
+            )}
+          </section>
           <p className="rv-profile-caption">{t('rv.profile.editorial.description')}</p>
         </motion.aside>
         <div className="rv-profile-chapters">
