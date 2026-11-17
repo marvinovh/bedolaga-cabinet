@@ -6,15 +6,15 @@
 }
 
 .rv-profile-heading {
-  padding-bottom: 32px;
-  border-bottom: 2px solid var(--rv-bd2);
+  min-width: 0;
 }
 
 .rv-profile-title {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: start;
   gap: 0.14em;
-  font-size: clamp(64px, 8vw, 104px);
+  font-size: clamp(48px, 5.3vw, 76px);
   white-space: nowrap;
 }
 
@@ -136,9 +136,12 @@
 
   .rv-profile-heading {
     padding-bottom: 24px;
+    border-bottom: 2px solid var(--rv-bd2);
   }
 
   .rv-profile-title {
+    flex-direction: row;
+    align-items: center;
     font-size: clamp(36px, 14vw, 80px);
   }
 

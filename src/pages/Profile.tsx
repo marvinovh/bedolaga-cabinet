@@ -252,18 +252,20 @@ export default function Profile() {
       initial="initial"
       animate="animate"
     >
-      <motion.header variants={staggerItem} className="rv-profile-heading">
-        <div className="min-w-0">
-          <WebBackButton to="/" className="rv-ibtn mb-5 transition-colors hover:border-dark-600" />
-          <h1 className="rv-d rv-profile-title">
-            <span>{t('rv.profile.editorial.your')}</span>
-            <span className="rv-pill">{t('profile.title')}</span>
-          </h1>
-        </div>
-      </motion.header>
-
       <div className="rv-profile-body">
         <motion.aside variants={staggerItem} className="rv-profile-aside">
+          <motion.header variants={staggerItem} className="rv-profile-heading">
+            <div className="min-w-0">
+              <WebBackButton
+                to="/"
+                className="rv-ibtn mb-5 transition-colors hover:border-dark-600"
+              />
+              <h1 className="rv-d rv-profile-title">
+                <span>{t('rv.profile.editorial.your')}</span>
+                <span className="rv-pill">{t('profile.title')}</span>
+              </h1>
+            </div>
+          </motion.header>
           <section className="bento-card rv-profile-identity">
             <div className="flex min-w-0 flex-wrap items-center gap-4">
               <Avatar size={64} className="border-accent-500 bg-accent-500 text-[#111]" />
