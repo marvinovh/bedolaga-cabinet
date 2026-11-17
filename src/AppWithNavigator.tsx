@@ -21,6 +21,8 @@ import { isInTelegramWebApp, closeTelegramApp } from './hooks/useTelegramSDK';
 import { getFallbackParentPath } from './utils/navigation';
 import { subscriptionApi } from './api/subscription';
 import { useBlockingStore } from './store/blocking';
+import { usePermissionStore } from './store/permissions';
+import { getAdminHomePath } from './components/admin/AdminHome';
 
 const TWEMOJI_OPTIONS = { className: 'twemoji', folder: 'svg', ext: '.svg' } as const;
 
@@ -157,7 +159,14 @@ function TelegramBackButton() {
       SUBSCRIPTION_DETAIL_RE.test(pathname) && !listIsSafe
         ? '/'
         : getFallbackParentPath(pathnameRef.current);
-    navigateRef.current(fallback, { replace: true });
+    // /admin redirects to the first permitted screen. If we are already
+    // there, going through /admin again would make Back appear to do nothing.
+    const target =
+      fallback === '/admin' &&
+      getAdminHomePath(usePermissionStore.getState().hasPermission) === pathname.replace(/\/+$/, '')
+        ? '/'
+        : fallback;
+    navigateRef.current(target, { replace: true });
   }, []);
 
   useEffect(() => {

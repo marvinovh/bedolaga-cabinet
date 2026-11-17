@@ -4,6 +4,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { AppWithNavigator } from './AppWithNavigator';
 import { useBlockingStore } from './store/blocking';
+import { usePermissionStore } from './store/permissions';
 
 const bridge = vi.hoisted(() => ({
   click: null as (() => void) | null,
@@ -49,6 +50,7 @@ vi.mock('@/lib/twemoji', () => ({ default: ({ children }: { children: ReactNode 
 afterEach(() => {
   cleanup();
   useBlockingStore.getState().clearBlocking();
+  usePermissionStore.getState().reset();
   vi.clearAllMocks();
 });
 
@@ -62,4 +64,14 @@ it('uses Telegram Back to close the Mini App while the backend is unavailable', 
   act(() => bridge.click?.());
   expect(bridge.close).toHaveBeenCalledOnce();
   expect(window.location.pathname).toBe('/login');
+});
+
+it('returns to the cabinet from a direct link to the admin landing page', () => {
+  window.history.replaceState(null, '', '/admin/dashboard');
+  usePermissionStore.setState({ permissions: ['stats:read'], isLoaded: true });
+  render(<AppWithNavigator />);
+
+  expect(bridge.click).not.toBeNull();
+  act(() => bridge.click?.());
+  expect(window.location.pathname).toBe('/');
 });
