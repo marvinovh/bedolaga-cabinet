@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   logout: vi.fn(),
   toggleTheme: vi.fn(),
   telegram: false,
+  closeMiniApp: vi.fn(),
 }));
 const user = {
   id: 42,
@@ -67,6 +68,10 @@ vi.mock('@/platform', () => ({
   }),
 }));
 vi.mock('@/platform/hooks/usePlatform', () => ({ useIsTelegram: () => mocks.telegram }));
+vi.mock('@/hooks/useTelegramSDK', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/hooks/useTelegramSDK')>()),
+  closeTelegramApp: mocks.closeMiniApp,
+}));
 vi.mock('@/components/LanguageSwitcher', () => ({
   default: () => <button type="button">Language</button>,
 }));
@@ -150,13 +155,15 @@ describe('editorial profile keeps account settings functional', () => {
     expect(screen.getByText('Connected accounts screen')).toBeTruthy();
   });
 
-  it('honors disabled email, single-theme and Telegram logout restrictions', () => {
+  it('honors disabled email and single-theme settings while allowing Telegram exit', () => {
     mocks.telegram = true;
     renderProfile(false, { dark: true, light: false });
     expect(screen.queryByText('alex@example.com')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'rv.profile.editorial.email' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'rv.profile.light' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'rv.profile.logout' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'rv.profile.logout' }));
+    expect(mocks.logout).toHaveBeenCalledOnce();
+    expect(mocks.closeMiniApp).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'Language' })).toBeTruthy();
     expect(screen.getAllByRole('switch')).toHaveLength(5);
   });

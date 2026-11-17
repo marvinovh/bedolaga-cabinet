@@ -1,61 +1,42 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * Кнопка «Выйти» нужна только в браузере. В Telegram вход идёт по initData:
- * после «выхода» страница входа тут же входит обратно — кнопка бессмысленна и
- * только путает. Оба места (шапка на широком экране и мобильное меню) рисуют
- * её через один компонент, и он в Telegram не рисует ничего.
- */
+const state = vi.hoisted(() => ({ telegram: false, close: vi.fn() }));
+vi.mock('@/platform/hooks/usePlatform', () => ({ useIsTelegram: () => state.telegram }));
+vi.mock('@/hooks/useTelegramSDK', () => ({ closeTelegramApp: state.close }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-const state = { telegram: false };
-
-vi.mock('@/platform/hooks/usePlatform', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@/platform/hooks/usePlatform')>();
-  return { ...original, useIsTelegram: () => state.telegram };
-});
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-    i18n: { language: 'ru', changeLanguage: () => Promise.resolve() },
-  }),
-  Trans: ({ children }: { children?: unknown }) => children ?? null,
-  initReactI18next: { type: '3rdParty', init: () => {} },
-}));
+import { LogoutButton } from './LogoutButton';
 
 afterEach(() => {
   cleanup();
   state.telegram = false;
+  vi.clearAllMocks();
 });
 
-async function renderButton(variant: 'menu' | 'icon', onLogout = () => {}) {
-  const { LogoutButton } = await import('./LogoutButton');
-  return render(<LogoutButton variant={variant} onLogout={onLogout} />);
+for (const variant of ['menu', 'icon', 'profile'] as const) {
+  describe(`logout: ${variant}`, () => {
+    const label = variant === 'profile' ? 'rv.profile.logout' : 'nav.logout';
+
+    it('logs out in the browser without trying to close its window', () => {
+      const logout = vi.fn();
+      render(<LogoutButton variant={variant} onLogout={logout} />);
+      fireEvent.click(screen.getByRole('button', { name: label }));
+      expect(logout).toHaveBeenCalledOnce();
+      expect(state.close).not.toHaveBeenCalled();
+    });
+
+    it('is available in Telegram and clears the session before closing the Mini App', () => {
+      state.telegram = true;
+      const logout = vi.fn();
+      render(<LogoutButton variant={variant} onLogout={logout} />);
+      fireEvent.click(screen.getByRole('button', { name: label }));
+      expect(logout).toHaveBeenCalledOnce();
+      expect(state.close).toHaveBeenCalledOnce();
+      expect(logout.mock.invocationCallOrder[0]).toBeLessThan(
+        state.close.mock.invocationCallOrder[0],
+      );
+    });
+  });
 }
-
-describe('кнопка выхода', () => {
-  it('в браузере есть в меню и в шапке и зовёт выход', async () => {
-    const calls: number[] = [];
-    await renderButton('menu', () => calls.push(1));
-
-    screen.getByText('nav.logout').click();
-    expect(calls).toHaveLength(1);
-
-    cleanup();
-    await renderButton('icon');
-    expect(screen.getByTitle('nav.logout')).toBeTruthy();
-  });
-
-  it('в Telegram не рисуется ни в меню, ни в шапке', async () => {
-    state.telegram = true;
-
-    const menu = await renderButton('menu');
-    expect(menu.container.innerHTML).toBe('');
-
-    cleanup();
-    const icon = await renderButton('icon');
-    expect(icon.container.innerHTML).toBe('');
-  });
-});

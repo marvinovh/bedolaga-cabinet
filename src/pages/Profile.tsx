@@ -28,7 +28,7 @@ import { Skeleton, SkeletonGroup } from '@/components/ui/skeleton';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { Avatar } from '@/components/rv/Avatar';
 import { useTheme } from '@/hooks/useTheme';
-import { useIsTelegram } from '@/platform/hooks/usePlatform';
+import { LogoutButton } from '@/components/layout/AppShell/LogoutButton';
 import { themeColorsApi } from '@/api/themeColors';
 import './Profile.css';
 
@@ -60,7 +60,6 @@ export default function Profile() {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const logout = useAuthStore((state) => state.logout);
-  const isTelegram = useIsTelegram();
   const { isDark, toggleTheme } = useTheme();
   const { data: enabledThemes } = useQuery({
     queryKey: ['enabled-themes'],
@@ -758,15 +757,7 @@ export default function Profile() {
           {t('rv.profile.docs')}
           <ArrowRightIcon className="h-4 w-4" />
         </Link>
-        {!isTelegram && (
-          <button
-            type="button"
-            onClick={logout}
-            className="min-h-11 text-sm text-dark-400 hover:text-[var(--rv-bad)]"
-          >
-            {t('rv.profile.logout')}
-          </button>
-        )}
+        <LogoutButton variant="profile" onLogout={logout} />
       </motion.footer>
     </motion.div>
   );
