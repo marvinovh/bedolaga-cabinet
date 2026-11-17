@@ -11,13 +11,16 @@
 }
 
 .rv-profile-title {
+  display: flex;
+  align-items: center;
+  gap: 0.14em;
   font-size: clamp(64px, 8vw, 104px);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .rv-profile-title .rv-pill {
   max-width: 100%;
-  margin-top: 6px;
+  flex-shrink: 0;
 }
 
 .rv-profile-identity {
@@ -136,7 +139,7 @@
   }
 
   .rv-profile-title {
-    font-size: clamp(58px, 17vw, 80px);
+    font-size: clamp(36px, 14vw, 80px);
   }
 
   .rv-profile-name {

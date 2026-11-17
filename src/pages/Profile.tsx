@@ -256,9 +256,8 @@ export default function Profile() {
         <div className="min-w-0">
           <WebBackButton to="/" className="rv-ibtn mb-5 transition-colors hover:border-dark-600" />
           <h1 className="rv-d rv-profile-title">
-            {t('rv.profile.editorial.your')}
-            <br />
-            <span className="rv-pill">{t('profile.title')}.</span>
+            <span>{t('rv.profile.editorial.your')}</span>
+            <span className="rv-pill">{t('profile.title')}</span>
           </h1>
         </div>
       </motion.header>
