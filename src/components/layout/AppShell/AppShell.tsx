@@ -197,6 +197,7 @@ export function AppShell({ children }: AppShellProps) {
       >
         <div className="mx-auto flex h-[68px] max-w-[1184px] items-center gap-4 px-6">
           <Brand
+            to="/"
             size={38}
             radius={10}
             onAccent

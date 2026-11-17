@@ -10150,6 +10150,16 @@
       "copy": "Copy"
     },
     "profile": {
+      "editorial": {
+        "your": "你的",
+        "you": "个人信息",
+        "accountId": "账号 ID",
+        "description": "管理账号、登录方式和通知设置。",
+        "email": "保持联系",
+        "login": "轻松登录",
+        "appearance": "个性设置",
+        "notifications": "重要通知"
+      },
       "since": "with us since {{date}}",
       "loginMethods": "Sign-in methods",
       "appearance": "Appearance",

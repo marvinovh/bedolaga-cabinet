@@ -10278,6 +10278,16 @@
       "copy": "Copy"
     },
     "profile": {
+      "editorial": {
+        "your": "Your",
+        "you": "This is you",
+        "accountId": "Account ID",
+        "description": "Your account, sign-in methods and notification preferences.",
+        "email": "Stay in touch",
+        "login": "Sign in with ease",
+        "appearance": "Make it yours",
+        "notifications": "Just what matters"
+      },
       "since": "with us since {{date}}",
       "loginMethods": "Sign-in methods",
       "appearance": "Appearance",

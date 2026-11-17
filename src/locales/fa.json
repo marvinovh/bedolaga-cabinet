@@ -10287,6 +10287,16 @@
       "copy": "Copy"
     },
     "profile": {
+      "editorial": {
+        "your": "حساب",
+        "you": "مشخصات شما",
+        "accountId": "شناسه حساب",
+        "description": "تنظیمات حساب، روش‌های ورود و اعلان‌ها.",
+        "email": "در ارتباط باشید",
+        "login": "ورود آسان",
+        "appearance": "به سلیقه شما",
+        "notifications": "فقط اعلان‌های مهم"
+      },
       "since": "with us since {{date}}",
       "loginMethods": "Sign-in methods",
       "appearance": "Appearance",

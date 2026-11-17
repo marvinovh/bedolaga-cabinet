@@ -10403,6 +10403,16 @@
       "copy": "Копировать"
     },
     "profile": {
+      "editorial": {
+        "your": "Твой",
+        "you": "Это ты",
+        "accountId": "ID аккаунта",
+        "description": "Настройки аккаунта, способов входа и уведомлений.",
+        "email": "На связи",
+        "login": "Вход без лишнего",
+        "appearance": "Под тебя",
+        "notifications": "Только нужное"
+      },
       "since": "с нами с {{date}}",
       "loginMethods": "Способы входа",
       "appearance": "Внешний вид",
